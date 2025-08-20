@@ -1,0 +1,8 @@
+dn: uid=jdoe,dc=minhaempresa,dc=local
+objectClass: inetOrgPerson
+sn: Doe
+givenName: John
+cn: John Doe
+uid: jdoe
+mail: jdoe@minhaempresa.local
+userPassword: s3nh@
