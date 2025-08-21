@@ -27,6 +27,8 @@ type loginResp struct {
 	User  model.User `json:"user"`
 }
 
+// Login autentica o usuário via LDAP, atualiza o shadow account
+// no repositório local e retorna um JWT
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginReq
 
@@ -36,7 +38,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u, err := h.LDAP.Authenticate(req.Login, req.Password)
-
 	if err != nil {
 		httpx.Error(w, http.StatusUnauthorized, err.Error())
 		return
@@ -48,8 +49,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Atualiza a última vez que o usuário fez login
 	now := time.Now()
 	_ = h.Users.TouchLogin(r.Context(), u.Login, now)
+
 	tok, err := h.TM.Generate(auth.Claims{
 		UserID:    u.ID,
 		Nome:      u.Nome,
@@ -63,9 +66,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Retorna JSON com o token e dados do usuário
 	httpx.JSON(w, http.StatusOK, loginResp{Token: tok, User: *u})
 }
 
+// Retorna informações do usuário autenticado a partir do token JWT
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	c, err := httpx.ClaimsFrom(r)
 

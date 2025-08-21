@@ -13,12 +13,16 @@ type UserRepository interface {
 	TouchLogin(ctx context.Context, login string, t time.Time) error
 }
 
+// ErrNotFound é um erro genérico retornado quando o usuário não é encontrado
 var (
 	ErrNotFound = fmtError("not found")
 )
 
+// fmtError é um tipo customizado que implementa a interface error
+// Permite criar erros simples com string
 type fmtError string
 
-func (e fmtError) Error() string { 
-	return string(e) 
+// Error implementa a interface error
+func (e fmtError) Error() string {
+	return string(e)
 }

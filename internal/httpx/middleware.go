@@ -12,21 +12,26 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/model"
 )
 
+// Chave para o context
 type ctxKey string
 
+// Chave usada para armazenar os claims JWT no context da requisição
 const ctxClaims ctxKey = "claims"
 
+// Envia um objeto como resposta HTTP em formato JSON
 func JSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
 }
 
+// Envia uma resposta de erro em JSON com o status e mensagem fornecidos
 func Error(w http.ResponseWriter, status int, msg string) {
 	JSON(w, status, map[string]string{"error": msg})
 }
 
-// Autenticação por JWT (Bearer <token>)
+// Verifica se o header Authorization está presente e válido (Bearer <token>)
+// Decodifica o token e adiciona os claims no context da requisição
 func AuthMiddleware(tm *auth.TokenManager) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -52,13 +57,15 @@ func AuthMiddleware(tm *auth.TokenManager) func(http.Handler) http.Handler {
 				return
 			}
 
+			// Armazena os claims no context e passa para o próximo handler
 			ctx := context.WithValue(r.Context(), ctxClaims, claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
-// RBAC: exige um dos papéis
+// RequireRoles é um middleware de RBAC (controle de acesso por papéis)
+// Permite apenas usuários com um dos papéis especificados
 func RequireRoles(allowed ...model.Permissao) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +88,7 @@ func RequireRoles(allowed ...model.Permissao) func(http.Handler) http.Handler {
 	}
 }
 
-// Recover + Timeout
+// Middleware que captura panics e evita crash do servidor
 func Recover(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -96,13 +103,15 @@ func Recover(next http.Handler) http.Handler {
 	})
 }
 
+// Cria um middleware que define tempo máximo de execução de uma requisição
 func Timeout(d time.Duration) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.TimeoutHandler(next, d, "request timeout")
 	}
 }
 
-// Chain simples de middlewares (no framework!)
+// Permite encadear múltiplos middlewares de forma simples
+// Aplica os middlewares da última para a primeira (como decoradores)
 func Chain(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
 	for i := len(mws) - 1; i >= 0; i-- {
 		h = mws[i](h)
@@ -110,7 +119,7 @@ func Chain(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler 
 	return h
 }
 
-// Helper para obter Claims no handler
+// Helper para extrair os claims JWT do context da requisição
 func ClaimsFrom(r *http.Request) (*auth.Claims, error) {
 	v := r.Context().Value(ctxClaims)
 

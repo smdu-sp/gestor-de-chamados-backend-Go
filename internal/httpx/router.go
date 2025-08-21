@@ -2,7 +2,7 @@ package httpx
 
 import "net/http"
 
-// Método correto? Se não, 405
+// Middleware que garante que a requisição HTTP use apenas o método especificado.
 func Method(h http.HandlerFunc, method string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -14,9 +14,12 @@ func Method(h http.HandlerFunc, method string) http.HandlerFunc {
 			)
 			return
 		}
+		// Chama o handler original se o método estiver correto
 		h(w, r)
 	}
 }
 
-// ServeMux nativo, sem framework
-func NewMux() *http.ServeMux { return http.NewServeMux() }
+// Retorna um novo http.ServeMux
+func NewMux() *http.ServeMux {
+	return http.NewServeMux()
+}

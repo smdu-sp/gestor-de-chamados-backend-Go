@@ -6,6 +6,7 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/httpx"
 )
 
+// UserHandler é responsável por gerenciar rotas relacionadas a usuários.
 type UserHandler struct{}
 
 func (h *UserHandler) AdminOnly(w http.ResponseWriter, r *http.Request) {

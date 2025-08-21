@@ -5,14 +5,14 @@ import "time"
 type Permissao string
 
 const (
-	ADM  Permissao = "ADM"
-	SUP  Permissao = "SUP"
-	INF  Permissao = "INF"
-	VOIP Permissao = "VOIP"
-	CAD  Permissao = "CAD"
-	USR  Permissao = "USR"
-	IMP  Permissao = "IMP"
-	DEV  Permissao = "DEV"
+	ADM  Permissao = "ADM" 	// Administrador
+	SUP  Permissao = "SUP" 	// Técnico de Suporte (Help Desk)
+	INF  Permissao = "INF" 	// Técnico de Infraestrutura
+	VOIP Permissao = "VOIP" // Técnico de Telefonia
+	CAD  Permissao = "CAD" 	// Cadastro de usuários
+	USR  Permissao = "USR" 	// Usuário comum
+	IMP  Permissao = "IMP" 	// Técnico de Impressoras
+	DEV  Permissao = "DEV" 	// Desenvolvedor
 )
 
 type User struct {
