@@ -1,0 +1,49 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Build e cache do Go
+/bin/
+/out/
+/dist/
+/build/
+/cover.out
+*.prof
+*.pprof
+*.test
+*.cover
+*.log
+
+# Diretórios criados pelo Go
+*.o
+*.a
+*.obj
+*.out
+
+# Dependências Go (go mod baixa novamente)
+vendor/
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.*
+
+# IDEs e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.swm
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Docker/LDAP data (não versionar dados gerados em runtime)
+test/ldap/ldap-data/
+test/ldap/ldap-config/docker-openldap-was-*
