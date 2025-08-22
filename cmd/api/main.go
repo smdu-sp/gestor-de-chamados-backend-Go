@@ -28,6 +28,9 @@ func main() {
 	// Cria repositório de usuários em memória (poderá ser trocado por banco no futuro).
 	users := memory.NewUserRepo()
 
+	// Cria repositório de refresh em memória (poderá ser trocado por banco no futuro).
+	refreshRepo := memory.NewRefreshRepo()
+
 	// Inicializa cliente LDAP para autenticação contra o diretório.
 	ldapClient := ldapx.New(cfg.LDAP)
 
@@ -38,11 +41,16 @@ func main() {
 		cfg.JWTTTL,
 	)
 
+	// Cria gerenciador de refresh
+	rm := auth.NewRefreshManager()
+
 	// Instancia handler de autenticação (login, /me), injetando dependências.
 	authH := &handler.AuthHandler{
 		LDAP:  ldapClient,
 		Users: users,
 		TM:    tm,
+		RM:    rm,
+		RRepo: refreshRepo,
 	}
 
 	// Instancia handler de usuário (rotas protegidas de exemplo).
@@ -61,18 +69,23 @@ func main() {
 	// Endpoint de login "/login" (gera token JWT)
 	mux.HandleFunc("/login", httpx.Method(authH.Login, http.MethodPost))
 
+	// Endpoint de refresh "/refresh" (gera token JWT + refresh)
+	mux.HandleFunc("/refresh", httpx.Method(authH.Refresh, http.MethodPost))
+
 	// ------------------------
 	// Rotas protegidas
 	// ------------------------
 
 	// Cria uma cadeia de middlewares: autenticação JWT + timeout + recover
 	authChain := func(h http.Handler) http.Handler {
-		return httpx.Chain(h, 
-			httpx.AuthMiddleware(tm),			// valida token
+		return httpx.Chain(h,
+			httpx.AuthMiddleware(tm),     // valida token
 			httpx.Timeout(5*time.Second), // timeout por request
-			httpx.Recover,								// captura panics
+			httpx.Recover,                // captura panics
 		)
 	}
+
+	mux.Handle("/logout", authChain(http.HandlerFunc(authH.Logout)))
 
 	// Rota autenticada: retorna dados do usuário logado (/me)
 	mux.Handle("/me", authChain(http.HandlerFunc(authH.Me)))
