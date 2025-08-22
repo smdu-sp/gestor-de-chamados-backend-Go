@@ -6,6 +6,7 @@ Este projeto é uma **API REST desenvolvida em Go (sem frameworks web)** utiliza
 
 * **Autenticação via LDAP**
 * **Emissão de tokens JWT**
+* **Refresh Token e Logout (revogação de sessões)**
 * **Controle de acesso baseado em papéis (RBAC)**
 * **Middlewares de autenticação, autorização, recover e timeout**
 * Repositório de usuários **in-memory** (com interface pronta para extensão em banco SQL, ex.: Postgres)
@@ -20,13 +21,13 @@ Este projeto é uma **API REST desenvolvida em Go (sem frameworks web)** utiliza
 │   └── api/
 │       └── main.go
 ├── internal/
-│   ├── auth/           # JWT + RBAC
+│   ├── auth/           # JWT, Refresh Tokens e RBAC
 │   ├── config/         # Configurações
 │   ├── handler/        # Handlers HTTP
 │   ├── httpx/          # Middleware e roteamento
 │   ├── ldapx/          # Cliente LDAP
 │   ├── model/          # Modelos de domínio
-│   ├── repository/     # Interfaces e memória
+│   ├── repository/     # Interfaces e memória (inclui refresh tokens)
 │   └── util/           # Utilitários
 ├── test/               # Testes
 │   └── ldap/           # Servidor LDAP de testes 
@@ -169,6 +170,37 @@ Response 200:
 
 ---
 
+### Refresh token
+
+**POST /refresh**
+
+```json
+Request:
+{ "refreshToken": "<refresh-token>" }
+
+Response 200:
+{
+  "accessToken": "<novo-jwt>",
+  "refreshToken": "<novo-refresh>"
+}
+```
+
+---
+
+### Logout
+
+**POST /logout**
+(Requer header `Authorization: Bearer <token>`)
+
+Revoga todos os refresh tokens associados ao usuário.
+
+```json
+Response 200:
+{ "ok": "logout" }
+```
+
+---
+
 ### Usuário autenticado
 
 **GET /me**
@@ -196,6 +228,15 @@ curl -s http://localhost:8080/
 curl -s -X POST http://localhost:8080/login \
   -H 'Content-Type: application/json' \
   -d '{"login":"jdoe","password":"s3nh@"}'
+
+# Refresh
+curl -s -X POST http://localhost:8080/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"<refresh-token>"}'
+
+# Logout
+curl -s -X POST http://localhost:8080/logout \
+  -H "Authorization: Bearer <token>"
 
 # Claims
 TOKEN="<cole-o-token>"
