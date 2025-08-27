@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    platform: linux/amd64
+    container_name: my-database
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: user
+      MYSQL_PASSWORD: userpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - backend-net
+
+  ldap:
+    image: osixia/openldap:1.5.0
+    container_name: ldap-test
+    environment:
+      LDAP_ORGANISATION: "Rede SP"
+      LDAP_DOMAIN: "rede.sp"
+      LDAP_ADMIN_PASSWORD: "Prodam0"
+    ports:
+      - "389:389"
+    volumes:
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap/slapd.d
+    networks:
+      - backend-net
+
+networks:
+  backend-net:
+
+volumes:
+  db_data:
+  ldap_data:
+  ldap_config:
