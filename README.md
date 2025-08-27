@@ -48,41 +48,11 @@ Este projeto é uma **API REST desenvolvida em Go (sem frameworks web)** utiliza
 
 ## Configuração
 
-Crie um arquivo `.env` na raiz do projeto:
+Antes de rodar o projeto, configure as variáveis de ambiente:
 
-```ini
-# ============= App =============
-ENVIRONMENT=production
-PORT=8080
-CORS_ORIGIN=http://localhost:8080 # modificar dominio em produção
-
-# ============= DB (MySQL 8) ============
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=user
-DB_PASS=troque-pela-senha-do-db
-DB_NAME=troque-pelo-nome-do-db 
-
-# ============= JWT =====================
-JWT_SECRET=troque-esta-chave 
-RT_SECRET=troque-esta-chave-refresh 
-ACCESS_TTL=24h
-REFRESH_TTL=168h # 7 dias
-
-# ============= LDAP / OpenLDAP (Desenvolvimento) ============
-# LDAP_SERVER=ldap:
-# LDAP_BASE=dc=,dc=
-# LDAP_USER=cn=,dc=,dc=
-# LDAP_PASS=
-# LDAP_LOGIN_ATTR=uid
-
-# ============= Active Directory (Produção) ==================
-LDAP_SERVER=
-LDAP_DOMAIN=
-LDAP_BASE=DC=,DC=
-LDAP_USER=
-LDAP_PASS=
-LDAP_LOGIN_ATTR=sAMAccountName
+Copie o arquivo de exemplo:
+```bash
+  cp .env.example .env
 ```
 
 > O sistema suporta autenticação via **OpenLDAP** (ideal para testes locais) ou **Active Directory** (produção).

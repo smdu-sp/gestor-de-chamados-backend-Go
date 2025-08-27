@@ -30,7 +30,6 @@ vendor/
 # Arquivos de ambiente
 .env
 .env.local
-.env.*
 
 # IDEs e editores
 .vscode/
