@@ -4,12 +4,11 @@
 
 Este projeto é uma **API REST desenvolvida em Go (sem frameworks web)** utilizando apenas `net/http`, com suporte a:
 
-* **Autenticação via LDAP**
+* **Autenticação via LDAP ou Active Directory**
 * **Emissão de tokens JWT**
-* **Refresh Token e Logout (revogação de sessões)**
+* **Refresh Token**
 * **Controle de acesso baseado em papéis (RBAC)**
-* **Middlewares de autenticação, autorização, recover e timeout**
-* Repositório de usuários **in-memory** (com interface pronta para extensão em banco SQL, ex.: Postgres)
+* **Middlewares de autenticação e autorização**
 
 ---
 
@@ -21,17 +20,16 @@ Este projeto é uma **API REST desenvolvida em Go (sem frameworks web)** utiliza
 │   └── api/
 │       └── main.go
 ├── internal/
-│   ├── auth/           # JWT, Refresh Tokens e RBAC
+│   ├── auth/           # JWT, LDAP/AD, Middleware
 │   ├── config/         # Configurações
-│   ├── handler/        # Handlers HTTP
-│   ├── httpx/          # Middleware e roteamento
-│   ├── ldapx/          # Cliente LDAP
-│   ├── model/          # Modelos de domínio
-│   ├── repository/     # Interfaces e memória (inclui refresh tokens)
+│   ├── domain/         # Model, Repository, Service 
+│   ├── http/           # Handlers, Routers
+│   ├── response/       # JSON, ErrorJSON
 │   └── util/           # Utilitários
-├── test/               # Testes
-│   └── ldap/           # Servidor LDAP de testes 
+├── ldap-init/          # LDIF de testes OpenLDAP
+├── migrations/         # Migrations do BD
 ├── .env
+├── docker-compose.yml  # Sobe banco e servido OpenLDAP para testes
 ├── go.mod
 ├── go.sum
 └── README.md
@@ -53,78 +51,50 @@ Este projeto é uma **API REST desenvolvida em Go (sem frameworks web)** utiliza
 Crie um arquivo `.env` na raiz do projeto:
 
 ```ini
-HTTP_ADDR=:8080
-JWT_SECRET=troque-por-um-segredo-forte
-JWT_ISSUER=authapi
-JWT_TTL=2h
+# ============= App =============
+ENVIRONMENT=production
+PORT=8080
+CORS_ORIGIN=http://localhost:8080 # modificar dominio em produção
 
-LDAP_URL=ldap://localhost:389
-LDAP_BASE_DN=dc=minhaempresa,dc=local
-LDAP_BIND_DN=cn=admin,dc=minhaempresa,dc=local
-LDAP_BIND_PASS=admin
-LDAP_USER_FILTER=(|(uid=%s)(sAMAccountName=%s)(mail=%s))
+# ============= DB (MySQL 8) ============
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=user
+DB_PASS=troque-pela-senha-do-db
+DB_NAME=troque-pelo-nome-do-db 
 
-LDAP_TLS=false
-LDAP_INSECURE=true
-LDAP_ATTR_LOGIN=uid
-LDAP_ATTR_NAME=cn
-LDAP_ATTR_EMAIL=mail
-LDAP_ATTR_AVATAR=
-LDAP_ATTR_PERM=department
+# ============= JWT =====================
+JWT_SECRET=troque-esta-chave 
+RT_SECRET=troque-esta-chave-refresh 
+ACCESS_TTL=24h
+REFRESH_TTL=168h # 7 dias
+
+# ============= LDAP / OpenLDAP (Desenvolvimento) ============
+# LDAP_SERVER=ldap:
+# LDAP_BASE=dc=,dc=
+# LDAP_USER=cn=,dc=,dc=
+# LDAP_PASS=
+# LDAP_LOGIN_ATTR=uid
+
+# ============= Active Directory (Produção) ==================
+LDAP_SERVER=
+LDAP_DOMAIN=
+LDAP_BASE=DC=,DC=
+LDAP_USER=
+LDAP_PASS=
+LDAP_LOGIN_ATTR=sAMAccountName
 ```
-## Subindo servidor LDAP de teste com Docker
 
-Para testar a API localmente, você pode usar um container **OpenLDAP** simples:
-
-```bash
-docker run --name ldap-server -p 389:389 \
-  -e LDAP_ORGANISATION="Minha Empresa" \
-  -e LDAP_DOMAIN="minhaempresa.local" \
-  -e LDAP_ADMIN_PASSWORD="admin" \
-  -d osixia/openldap:1.5.0
-```
-
-Credenciais padrão:
-
-* **Bind DN:** `cn=admin,dc=minhaempresa,dc=local`
-* **Senha:** `admin`
+> O sistema suporta autenticação via **OpenLDAP** (ideal para testes locais) ou **Active Directory** (produção).
 
 ---
 
-### Inserindo usuários de teste
-
-Crie um arquivo `usuarios.ldif`:
-
-```ldif
-dn: uid=jdoe,dc=minhaempresa,dc=local
-objectClass: inetOrgPerson
-uid: jdoe
-sn: Doe
-cn: John Doe
-mail: jdoe@minhaempresa.local
-userPassword: s3nh@
-```
-
-Carregue o usuário no LDAP:
-
+# AD (exemplo)
 ```bash
-docker cp usuarios.ldif ldap-server:/usuarios.ldif
-docker exec -it ldap-server ldapadd -x \
-  -D "cn=admin,dc=minhaempresa,dc=local" -w admin \
-  -f /usuarios.ldif
+ldapsearch -x -H ldap://10.10.65.242 \
+  -D "usuario@rede.sp" -w "senha" \
+  -b "DC=rede,DC=sp"
 ```
-
----
-
-### Testando o LDAP
-
-```bash
-ldapsearch -x -H ldap://localhost:389 \
-  -D "cn=admin,dc=minhaempresa,dc=local" -w admin \
-  -b "dc=minhaempresa,dc=local"
-```
-
-Se o usuário `jdoe` aparecer, o ambiente LDAP está pronto para ser usado pela API.
 
 ---
 
@@ -151,18 +121,12 @@ A API estará disponível em:
 
 ```json
 Request:
-{ "login": "jdoe", "password": "s3nh@" }
+{ "login": "usuario", "password": "senha@" }
 
 Response 200:
 {
-  "token": "<jwt>",
-  "user": {
-    "id": "123",
-    "nome": "John Doe",
-    "login": "jdoe",
-    "email": "jdoe@empresa.com",
-    "permissao": "USR"
-  }
+    "access_token": <access-token>,
+    "refresh_token": <refresh_token>
 }
 ```
 
@@ -180,41 +144,10 @@ Request:
 
 Response 200:
 {
-  "accessToken": "<novo-jwt>",
-  "refreshToken": "<novo-refresh>"
+  "access_token": "<novo-access>",
+  "refresh_token": "<novo-refresh>"
 }
 ```
-
----
-
-### Logout
-
-**POST /logout**
-(Requer header `Authorization: Bearer <token>`)
-
-Revoga todos os refresh tokens associados ao usuário.
-
-```json
-Response 200:
-{ "ok": "logout" }
-```
-
----
-
-### Usuário autenticado
-
-**GET /me**
-(Requer header `Authorization: Bearer <token>`)
-
-Retorna os dados do usuário logado (claims do JWT).
-
----
-
-### Rotas com RBAC
-
-* **GET /admin/ping** → requer papel `ADM`
-* **GET /suporte/ping** → requer papel `SUP` ou `DEV`
-* **GET /** → rota pública (sem autenticação)
 
 ---
 
@@ -227,22 +160,11 @@ curl -s http://localhost:8080/
 # Login
 curl -s -X POST http://localhost:8080/login \
   -H 'Content-Type: application/json' \
-  -d '{"login":"jdoe","password":"s3nh@"}'
+  -d '{"login":"usuario","password":"senha@"}'
 
 # Refresh
 curl -s -X POST http://localhost:8080/refresh \
   -H 'Content-Type: application/json' \
   -d '{"refreshToken":"<refresh-token>"}'
-
-# Logout
-curl -s -X POST http://localhost:8080/logout \
-  -H "Authorization: Bearer <token>"
-
-# Claims
-TOKEN="<cole-o-token>"
-curl -s http://localhost:8080/me -H "Authorization: Bearer $TOKEN"
-
-# Rota admin
-curl -s http://localhost:8080/admin/ping -H "Authorization: Bearer $TOKEN"
 ```
 
