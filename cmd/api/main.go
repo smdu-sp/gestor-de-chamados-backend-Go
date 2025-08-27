@@ -1,118 +1,65 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/joho/godotenv"
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/auth"
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/db"
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/config"
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/handler"
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/httpx"
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/ldapx"
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/repository/memory"
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/http/router"
 )
 
 func main() {
-
-	// Carrega variáveis de ambiente
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("⛔ Aviso: .env não foi carregado automaticamente")
+	if err := run(); err != nil {
+		log.Fatalf("erro ao iniciar a aplicação: %v", err)
 	}
+}
 
-	// Carrega a configuração da aplicação (HTTP, JWT, LDAP, etc.)
+func run() error {
+	// Carrega configuração
 	cfg := config.Load()
 
-	// Cria repositório de usuários em memória (poderá ser trocado por banco no futuro).
-	users := memory.NewUserRepo()
+	// Conecta ao banco
+	dbConn, err := db.OpenMySQL(cfg)
+	if err != nil {
+		return err
+	}
+	defer dbConn.Close()
 
-	// Cria repositório de refresh em memória (poderá ser trocado por banco no futuro).
-	refreshRepo := memory.NewRefreshRepo()
+	// Monta o router
+	r := router.Build(cfg, dbConn)
 
-	// Inicializa cliente LDAP para autenticação contra o diretório.
-	ldapClient := ldapx.New(cfg.LDAP)
-
-	// Cria gerenciador de tokens JWT com base nas configs carregadas.
-	tm := auth.NewTokenManager(
-		cfg.JWTSecret,
-		cfg.JWTIssuer,
-		cfg.JWTTTL,
-	)
-
-	// Cria gerenciador de refresh
-	rm := auth.NewRefreshManager()
-
-	// Instancia handler de autenticação (login, /me), injetando dependências.
-	authH := &handler.AuthHandler{
-		LDAP:  ldapClient,
-		Users: users,
-		TM:    tm,
-		RM:    rm,
-		RRepo: refreshRepo,
+	// Cria o servidor HTTP
+	srv := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
-	// Instancia handler de usuário (rotas protegidas de exemplo).
-	userH := &handler.UserHandler{}
+	// Inicia o servidor em goroutine
+	go func() {
+		log.Printf("API rodando em http://localhost:%s", cfg.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("erro no servidor: %v", err)
+		}
+	}()
 
-	// Cria roteador HTTP nativo (ServeMux).
-	mux := httpx.NewMux()
+	// Configura graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 
-	// ------------------------
-	// Rotas públicas
-	// ------------------------
+	log.Println("Shutting down server...")
 
-	// Endpoint público raiz "/"
-	mux.HandleFunc("/", httpx.Method(userH.Publico, http.MethodGet))
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	// Endpoint de login "/login" (gera token JWT)
-	mux.HandleFunc("/login", httpx.Method(authH.Login, http.MethodPost))
-
-	// Endpoint de refresh "/refresh" (gera token JWT + refresh)
-	mux.HandleFunc("/refresh", httpx.Method(authH.Refresh, http.MethodPost))
-
-	// ------------------------
-	// Rotas protegidas
-	// ------------------------
-
-	// Cria uma cadeia de middlewares: autenticação JWT + timeout + recover
-	authChain := func(h http.Handler) http.Handler {
-		return httpx.Chain(h,
-			httpx.AuthMiddleware(tm),     // valida token
-			httpx.Timeout(5*time.Second), // timeout por request
-			httpx.Recover,                // captura panics
-		)
-	}
-
-	mux.Handle("/logout", authChain(http.HandlerFunc(authH.Logout)))
-
-	// Rota autenticada: retorna dados do usuário logado (/me)
-	mux.Handle("/me", authChain(http.HandlerFunc(authH.Me)))
-
-	// ------------------------
-	// RBAC (controle de acesso por papel)
-	// ------------------------
-
-	// Apenas usuários com papel "ADM"
-	mux.Handle("/admin/ping", authChain(
-		httpx.RequireRoles("ADM")(http.HandlerFunc(userH.AdminOnly)),
-	))
-
-	// Apenas usuários com papel "SUP" ou "DEV"
-	mux.Handle("/suporte/ping", authChain(
-		httpx.RequireRoles("SUP", "DEV")(http.HandlerFunc(userH.SuporteOuDev)),
-	))
-
-	// ------------------------
-	// Inicialização do servidor
-	// ------------------------
-
-	// Exibe no log a porta em que a API está escutando
-	log.Printf("listening on %s", cfg.Addr)
-
-	// Inicia servidor HTTP com o roteador configurado
-	if err := http.ListenAndServe(cfg.Addr, mux); err != nil {
-		log.Fatal(err) // encerra se não conseguir subir
-	}
+	return srv.Shutdown(ctx)
 }
