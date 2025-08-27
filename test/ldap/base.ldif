@@ -1,6 +1,0 @@
-dn: dc=minhaempresa,dc=local
-objectClass: top
-objectClass: dcObject
-objectClass: organization
-o: Minha Empresa
-dc: minhaempresa
