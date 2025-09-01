@@ -8,6 +8,31 @@ import (
 	ldap "github.com/go-ldap/ldap/v3"
 )
 
+// LDAPConnection é a interface que abstrai uma conexão LDAP
+type LDAPConnection interface {
+	Close() error
+	Bind(username, password string) error
+	Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error)
+	StartTLS(*tls.Config) error
+}
+
+// LDAPInterface define os métodos que a implementação LDAP deve fornecer
+type LDAPInterface interface {
+	Bind(login, senha string) error
+	SearchByLogin(login string) (nome, email, outLogin string, err error)
+}
+
+// realLDAPConn adapta *ldap.Conn para a interface LDAPConnection
+type realLDAPConn struct {
+	*ldap.Conn
+}
+
+// Search implementa a busca de usuários no LDAP
+func (c *realLDAPConn) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
+	return c.Conn.Search(sr)
+}
+
+// Client representa cliente LDAP configurado
 type Client struct {
 	Server    string // ex: ldap://localhost:389
 	Domain    string // ex: @rede.sp (AD)
@@ -15,6 +40,9 @@ type Client struct {
 	User      string // bind user
 	Pass      string // bind password
 	LoginAttr string // ex: "uid" para OpenLDAP, "sAMAccountName" para AD
+
+	// ConnectFunc permite injeção de mock em testes
+	ConnectFunc func(user, pass string) (LDAPConnection, error)
 }
 
 // Bind autentica usuário no LDAP/AD
@@ -24,22 +52,22 @@ func (c *Client) Bind(login, senha string) error {
 		bindUser += c.Domain
 	}
 
-	l, err := c.connect(bindUser, senha)
+	ldapConn, err := c.connect(bindUser, senha)
 	if err != nil {
 		return fmt.Errorf("falha no bind LDAP: %w", err)
 	}
-	defer l.Close()
+	defer ldapConn.Close()
 
 	return nil
 }
 
 // SearchByLogin busca usuário pelo atributo LoginAttr
 func (c *Client) SearchByLogin(login string) (nome, email, outLogin string, err error) {
-	l, err := c.connect(c.UserWithDomain(), c.Pass)
+	ldapConn, err := c.connect(c.UserWithDomain(), c.Pass)
 	if err != nil {
-		return "", "", "", fmt.Errorf("erro bind service account: %w", err)
+		return "", "", "", fmt.Errorf("erro de conexão do LDAP: %w", err)
 	}
-	defer l.Close()
+	defer ldapConn.Close()
 
 	// Filtro de pesquisa
 	filter := fmt.Sprintf("(%s=%s)", c.LoginAttr, ldap.EscapeFilter(login))
@@ -53,39 +81,50 @@ func (c *Client) SearchByLogin(login string) (nome, email, outLogin string, err 
 		nil,
 	)
 
-	res, err := l.Search(req)
+	res, err := ldapConn.Search(req)
 	if err != nil {
 		return "", "", "", fmt.Errorf("erro na pesquisa LDAP: %w", err)
 	}
+
 	if len(res.Entries) == 0 {
 		return "", "", "", fmt.Errorf("usuário não encontrado")
 	}
 
 	entry := res.Entries[0]
-	return entry.GetAttributeValue("cn"), entry.GetAttributeValue("mail"), entry.GetAttributeValue(c.LoginAttr), nil
+	return entry.GetAttributeValue("cn"),
+		entry.GetAttributeValue("mail"),
+		entry.GetAttributeValue(c.LoginAttr),
+		nil
 }
 
 // connect cria conexão LDAP e faz bind com usuário e senha
-func (c *Client) connect(user, pass string) (*ldap.Conn, error) {
-	l, err := ldap.DialURL(c.Server)
+func (c *Client) connect(user, pass string) (LDAPConnection, error) {
+	// Se for teste, usa ConnectFunc mockada
+	if c.ConnectFunc != nil {
+		return c.ConnectFunc(user, pass)
+	}
+
+	ldapConn, err := ldap.DialURL(c.Server)
 	if err != nil {
 		return nil, err
 	}
 
+	conn := &realLDAPConn{ldapConn}
+
 	// Usar StartTLS se for ldaps
 	if strings.HasPrefix(c.Server, "ldaps") {
-		if err := l.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
-			l.Close()
+		if err := conn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
+			conn.Close()
 			return nil, err
 		}
 	}
 
-	if err := l.Bind(user, pass); err != nil {
-		l.Close()
+	if err := conn.Bind(user, pass); err != nil {
+		conn.Close()
 		return nil, err
 	}
 
-	return l, nil
+	return conn, nil
 }
 
 // UserWithDomain retorna usuário completo para bind AD/OpenLDAP

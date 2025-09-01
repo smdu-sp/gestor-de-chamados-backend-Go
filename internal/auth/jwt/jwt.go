@@ -1,10 +1,19 @@
 package jwt
 
 import (
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+// JWTInterface define os métodos que a implementação JWT deve fornecer
+type JWTInterface interface {
+	SignAccess(c Claims) (string, error)
+	SignRefresh(c Claims) (string, error)
+	ParseRefresh(token string) (*Claims, error)
+}
 
 type Manager struct {
 	AccessSecret  []byte
@@ -51,14 +60,28 @@ func (m *Manager) sign(c Claims, secret []byte, ttl time.Duration) (string, erro
 
 // parse é uma função helper interna para validar token
 func (m *Manager) parse(tokenStr string, secret []byte) (*Claims, error) {
-	parsed, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(token *jwt.Token) (any, error) {
+	// Parse o token e valide a assinatura
+	parsed, err := jwt.ParseWithClaims(
+		tokenStr, 
+		&Claims{}, 
+		func(token *jwt.Token) (any, error) {
 		return secret, nil
 	})
+
+	// Verifica se houve erro na validação
 	if err != nil {
-		return nil, err
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, fmt.Errorf("token expirado: %w", err)
+		}
+		if errors.Is(err, jwt.ErrTokenSignatureInvalid) {
+			return nil, fmt.Errorf("assinatura inválida: %w", err)
+		}
+		return nil, fmt.Errorf("erro ao validar token: %w", err)
 	}
-	if cl, ok := parsed.Claims.(*Claims); ok && parsed.Valid {
-		return cl, nil
+
+	// Verifica se as claims são válidas
+	if claims, ok := parsed.Claims.(*Claims); ok && parsed.Valid {
+		return claims, nil
 	}
-	return nil, jwt.ErrTokenInvalidClaims
+	return nil, fmt.Errorf("claims inválidos: %w", jwt.ErrTokenInvalidClaims)
 }

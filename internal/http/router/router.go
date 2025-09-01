@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/auth/jwt"
@@ -13,6 +14,7 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/config"
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain/user"
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/http/handlers"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func Build(cfg config.Config, db *sql.DB) http.Handler {
@@ -56,14 +58,22 @@ func Build(cfg config.Config, db *sql.DB) http.Handler {
 
 	// Público
 	mux.HandleFunc("/login", authH.Login)
-	mux.HandleFunc("/refresh", authH.Refresh) // lê refresh_token do body
+	mux.HandleFunc("/refresh", authH.Refresh)
 
-	// Protegido (JWT)
+	// Serve Swagger UI
+	mux.Handle("/swagger/", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/swagger.json"),
+	))
+
+	// Serve o arquivo swagger.json gerado
+	mux.Handle("/swagger/swagger.json", http.StripPrefix("/swagger/", http.FileServer(http.Dir("./docs"))))
+
+	// Protegido (JWT) - Abaixo de protected tudo que requer autenticação
 	protected := http.NewServeMux()
 	// Auth util
 	protected.HandleFunc("/eu", authH.Me)
 
-	// Usuários — paths EXATOS do Nest
+	// Usuários
 	protected.HandleFunc("/usuarios/criar", usrH.Criar)
 	protected.HandleFunc("/usuarios/buscar-tudo", usrH.BuscarTudo)
 	protected.HandleFunc("/usuarios/buscar-por-id/", usrH.BuscarPorID) // + :id
@@ -101,11 +111,14 @@ func chain(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler 
 func mount(h http.Handler) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/health" || r.URL.Path == "/login" || r.URL.Path == "/refresh" {
-				next.ServeHTTP(w, r) // chama o handler público
+			if r.URL.Path == "/health" ||
+				r.URL.Path == "/login" ||
+				r.URL.Path == "/refresh" ||
+				strings.HasPrefix(r.URL.Path, "/swagger") {
+				next.ServeHTTP(w, r)
 				return
 			}
-			h.ServeHTTP(w, r) // chama o handler protegido
+			h.ServeHTTP(w, r)
 		})
 	}
 }

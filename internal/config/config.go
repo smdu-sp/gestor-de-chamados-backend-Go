@@ -67,8 +67,8 @@ func Load() Config {
 
 // getenv retorna o valor da variável de ambiente ou o valor padrão se não estiver definida
 func getenv(k, def string) string {
-	if v := os.Getenv(k); v != "" {
-		return v
+	if valor := os.Getenv(k); valor != "" {
+		return valor
 	}
 	return def
 }
