@@ -63,6 +63,7 @@ func (c *Client) Bind(login, senha string) error {
 
 // SearchByLogin busca usuário pelo atributo LoginAttr
 func (c *Client) SearchByLogin(login string) (nome, email, outLogin string, err error) {
+	fmt.Println("Tentando conectar ao LDAP com user:", c.UserWithDomain())
 	ldapConn, err := c.connect(c.UserWithDomain(), c.Pass)
 	if err != nil {
 		return "", "", "", fmt.Errorf("erro de conexão do LDAP: %w", err)
@@ -71,6 +72,9 @@ func (c *Client) SearchByLogin(login string) (nome, email, outLogin string, err 
 
 	// Filtro de pesquisa
 	filter := fmt.Sprintf("(%s=%s)", c.LoginAttr, ldap.EscapeFilter(login))
+	fmt.Println("Filtro LDAP usado:", filter)
+	fmt.Println("Base DN:", c.Base)
+
 	req := ldap.NewSearchRequest(
 		c.Base,
 		ldap.ScopeWholeSubtree,
@@ -85,6 +89,8 @@ func (c *Client) SearchByLogin(login string) (nome, email, outLogin string, err 
 	if err != nil {
 		return "", "", "", fmt.Errorf("erro na pesquisa LDAP: %w", err)
 	}
+
+	fmt.Println("Número de entradas encontradas:", len(res.Entries))
 
 	if len(res.Entries) == 0 {
 		return "", "", "", fmt.Errorf("usuário não encontrado")

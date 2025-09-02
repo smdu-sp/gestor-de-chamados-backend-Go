@@ -42,3 +42,10 @@ type ErrorResponse struct {
     Message string      `json:"message"`
     Details any `json:"details,omitempty"`
 }
+
+// HealthResponse estrutura da resposta JSON do health check
+type HealthResponse struct {
+	Status    string `json:"status"`              // "ok" ou "fail"
+	DB        string `json:"database"`            // "ok" ou "fail"
+	Timestamp string `json:"timestamp,omitempty"` // horário do check
+}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -33,16 +32,11 @@ type RefreshRequest struct {
 
 // --- Helpers internos ---
 
-// writeError envia uma resposta de erro padrão
-func writeError(w http.ResponseWriter, code int, msg string) {
-	response.ErrorJSON(w, code, msg, nil)
-}
-
 // ParseLoginRequest lê e valida o payload de login
 func ParseLoginRequest(r *http.Request) (*user.LoginDTO, error) {
 	var req user.LoginDTO
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, fmt.Errorf("payload inválido: %w", err)
+		return nil, errors.New("payload inválido")
 	}
 	if req.Login == "" || req.Senha == "" {
 		return nil, errors.New("login/senha obrigatórios")
@@ -52,18 +46,15 @@ func ParseLoginRequest(r *http.Request) (*user.LoginDTO, error) {
 
 // getBindString monta a string de bind para o LDAP
 func (h *AuthHandler) getBindString(login string) string {
-	// Se LDAPDomain estiver configurado, usa o formato user@domain
 	if h.Config.LDAPDomain != "" {
 		return login + h.Config.LDAPDomain
 	}
 
-	// Senão, usa o formato uid=user,ou=users,base
-	// "ou" significa organizational unit
 	ou := "users"
 	if login == "admin1" {
 		ou = "admins"
 	}
-	return fmt.Sprintf("uid=%s,ou=%s,%s", login, ou, h.Config.LDAPBase)
+	return "uid=" + login + ",ou=" + ou + "," + h.Config.LDAPBase
 }
 
 // createClaims cria as claims JWT a partir do usuário
@@ -92,10 +83,10 @@ func (h *AuthHandler) criarUsuarioSeNecessario(ctx context.Context, login string
 	if u != nil {
 		return u, nil
 	}
-	// Usuário não existe, buscar no LDAP e criar
+
 	name, mail, sLogin, err := h.LDAP.SearchByLogin(login)
 	if err != nil {
-		log.Println("Erro buscando LDAP:", err)
+		response.ErrorJSON(nil, http.StatusInternalServerError, "erro ao buscar usuário LDAP", err.Error())
 		return nil, err
 	}
 
@@ -107,13 +98,12 @@ func (h *AuthHandler) criarUsuarioSeNecessario(ctx context.Context, login string
 		Status:    true,
 	}
 
-	// Criar usuário no banco
 	if err := h.Users.Criar(ctx, novo); err != nil {
-		log.Println("Erro criando usuário:", err)
+		response.ErrorJSON(nil, http.StatusInternalServerError, "erro ao criar usuário no banco", err.Error())
 		return nil, err
 	}
 
-	log.Println("Usuário criado com sucesso:", novo.Login)
+	log.Println("Usuário criado:", novo.Login)
 	return h.Users.BuscarPorLogin(ctx, login)
 }
 
@@ -134,48 +124,46 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	// Parse e validação do request
 	req, err := ParseLoginRequest(r)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+		response.ErrorJSON(w, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
-	// Buscar usuário no banco
+	// Busca usuário no banco
 	usuario, err := h.Users.BuscarPorLogin(r.Context(), req.Login)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "erro interno")
+		response.ErrorJSON(w, http.StatusInternalServerError, "erro interno", err.Error())
 		return
 	}
 
-	// Autenticar no LDAP
+	// Autenticação no LDAP
 	bind := h.getBindString(req.Login)
 	if err := h.LDAP.Bind(bind, req.Senha); err != nil {
-		writeError(w, http.StatusUnauthorized, "credenciais incorretas")
+		response.ErrorJSON(w, http.StatusUnauthorized, "credenciais incorretas", err.Error())
 		return
 	}
 
-	// Se usuário não existe no banco, criar
+	// Criação do usuário se necessário
 	usuario, err = h.criarUsuarioSeNecessario(r.Context(), req.Login, usuario)
 	if err != nil || usuario == nil {
-		writeError(w, http.StatusInternalServerError, "erro ao salvar usuário")
+		response.ErrorJSON(w, http.StatusInternalServerError, "erro ao salvar usuário", err.Error())
 		return
 	}
 
-	// Atualizar último login
+	// Atualiza o último login
 	if err := h.Users.AtualizarUltimoLogin(r.Context(), usuario.ID); err != nil {
 		log.Println("falha ao atualizar último login:", err)
 	}
 
-	// Gerar tokens JWT
+	// Gera os tokens JWT (access e refresh)
 	claims := createClaims(usuario)
 	accessToken, err := h.JWT.SignAccess(claims)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "erro gerando token")
+		response.ErrorJSON(w, http.StatusInternalServerError, "erro gerando token", err.Error())
 		return
 	}
-
-	// Gerar refresh token
 	refreshToken, err := h.JWT.SignRefresh(claims)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "erro gerando refresh")
+		response.ErrorJSON(w, http.StatusInternalServerError, "erro gerando refresh", err.Error())
 		return
 	}
 
@@ -199,24 +187,24 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var body RefreshRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeError(w, http.StatusBadRequest, "payload inválido")
+		response.ErrorJSON(w, http.StatusBadRequest, "payload inválido", err.Error())
 		return
 	}
 
 	if body.RefreshToken == "" {
-		writeError(w, http.StatusBadRequest, "refresh token obrigatório")
+		response.ErrorJSON(w, http.StatusBadRequest, "refresh token obrigatório", nil)
 		return
 	}
 
 	claims, err := h.JWT.ParseRefresh(body.RefreshToken)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, "refresh inválido")
+		response.ErrorJSON(w, http.StatusUnauthorized, "refresh inválido", err.Error())
 		return
 	}
 
 	usuario, err := h.Users.BuscarPorID(r.Context(), claims.ID)
 	if err != nil || usuario == nil {
-		writeError(w, http.StatusUnauthorized, "usuário inválido")
+		response.ErrorJSON(w, http.StatusUnauthorized, "usuário inválido", nil)
 		return
 	}
 
@@ -224,17 +212,17 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		log.Println("falha ao atualizar último login:", err)
 	}
 
-	// Atualizar issued at para agora
 	claims.RegisteredClaims.IssuedAt = gojwt.NewNumericDate(time.Now())
 
 	accessToken, err := h.JWT.SignAccess(*claims)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "erro gerando token")
+		response.ErrorJSON(w, http.StatusInternalServerError, "erro gerando token", err.Error())
 		return
 	}
+
 	refreshToken, err := h.JWT.SignRefresh(*claims)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, "erro gerando refresh")
+		response.ErrorJSON(w, http.StatusInternalServerError, "erro gerando refresh", err.Error())
 		return
 	}
 
@@ -257,13 +245,13 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	claims := jwtClaimsFromRequest(r)
 	if claims == nil {
-		writeError(w, http.StatusUnauthorized, "não autenticado")
+		response.ErrorJSON(w, http.StatusUnauthorized, "não autenticado", nil)
 		return
 	}
 
 	usuario, err := h.Users.BuscarPorID(r.Context(), claims.ID)
 	if err != nil || usuario == nil {
-		writeError(w, http.StatusNotFound, "usuário não encontrado")
+		response.ErrorJSON(w, http.StatusNotFound, "usuário não encontrado", nil)
 		return
 	}
 
