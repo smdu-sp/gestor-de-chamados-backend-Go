@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	"database/sql"
 	"log"
 	"net/http"
@@ -14,25 +13,25 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/config"
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain/user"
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/http/handlers"
-	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-func Build(cfg config.Config, db *sql.DB) http.Handler {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNoContent)
-	})
+var publicPrefixes = []string{
+	"/health",
+	"/login",
+	"/refresh",
+	"/swagger",
+}
 
+// Build faz a construção do handler principal
+func Build(cfg config.Config, db *sql.DB) http.Handler {
 	repo := user.NewRepository(db)
 	svc := user.NewService(repo)
-	accessTTL, _ := time.ParseDuration(cfg.AccessTTL)
-	refreshTTL, _ := time.ParseDuration(cfg.RefreshTTL)
 
-	jm := &jwt.Manager{
+	jwtManager := &jwt.Manager{
 		AccessSecret:  []byte(cfg.JWTSecret),
 		RefreshSecret: []byte(cfg.RTSecret),
-		AccessTTL:     accessTTL,
-		RefreshTTL:    refreshTTL,
+		AccessTTL:     parseDuration(cfg.AccessTTL),
+		RefreshTTL:    parseDuration(cfg.RefreshTTL),
 	}
 
 	ldapClient := &ldapauth.Client{
@@ -46,7 +45,7 @@ func Build(cfg config.Config, db *sql.DB) http.Handler {
 
 	authH := &handlers.AuthHandler{
 		Users:  svc,
-		JWT:    jm,
+		JWT:    jwtManager,
 		LDAP:   ldapClient,
 		Config: cfg,
 	}
@@ -56,69 +55,46 @@ func Build(cfg config.Config, db *sql.DB) http.Handler {
 		LDAP: ldapClient,
 	}
 
-	// Público
-	mux.HandleFunc("/login", authH.Login)
-	mux.HandleFunc("/refresh", authH.Refresh)
+	// Rotas públicas
+	public := http.NewServeMux()
+	RegisterSwaggerRoutes(public)
+	RegisterHealthRoute(public, db)
+	RegisterAuthRoutes(public, authH)
 
-	// Serve Swagger UI
-	mux.Handle("/swagger/", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/swagger.json"),
-	))
-
-	// Serve o arquivo swagger.json gerado
-	mux.Handle("/swagger/swagger.json", http.StripPrefix("/swagger/", http.FileServer(http.Dir("./docs"))))
-
-	// Protegido (JWT) - Abaixo de protected tudo que requer autenticação
+	// Rotas protegidas
 	protected := http.NewServeMux()
-	// Auth util
 	protected.HandleFunc("/eu", authH.Me)
+	RegisterUsuarioRoutes(protected, usrH)
 
-	// Usuários
-	protected.HandleFunc("/usuarios/criar", usrH.Criar)
-	protected.HandleFunc("/usuarios/buscar-tudo", usrH.BuscarTudo)
-	protected.HandleFunc("/usuarios/buscar-por-id/", usrH.BuscarPorID) // + :id
-	protected.HandleFunc("/usuarios/atualizar/", usrH.Atualizar)       // + :id
-	protected.HandleFunc("/usuarios/lista-completa", usrH.ListaCompleta)
-	protected.HandleFunc("/usuarios/buscar-tecnicos", usrH.BuscarTecnicos)
-	protected.HandleFunc("/usuarios/desativar/", usrH.Desativar) // + :id (soft delete)
-	protected.HandleFunc("/usuarios/autorizar/", usrH.Autorizar) // + :id (status=true)
-	protected.HandleFunc("/usuarios/valida-usuario", usrH.ValidaUsuario)
-	protected.HandleFunc("/usuarios/buscar-novo/", usrH.BuscarNovo) // + :login
-
-	// Aplica middlewares: CORS, Logger e JWT+update ultimoLogin
-	var h http.Handler = mux
-	h = chain(
-		h,
-		mount(middleware.WithUser(protected, jm, func(ctx context.Context, id string) error {
-			return svc.AtualizarUltimoLogin(ctx, id)
-		})),
-		middleware.CORS(cfg.CORSOrigin),
-		middleware.Logger,
-	)
+	// Handler principal
+	routes := BuildHandler(public, protected, jwtManager, svc)
+	routes = middleware.CORS(cfg.CORSOrigin)(routes)
 
 	log.Println("CORS liberado para:", cfg.CORSOrigin)
-	return h
+	return routes
 }
 
-// Helpers
-func chain(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler {
-	for i := len(mws) - 1; i >= 0; i-- {
-		h = mws[i](h)
-	}
-	return h
-}
+// BuildHandler gerencia as rotas publicas e protegidas
+func BuildHandler(public, protected http.Handler, jwtManager *jwt.Manager, svc user.UserServiceInterface) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s", r.Method, r.URL.Path)
 
-func mount(h http.Handler) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path == "/health" ||
-				r.URL.Path == "/login" ||
-				r.URL.Path == "/refresh" ||
-				strings.HasPrefix(r.URL.Path, "/swagger") {
-				next.ServeHTTP(w, r)
+		// Rotas públicas
+		for _, prefix := range publicPrefixes {
+			if strings.HasPrefix(r.URL.Path, prefix) {
+				public.ServeHTTP(w, r)
 				return
 			}
-			h.ServeHTTP(w, r)
-		})
-	}
+		}
+
+		// Rotas protegidas
+		protectedWithAuth := middleware.AuthenticateUser(protected, jwtManager, svc)
+		protectedWithAuth.ServeHTTP(w, r)
+	})
+}
+
+// parseDuration converte uma string em time.Duration
+func parseDuration(d string) time.Duration {
+	t, _ := time.ParseDuration(d)
+	return t
 }
