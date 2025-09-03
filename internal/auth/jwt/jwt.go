@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	goJwt "github.com/golang-jwt/jwt/v5"
 )
 
 // JWTInterface define os métodos que a implementação JWT deve fornecer
@@ -28,7 +28,7 @@ type Claims struct {
 	Nome      string `json:"nome"`
 	Email     string `json:"email"`
 	Permissao string `json:"permissao"`
-	jwt.RegisteredClaims
+	goJwt.RegisteredClaims
 }
 
 // SignAccess gera um token de acesso
@@ -53,27 +53,27 @@ func (m *Manager) ParseRefresh(tokenStr string) (*Claims, error) {
 
 // sign é uma função helper interna para gerar token
 func (m *Manager) sign(c Claims, secret []byte, ttl time.Duration) (string, error) {
-	c.RegisteredClaims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(ttl))
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, c)
+	c.RegisteredClaims.ExpiresAt = goJwt.NewNumericDate(time.Now().Add(ttl))
+	token := goJwt.NewWithClaims(goJwt.SigningMethodHS256, c)
 	return token.SignedString(secret)
 }
 
 // parse é uma função helper interna para validar token
 func (m *Manager) parse(tokenStr string, secret []byte) (*Claims, error) {
 	// Parse o token e valide a assinatura
-	parsed, err := jwt.ParseWithClaims(
-		tokenStr, 
-		&Claims{}, 
-		func(token *jwt.Token) (any, error) {
-		return secret, nil
-	})
+	parsed, err := goJwt.ParseWithClaims(
+		tokenStr,
+		&Claims{},
+		func(token *goJwt.Token) (any, error) {
+			return secret, nil
+		})
 
 	// Verifica se houve erro na validação
 	if err != nil {
-		if errors.Is(err, jwt.ErrTokenExpired) {
+		if errors.Is(err, goJwt.ErrTokenExpired) {
 			return nil, fmt.Errorf("token expirado: %w", err)
 		}
-		if errors.Is(err, jwt.ErrTokenSignatureInvalid) {
+		if errors.Is(err, goJwt.ErrTokenSignatureInvalid) {
 			return nil, fmt.Errorf("assinatura inválida: %w", err)
 		}
 		return nil, fmt.Errorf("erro ao validar token: %w", err)
@@ -83,5 +83,5 @@ func (m *Manager) parse(tokenStr string, secret []byte) (*Claims, error) {
 	if claims, ok := parsed.Claims.(*Claims); ok && parsed.Valid {
 		return claims, nil
 	}
-	return nil, fmt.Errorf("claims inválidos: %w", jwt.ErrTokenInvalidClaims)
+	return nil, fmt.Errorf("claims inválidos: %w", goJwt.ErrTokenInvalidClaims)
 }

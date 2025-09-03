@@ -5,30 +5,30 @@ import (
 	"fmt"
 	"strings"
 
-	ldap "github.com/go-ldap/ldap/v3"
+	goLdap "github.com/go-ldap/ldap/v3"
 )
 
 // LDAPConnection é a interface que abstrai uma conexão LDAP
 type LDAPConnection interface {
 	Close() error
 	Bind(username, password string) error
-	Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error)
+	Search(sr *goLdap.SearchRequest) (*goLdap.SearchResult, error)
 	StartTLS(*tls.Config) error
 }
 
-// LDAPInterface define os métodos que a implementação LDAP deve fornecer
+// LDAPInterface é a interface que define os métodos que a implementação LDAP deve fornecer
 type LDAPInterface interface {
 	Bind(login, senha string) error
 	SearchByLogin(login string) (nome, email, outLogin string, err error)
 }
 
-// realLDAPConn adapta *ldap.Conn para a interface LDAPConnection
+// realLDAPConn adapta goLdap.Conn para a interface LDAPConnection
 type realLDAPConn struct {
-	*ldap.Conn
+	*goLdap.Conn
 }
 
 // Search implementa a busca de usuários no LDAP
-func (c *realLDAPConn) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
+func (c *realLDAPConn) Search(sr *goLdap.SearchRequest) (*goLdap.SearchResult, error) {
 	return c.Conn.Search(sr)
 }
 
@@ -71,14 +71,14 @@ func (c *Client) SearchByLogin(login string) (nome, email, outLogin string, err 
 	defer ldapConn.Close()
 
 	// Filtro de pesquisa
-	filter := fmt.Sprintf("(%s=%s)", c.LoginAttr, ldap.EscapeFilter(login))
+	filter := fmt.Sprintf("(%s=%s)", c.LoginAttr, goLdap.EscapeFilter(login))
 	fmt.Println("Filtro LDAP usado:", filter)
 	fmt.Println("Base DN:", c.Base)
 
-	req := ldap.NewSearchRequest(
+	req := goLdap.NewSearchRequest(
 		c.Base,
-		ldap.ScopeWholeSubtree,
-		ldap.NeverDerefAliases,
+		goLdap.ScopeWholeSubtree,
+		goLdap.NeverDerefAliases,
 		0, 0, false,
 		filter,
 		[]string{"cn", "mail", c.LoginAttr},
@@ -110,7 +110,7 @@ func (c *Client) connect(user, pass string) (LDAPConnection, error) {
 		return c.ConnectFunc(user, pass)
 	}
 
-	ldapConn, err := ldap.DialURL(c.Server)
+	ldapConn, err := goLdap.DialURL(c.Server)
 	if err != nil {
 		return nil, err
 	}
