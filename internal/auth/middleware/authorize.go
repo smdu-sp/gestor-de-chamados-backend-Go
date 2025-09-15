@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/response"
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/interface/response"
 )
 
 // RequirePermissions libera se o usuário tiver QUALQUER uma das permissões

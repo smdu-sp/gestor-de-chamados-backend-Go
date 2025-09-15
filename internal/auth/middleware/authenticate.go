@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/auth/jwt"
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain/user"
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/response"
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/interface/response"
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain/usecase"
 )
 
 type ctxKey string
@@ -18,7 +18,7 @@ const bearerPrefix string = "Bearer "
 const unauthorizedMessage = "Você não está autorizado a acessar este recurso"
 
 // AuthenticateUser autentica o usuário e atualiza o último login diretamente via svc
-func AuthenticateUser(next http.Handler, jm *jwt.Manager, svc user.UserServiceInterface) http.Handler {
+func AuthenticateUser(next http.Handler, jm *jwt.Manager, svc usecase.UserUsecase) http.Handler {
 	// Retorna um handler que autentica o usuário
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 

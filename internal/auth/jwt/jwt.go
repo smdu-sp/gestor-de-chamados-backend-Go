@@ -15,6 +15,7 @@ type JWTInterface interface {
 	ParseRefresh(token string) (*Claims, error)
 }
 
+// Manager gerencia a criação e validação de tokens JWT
 type Manager struct {
 	AccessSecret  []byte
 	RefreshSecret []byte
@@ -22,6 +23,7 @@ type Manager struct {
 	RefreshTTL    time.Duration
 }
 
+// Claims define as claims personalizadas para o token JWT
 type Claims struct {
 	ID        string `json:"sub"`
 	Login     string `json:"login"`

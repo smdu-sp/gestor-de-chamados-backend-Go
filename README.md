@@ -1,7 +1,5 @@
 # Gestor de Chamados - Backend
 
-## API REST em Go (puro) com JWT + LDAP + RBAC
-
 Este projeto é uma **API REST desenvolvida em Go (sem frameworks web)** utilizando apenas `net/http`, com suporte a:
 
 * **Autenticação via LDAP ou Active Directory**
@@ -12,36 +10,10 @@ Este projeto é uma **API REST desenvolvida em Go (sem frameworks web)** utiliza
 
 ---
 
-## Estrutura do projeto
-
-```text
-.
-├── cmd/
-│   └── api/
-│       └── main.go
-├── internal/
-│   ├── auth/           # JWT, LDAP/AD, Middleware
-│   ├── config/         # Configurações
-│   ├── domain/         # Model, Repository, Service 
-│   ├── http/           # Handlers, Routers
-│   ├── response/       # JSON, ErrorJSON
-│   └── util/           # Utilitários
-├── ldap-init/          # LDIF de testes OpenLDAP
-├── migrations/         # Migrations do BD
-├── .env
-├── docker-compose.yml  # Sobe banco e servido OpenLDAP para testes
-├── go.mod
-├── go.sum
-└── README.md
-```
-
----
-
 ## Tecnologias
 
 * [Go 1.25.0](https://golang.org/)
 * [net/http](https://pkg.go.dev/net/http)
-* [golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt)
 * [go-ldap/ldap/v3](https://github.com/go-ldap/ldap)
 
 ---

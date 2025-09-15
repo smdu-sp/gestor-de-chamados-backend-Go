@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/db"
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/infra/db"
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/config"
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/http/router"
-	_ "github.com/smdu-sp/gestor-de-chamados-backend-Go/docs"
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/interface/router"
+	_ "github.com/smdu-sp/gestor-de-chamados-backend-Go/api"
 )
 
 // @title Gestor de Chamados API
