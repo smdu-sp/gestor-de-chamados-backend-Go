@@ -37,7 +37,7 @@ func (u *Usercase) Criar(ctx context.Context, user *model.Usuario) error {
 		return model.ErrCamposObrigatorios
 	}
 
-	id, err := util.NewUUIDv7String()
+	id, err := utils.NewUUIDv7String()
 	if err != nil {
 		return err
 	}

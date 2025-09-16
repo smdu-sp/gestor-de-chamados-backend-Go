@@ -41,16 +41,11 @@ type Usuario struct {
 	AtualizadoEm time.Time `json:"atualizadoEm"`
 }
 
-// NewUser cria uma nova instância de Usuario com os dados fornecidos
-func NewUser(nome, login, email string, permissao Permissao, status bool, avatar *string) (*Usuario, error) {
-	validUUID, err := util.NewUUIDv7String()
+// NewUsuario cria uma nova instância de Usuario com os dados fornecidos
+func NewUsuario(nome, login, email string, permissao Permissao, status bool, avatar *string) (*Usuario, error) {
+	validUUID, err := utils.NewUUIDv7String()
 	if err != nil {
-		return nil, util.NewAppError(
-			"NewUser",
-			util.LevelError,
-			"erro ao gerar ID para novo usuário",
-			err,
-		)
+		return nil, err
 	}
 	
 	now := time.Now()
