@@ -8,22 +8,22 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/interface/response"
 )
 
-// RequirePermissions libera se o usuário tiver QUALQUER uma das permissões
-func RequirePermissions(perms ...string) func(http.Handler) http.Handler {
+// RequerPermissoes libera se o usuário tiver QUALQUER uma das permissões
+func RequerPermissoes(perms ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Obtém as claims do usuário
-			claims := UserFromCtx(r)
+			claims := UsuarioFromCtx(r)
 			if claims == nil {
 				response.ErrorJSON(w, http.StatusUnauthorized, "unauthorized", "Você não está autorizado a acessar este recurso")
 				return
 			}
 
 			// Normaliza a permissão do usuário
-			userPerm := strings.ToLower(strings.TrimSpace(claims.Permissao))
+			permissaoUsuario := strings.ToLower(strings.TrimSpace(claims.Permissao))
 			ok := slices.ContainsFunc(perms, func(p string) bool {
-				return userPerm == strings.ToLower(strings.TrimSpace(p))
+				return permissaoUsuario == strings.ToLower(strings.TrimSpace(p))
 			})
 
 			if !ok {
