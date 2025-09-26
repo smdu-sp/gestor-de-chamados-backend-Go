@@ -2,23 +2,39 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/config"
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/utils"
 )
 
-// OpenMySQL abre uma conexão com o MySQL usando a configuração fornecida.
-func OpenMySQL(cfg config.Config) (*sql.DB, error) {
+
+// Erros sentinela comuns de banco de dados
+var ErrConexaoMySQL = errors.New("erro de conexão com o banco de dados MySQL")
+
+// ConectarMySQL abre uma conexão com o MySQL usando a configuração fornecida.
+func ConectarMySQL(cfg config.Config) (*sql.DB, error) {
 	dsn := buildDSN(cfg)
 
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("falha ao abrir conexão com MySQL: %w", err)
+		return nil, utils.NewAppError(
+			"[db.ConectarMySQL]",
+			utils.LevelError,
+			"falha ao abrir conexão com MySQL",
+			fmt.Errorf(utils.FmtErroWrap, ErrConexaoMySQL, err),
+		)
 	}
 
 	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("falha ao conectar no MySQL: %w", err)
+		return nil, utils.NewAppError(
+			"[db.ConectarMySQL]",
+			utils.LevelError,
+			"falha ao tentar conectar com MySQL",
+			fmt.Errorf(utils.FmtErroWrap, ErrConexaoMySQL, err),
+		)
 	}
 
 	return db, nil

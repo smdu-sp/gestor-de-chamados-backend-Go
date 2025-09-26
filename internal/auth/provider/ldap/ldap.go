@@ -9,21 +9,23 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain/usecase"
 )
 
-// LDAPConnection é a interface que abstrai uma conexão LDAP
-type LDAPConnection interface {
+var ErrUsuarioNaoEncontradoNoLDAP = fmt.Errorf("usuário não encontrado no LDAP")
+
+// LDAPConnection é a interface que abstrai uma conexão LDAP do go-ldap
+type ConexaoLDAP interface {
 	Close() error
 	Bind(username, password string) error
 	Search(sr *goLdap.SearchRequest) (*goLdap.SearchResult, error)
 	StartTLS(*tls.Config) error
 }
 
-// realLDAPConn adapta goLdap.Conn para a interface LDAPConnection
-type realLDAPConn struct {
+// conexaoLDAPReal adapta goLdap.Conn para a interface LDAPConnection
+type conexaoLDAPReal struct {
 	*goLdap.Conn
 }
 
-func (c *realLDAPConn) Search(sr *goLdap.SearchRequest) (*goLdap.SearchResult, error) {
-	return c.Conn.Search(sr)
+func (c *conexaoLDAPReal) Pesquisar(pesquisa *goLdap.SearchRequest) (*goLdap.SearchResult, error) {
+	return c.Conn.Search(pesquisa)
 }
 
 // Client implementa o Authenticator usando LDAP
@@ -36,33 +38,34 @@ type Client struct {
 	LoginAttr string
 
 	// ConnectFunc permite injeção de mock em testes
-	ConnectFunc func(user, pass string) (LDAPConnection, error)
+	ConnectFunc func(user, pass string) (ConexaoLDAP, error)
 }
 
-// Garantia de que Client implementa usecase.Authenticator
-var _ usecase.Authenticator = (*Client)(nil)
+// Garantia de que Client implementa usecase.AuthExternoUsecase
+var _ usecase.AuthExternoUsecase = (*Client)(nil)
 
 // Bind autentica usuário no LDAP/AD
 func (c *Client) Bind(login, senha string) error {
-	bindUser := login
+	bindUsuario := login
 	if c.Domain != "" && login != "" && !strings.Contains(login, "@") {
-		bindUser += c.Domain
+		bindUsuario += c.Domain
 	}
 
-	ldapConn, err := c.connect(bindUser, senha)
+	ldapConn, err := c.conectar(bindUsuario, senha)
 	if err != nil {
-		return fmt.Errorf("falha no bind LDAP: %w", err)
+		return fmt.Errorf("[ldap.Bind]: %w", err)
 	}
 	defer ldapConn.Close()
 
 	return nil
 }
 
-// SearchByLogin busca usuário pelo atributo LoginAttr
-func (c *Client) SearchByLogin(login string) (nome, email, outLogin string, err error) {
-	ldapConn, err := c.connect(c.UserWithDomain(), c.Pass)
+// PesquisarPorLogin busca usuário pelo atributo LoginAttr
+func (c *Client) PesquisarPorLogin(login string) (nome, email, outLogin string, err error) {
+	metodo := "[ldap.PesquisarPorLogin]: %w"
+	ldapConn, err := c.conectar(c.UsuarioComDominio(), c.Pass)
 	if err != nil {
-		return "", "", "", fmt.Errorf("erro de conexão do LDAP: %w", err)
+		return "", "", "", fmt.Errorf(metodo, err)
 	}
 	defer ldapConn.Close()
 
@@ -80,11 +83,11 @@ func (c *Client) SearchByLogin(login string) (nome, email, outLogin string, err 
 
 	res, err := ldapConn.Search(req)
 	if err != nil {
-		return "", "", "", fmt.Errorf("erro na pesquisa LDAP: %w", err)
+		return "", "", "", fmt.Errorf(metodo, err)
 	}
 
 	if len(res.Entries) == 0 {
-		return "", "", "", fmt.Errorf("usuário não encontrado")
+		return "", "", "", fmt.Errorf(metodo, ErrUsuarioNaoEncontradoNoLDAP)
 	}
 
 	entry := res.Entries[0]
@@ -95,7 +98,7 @@ func (c *Client) SearchByLogin(login string) (nome, email, outLogin string, err 
 }
 
 // connect cria conexão LDAP e faz bind com usuário e senha
-func (c *Client) connect(user, pass string) (LDAPConnection, error) {
+func (c *Client) conectar(user, pass string) (ConexaoLDAP, error) {
 	if c.ConnectFunc != nil {
 		return c.ConnectFunc(user, pass)
 	}
@@ -105,7 +108,7 @@ func (c *Client) connect(user, pass string) (LDAPConnection, error) {
 		return nil, err
 	}
 
-	conn := &realLDAPConn{ldapConn}
+	conn := &conexaoLDAPReal{ldapConn}
 
 	if strings.HasPrefix(c.Server, "ldaps") {
 		if err := conn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
@@ -122,8 +125,8 @@ func (c *Client) connect(user, pass string) (LDAPConnection, error) {
 	return conn, nil
 }
 
-// UserWithDomain retorna usuário completo para bind AD/OpenLDAP
-func (c *Client) UserWithDomain() string {
+// UsuarioComDominio retorna usuário completo para bind AD/OpenLDAP
+func (c *Client) UsuarioComDominio() string {
 	if c.Domain != "" {
 		return c.User + c.Domain
 	}

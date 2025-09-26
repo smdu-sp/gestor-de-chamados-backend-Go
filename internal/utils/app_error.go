@@ -4,6 +4,9 @@ import (
 	"fmt"
 )
 
+// FmtErroWrap formata um erro com contexto extra: %w (erro base), %v (detalhe).
+const FmtErroWrap = "%w: %v"
+
 // ErrorLevel representa o nível do erro (pode ser string simples ou const enum)
 type ErrorLevel string
 
@@ -24,9 +27,9 @@ type AppError struct {
 // Error implementa a interface `error`
 func (e AppError) Error() string {
 	if e.Cause != nil {
-		return fmt.Sprintf("[%s] %s: %s: %v", e.Method, e.Level, e.Message, e.Cause)
+		return fmt.Sprintf("%s %s: %s: %v", e.Method, e.Level, e.Message, e.Cause)
 	}
-	return fmt.Sprintf("[%s] %s: %s", e.Method, e.Level, e.Message)
+	return fmt.Sprintf("%s %s: %s", e.Method, e.Level, e.Message)
 }
 
 // Unwrap permite `errors.Unwrap`, `errors.Is`, `errors.As`

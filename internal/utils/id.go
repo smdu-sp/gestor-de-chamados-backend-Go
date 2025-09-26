@@ -28,10 +28,10 @@ func NewUUIDv7Bytes() (UUIDv7, error) {
 	// Preenche os 10 bytes restantes com aleatório
 	if _, err := rand.Read(uuid[6:]); err != nil {
 		return uuid, NewAppError(
-			"NewUUIDv7Bytes",
+			"[utils.NewUUIDv7Bytes]",
 			LevelError,
 			"erro ao gerar UUID v7",
-			ErrUUIDv7Generation,
+			fmt.Errorf("%w: %v", ErrUUIDv7Generation, err),
 		)
 	}
 
@@ -48,12 +48,7 @@ func NewUUIDv7Bytes() (UUIDv7, error) {
 func NewUUIDv7String() (string, error) {
 	uuid, err := NewUUIDv7Bytes()
 	if err != nil {
-		return "", NewAppError(
-			"NewUUIDv7String",
-			LevelError,
-			"erro ao gerar UUID v7",
-			err,
-		)
+		return "", fmt.Errorf("[utils.NewUUIDv7String]: %w", err)
 	}
 	return uuid.String(), nil
 }
