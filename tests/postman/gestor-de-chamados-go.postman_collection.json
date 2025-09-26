@@ -1,0 +1,1300 @@
+{
+	"info": {
+		"_postman_id": "99685629-d5e4-4335-b5e5-7ac13e84fa2f",
+		"name": "gestor-de-chamados-go",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "47631449",
+		"_collection_link": "https://rogeriodevjava-4243527.postman.co/workspace/Rogerio-DevJava's-Workspace~330e54f8-618e-45ee-86a8-87dd8a88f050/collection/47631449-99685629-d5e4-4335-b5e5-7ac13e84fa2f?action=share&source=collection_link&creator=47631449"
+	},
+	"item": [
+		{
+			"name": "saude",
+			"item": [
+				{
+					"name": "health",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/health",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();\r",
+									"\r",
+									"// Armazena o access_token em uma variável de ambiente\r",
+									"pm.environment.set(\"access_token\", response.access_token);\r",
+									"\r",
+									"// Armazena o refresh_token em uma variável de ambiente\r",
+									"pm.environment.set(\"refresh_token\", response.refresh_token);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"login\": \"x494424\",\r\n  \"senha\": \"{{PASSWORD}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/login",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "refresh",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"refresh_token\": \"{{refresh_token}}\"\r\n}"
+						},
+						"url": {
+							"raw": "{{baseURL}}/refresh",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"refresh"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "crud usuarios",
+			"item": [
+				{
+					"name": "user create",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nome\": \"03usuario\",\r\n  \"login\": \"03usuario\",\r\n  \"email\": \"03usuario@rede.sp\",\r\n  \"permissao\": \"USR\",\r\n  \"status\": true,\r\n  \"avatar\": null\r\n}\r\n"
+						},
+						"url": {
+							"raw": "{{baseURL}}/usuarios/criar",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"usuarios",
+								"criar"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "me",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/eu",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"eu"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "usuario validar",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/usuarios/valida-usuario",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"usuarios",
+								"valida-usuario"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "usuarios paginados",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/usuarios/buscar-tudo?page=1&limit=10",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"usuarios",
+								"buscar-tudo"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "usuarios nao-paginados",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/usuarios/lista-completa",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"usuarios",
+								"lista-completa"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "usuarios tec",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/usuarios/buscar-tecnicos",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"usuarios",
+								"buscar-tecnicos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "usuario por id",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/usuarios/buscar-por-id/019963ea-fdba-77ed-9db6-5bfa4d28ec9e",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"usuarios",
+								"buscar-por-id",
+								"019963ea-fdba-77ed-9db6-5bfa4d28ec9e"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "usuario por login",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/usuarios/buscar-novo/d927014",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"usuarios",
+								"buscar-novo",
+								"d927014"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "usuario permissao",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \r\n  \"permissao\": \"TEC\" \r\n}\r\n"
+						},
+						"url": {
+							"raw": "{{baseURL}}/usuarios/atualizar-permissao/01995d56-1dba-7e6d-b037-90612fb0728f",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"usuarios",
+								"atualizar-permissao",
+								"01995d56-1dba-7e6d-b037-90612fb0728f"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "usuario ativar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\r\n"
+						},
+						"url": {
+							"raw": "{{baseURL}}/usuarios/ativar/01995d56-1dba-7e6d-b037-90612fb0728f",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"usuarios",
+								"ativar",
+								"01995d56-1dba-7e6d-b037-90612fb0728f"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "usuario desativar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\r\n"
+						},
+						"url": {
+							"raw": "{{baseURL}}/usuarios/desativar/01995d56-1dba-7e6d-b037-90612fb0728f",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"usuarios",
+								"desativar",
+								"01995d56-1dba-7e6d-b037-90612fb0728f"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "crud chamados",
+			"item": [
+				{
+					"name": "chamado criar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"titulo\": \"Chamado Teste4\",\r\n  \"descricao\": \"Descrição do chamado de teste4\",\r\n  \"categoriaId\": \"1\",\r\n  \"subcategoriaId\": \"1\",\r\n  \"criadorId\": \"01995f80-83bc-7696-bde2-6b384153b330\"\r\n}"
+						},
+						"url": {
+							"raw": "{{baseURL}}/chamados/criar",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"chamados",
+								"criar"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "chamado atualizar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"titulo\": \"Novo Chamado Teste4\",\r\n  \"descricao\": \"Nova Descrição do chamado de teste4\",\r\n  \"status\": \"ABERTO\",\r\n  \"categoriaId\": \"1\",\r\n  \"subcategoriaId\": \"1\",\r\n  \"criadorId\": \"01995f80-83bc-7696-bde2-6b384153b330\"\r\n}"
+						},
+						"url": {
+							"raw": "{{baseURL}}/chamados/atualizar/01997d16-9906-76d8-9710-c6ddb509940c",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"chamados",
+								"atualizar",
+								"01997d16-9906-76d8-9710-c6ddb509940c"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "chamado por id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/chamados/buscar-por-id/01997cfa-d49e-7ec7-8322-f56dc91f0da1",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"chamados",
+								"buscar-por-id",
+								"01997cfa-d49e-7ec7-8322-f56dc91f0da1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "chamados paginados",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/chamados/buscar-tudo",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"chamados",
+								"buscar-tudo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "chamados nao-paginados",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/chamados/lista-completa",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"chamados",
+								"lista-completa"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "chamado atualizar status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"status\": \"ABERTO\",\r\n  \"solucao\": \"\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/chamados/atualizar-status/01997cfb-d7c4-7c0c-8436-99e9c1acef4c",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"chamados",
+								"atualizar-status",
+								"01997cfb-d7c4-7c0c-8436-99e9c1acef4c"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "chamado desarquivar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"status\": \"REJEITADO\",\r\n  \"solucao\": \"Solução Teste\"\r\n}"
+						},
+						"url": {
+							"raw": "{{baseURL}}/chamados/desarquivar/01997cfa-d49e-7ec7-8322-f56dc91f0da1",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"chamados",
+								"desarquivar",
+								"01997cfa-d49e-7ec7-8322-f56dc91f0da1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "chamado atribuir tecnico",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"tecnicoId\": \"01995f80-83bc-7696-bde2-6b384153b330\"\r\n}"
+						},
+						"url": {
+							"raw": "{{baseURL}}/chamados/atribuir-tecnico/01997cfa-d49e-7ec7-8322-f56dc91f0da1",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"chamados",
+								"atribuir-tecnico",
+								"01997cfa-d49e-7ec7-8322-f56dc91f0da1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "chamado arquivar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"status\": \"REJEITADO\",\r\n  \"solucao\": \"Solução Teste\"\r\n}"
+						},
+						"url": {
+							"raw": "{{baseURL}}/chamados/arquivar/01997cfa-d49e-7ec7-8322-f56dc91f0da1",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"chamados",
+								"arquivar",
+								"01997cfa-d49e-7ec7-8322-f56dc91f0da1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "chamados remover tecnico",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/chamados/remover-tecnico/01997cfa-d49e-7ec7-8322-f56dc91f0da1",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"chamados",
+								"remover-tecnico",
+								"01997cfa-d49e-7ec7-8322-f56dc91f0da1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "crud categorias",
+			"item": [
+				{
+					"name": "categoria criar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nome\": \"Categoria de Teste\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/categorias/criar",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"categorias",
+								"criar"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "categoria atualizar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nome\": \"Categoria de Teste\",\r\n  \"status\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/categorias/atualizar/019982d7-5c8b-7199-b4cf-93e8f375fd8a",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"categorias",
+								"atualizar",
+								"019982d7-5c8b-7199-b4cf-93e8f375fd8a"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "categoria por id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/categorias/buscar-por-id/019982d7-5c8b-7199-b4cf-93e8f375fd8a",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"categorias",
+								"buscar-por-id",
+								"019982d7-5c8b-7199-b4cf-93e8f375fd8a"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "categoria paginados",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/categorias/buscar-tudo",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"categorias",
+								"buscar-tudo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "categorias nao-paginados",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/categorias/lista-completa",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"categorias",
+								"lista-completa"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "categoria desativar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/categorias/desativar/019982d7-5c8b-7199-b4cf-93e8f375fd8a",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"categorias",
+								"desativar",
+								"019982d7-5c8b-7199-b4cf-93e8f375fd8a"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "categoria ativar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/categorias/ativar/019982d7-5c8b-7199-b4cf-93e8f375fd8a",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"categorias",
+								"ativar",
+								"019982d7-5c8b-7199-b4cf-93e8f375fd8a"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "crud subcategorias",
+			"item": [
+				{
+					"name": "subcategoria criar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nome\": \"Subcategoria de Teste\",\r\n  \"categoria_id\": \"019982d7-5c8b-7199-b4cf-93e8f375fd8a\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/subcategorias/criar",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"subcategorias",
+								"criar"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "subcategoria atualizar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nome\": \"Subcategoria de Teste Atualizada\",\r\n  \"status\": false,\r\n  \"categoria_id\": \"019982d7-5c8b-7199-b4cf-93e8f375fd8a\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/subcategorias/atualizar/01998780-fb8f-79c0-95d5-e28fa1fce88d",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"subcategorias",
+								"atualizar",
+								"01998780-fb8f-79c0-95d5-e28fa1fce88d"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "subcategorias buscar-por-id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/subcategorias/buscar-por-id/01998780-fb8f-79c0-95d5-e28fa1fce88d",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"subcategorias",
+								"buscar-por-id",
+								"01998780-fb8f-79c0-95d5-e28fa1fce88d"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "subcategorias paginadas",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/subcategorias/buscar-tudo",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"subcategorias",
+								"buscar-tudo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "subcategorias nao-paginadas",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/subcategorias/lista-completa",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"subcategorias",
+								"lista-completa"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "subcategoria desativar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/subcategorias/desativar/01998780-fb8f-79c0-95d5-e28fa1fce88d",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"subcategorias",
+								"desativar",
+								"01998780-fb8f-79c0-95d5-e28fa1fce88d"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "subcategoria ativar",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/subcategorias/ativar/01998780-fb8f-79c0-95d5-e28fa1fce88d",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"subcategorias",
+								"ativar",
+								"01998780-fb8f-79c0-95d5-e28fa1fce88d"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "http://localhost:8080",
+			"type": "default"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "default"
+		}
+	]
+}
