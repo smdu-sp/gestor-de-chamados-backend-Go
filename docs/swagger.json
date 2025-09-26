@@ -1,0 +1,1798 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API para gestão de chamados",
+        "title": "Gestor de Chamados API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/categorias/ativar/{id}": {
+            "patch": {
+                "description": "Ativa uma categoria pelo ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Ativar categoria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da categoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Categoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/categorias/atualizar/{id}": {
+            "put": {
+                "description": "Atualiza uma categoria existente pelo ID com os dados fornecidos no corpo da requisição.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Atualizar categoria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da categoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Categoria",
+                        "name": "categoria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Categoria"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/categorias/buscar-por-id/{id}": {
+            "get": {
+                "description": "Retorna uma categoria pelo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Buscar categoria por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da categoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Categoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/categorias/buscar-por-nome/{nome}": {
+            "get": {
+                "description": "Retorna uma categoria pelo nome",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Buscar categoria por nome",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Nome da categoria",
+                        "name": "nome",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Categoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/categorias/buscar-tudo": {
+            "get": {
+                "description": "Retorna lista paginada de categorias",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Listar todas as categorias",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Página",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limite",
+                        "name": "limite",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Busca",
+                        "name": "busca",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Categoria"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/categorias/criar": {
+            "post": {
+                "description": "Cria uma nova categoria com dados fornecidos no corpo da requisição.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Criar uma nova categoria",
+                "parameters": [
+                    {
+                        "description": "Categoria",
+                        "name": "categoria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Categoria"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.Categoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/categorias/desativar/{id}": {
+            "delete": {
+                "description": "Desativa (soft delete) uma categoria pelo ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Desativar categoria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da categoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Categoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/categorias/listar-completa": {
+            "get": {
+                "description": "Retorna lista completa de categorias sem paginação",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categorias"
+                ],
+                "summary": "Listar todas as categorias (completa)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Categoria"
+                            }
+                        }
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/chamados/arquivar/{id}": {
+            "patch": {
+                "description": "Arquiva um chamado existente pelo ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chamados"
+                ],
+                "summary": "Arquiva um chamado existente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do chamado",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/chamados/atribuir-tecnico/{id}": {
+            "patch": {
+                "description": "Atribui um técnico a um chamado existente pelo ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chamados"
+                ],
+                "summary": "Atribui um técnico a um chamado existente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do chamado",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "ID do técnico",
+                        "name": "tecnico",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/chamados/atualizar-status/{id}": {
+            "patch": {
+                "description": "Atualiza o status de um chamado existente pelo ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chamados"
+                ],
+                "summary": "Atualiza o status de um chamado existente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do chamado",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status e solução do chamado",
+                        "name": "chamado",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/chamados/atualizar/{id}": {
+            "put": {
+                "description": "Atualiza os dados de um chamado existente pelo ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chamados"
+                ],
+                "summary": "Atualiza um chamado existente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do chamado",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados do chamado",
+                        "name": "chamado",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Chamado"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Chamado"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/chamados/buscar-por-id/{id}": {
+            "get": {
+                "description": "Retorna chamado pelo ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chamados"
+                ],
+                "summary": "Busca um chamado por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do chamado",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Chamado"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/chamados/buscar-tudo": {
+            "get": {
+                "description": "Retorna lista paginada de chamados.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chamados"
+                ],
+                "summary": "Lista chamados com paginação e filtros",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Pagina",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limite",
+                        "name": "limite",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Busca",
+                        "name": "busca",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Status do chamado",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID da categoria",
+                        "name": "categoriaId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID da subcategoria",
+                        "name": "subcategoriaId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID do criador",
+                        "name": "criadorId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID do atribuído",
+                        "name": "atribuidoId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Chamado"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/chamados/criar": {
+            "post": {
+                "description": "Cria um novo chamado com os dados fornecidos no corpo da requisição.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chamados"
+                ],
+                "summary": "Cria um novo chamado",
+                "parameters": [
+                    {
+                        "description": "Dados do chamado",
+                        "name": "chamado",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Chamado"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.Chamado"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/chamados/desarquivar/{id}": {
+            "patch": {
+                "description": "Desarquiva um chamado existente pelo ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chamados"
+                ],
+                "summary": "Desarquiva um chamado existente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do chamado",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/chamados/lista-completa": {
+            "get": {
+                "description": "Retorna todos os chamados sem paginação, útil para relatórios ou exportação de dados.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chamados"
+                ],
+                "summary": "Retorna todos os chamados sem paginação",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Chamado"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/chamados/remover-tecnico/{id}": {
+            "delete": {
+                "description": "Remove o técnico atribuído de um chamado existente pelo ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "chamados"
+                ],
+                "summary": "Remove o técnico atribuído de um chamado existente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do chamado",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "Autentica um usuário e retorna tokens JWT.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login",
+                "parameters": [
+                    {
+                        "description": "Login e senha do usuário",
+                        "name": "loginRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginDto"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/refresh": {
+            "post": {
+                "description": "Atualiza os tokens JWT usando um token de refresh.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh",
+                "parameters": [
+                    {
+                        "description": "Token de refresh",
+                        "name": "refreshRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.RefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/usuarios/ativar/{id}": {
+            "patch": {
+                "description": "Ativa (reativa) usuário pelo ID (apenas ADM)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Ativa usuário",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do usuário",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/usuarios/atualizar-permissao/{id}": {
+            "patch": {
+                "description": "Atualiza permissão do usuário pelo ID (apenas ADM)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Atualiza permissão do usuário",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do usuário",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Permissão do usuário",
+                        "name": "permissao",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/usuarios/atualizar/{id}": {
+            "put": {
+                "description": "Atualiza dados do usuário (ADM/TEC/USR conforme regra)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Atualiza usuário",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do usuário",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados do usuário",
+                        "name": "usuario",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Usuario"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Usuario"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/usuarios/autorizar/{id}": {
+            "patch": {
+                "description": "Autoriza (reativa) usuário pelo ID (apenas ADM)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Autoriza usuário",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do usuário",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/usuarios/buscar-novo/{login}": {
+            "get": {
+                "description": "Busca usuário no LDAP e retorna dados (apenas ADM)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Busca usuário novo no LDAP",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Login do usuário",
+                        "name": "login",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/usuarios/buscar-por-id/{id}": {
+            "get": {
+                "description": "Retorna usuário pelo ID (apenas ADM)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Busca usuário por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do usuário",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Usuario"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/usuarios/buscar-tecnicos": {
+            "get": {
+                "description": "Retorna lista de técnicos (apenas ADM)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Lista técnicos",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Usuario"
+                            }
+                        }
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/usuarios/buscar-tudo": {
+            "get": {
+                "description": "Retorna lista paginada de usuários (apenas ADM)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Lista usuários com paginação e filtros",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Página",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limite",
+                        "name": "limite",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Busca",
+                        "name": "busca",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Permissão",
+                        "name": "permissao",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Usuario"
+                            }
+                        }
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/usuarios/criar": {
+            "post": {
+                "description": "Cria um usuário com os dados fornecidos no corpo da requisição.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Cria um novo usuário",
+                "parameters": [
+                    {
+                        "description": "Dados do usuário",
+                        "name": "usuario",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Usuario"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {}
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/usuarios/desativar/{id}": {
+            "delete": {
+                "description": "Desativa (soft delete) usuário pelo ID (apenas ADM)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Desativa usuário",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do usuário",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/usuarios/lista-completa": {
+            "get": {
+                "description": "Retorna todos os usuários (apenas ADM)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Lista completa de usuários",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Usuario"
+                            }
+                        }
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/usuarios/valida-usuario": {
+            "get": {
+                "description": "Verifica se o usuário está autenticado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "usuarios"
+                ],
+                "summary": "Valida usuário autenticado",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handler.LoginDto": {
+            "type": "object",
+            "properties": {
+                "login": {
+                    "type": "string"
+                },
+                "senha": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.RefreshRequest": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Categoria": {
+            "type": "object",
+            "properties": {
+                "atualizado_em": {
+                    "type": "string"
+                },
+                "criado_em": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nome": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "model.Chamado": {
+            "type": "object",
+            "properties": {
+                "atribuidoId": {
+                    "type": "string"
+                },
+                "atualizadoEm": {
+                    "type": "string"
+                },
+                "categoriaId": {
+                    "type": "string"
+                },
+                "criadoEm": {
+                    "type": "string"
+                },
+                "criadorId": {
+                    "type": "string"
+                },
+                "descricao": {
+                    "type": "string"
+                },
+                "fechadoEm": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "solucao": {
+                    "type": "string"
+                },
+                "solucionadoEm": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/model.StatusChamado"
+                },
+                "subcategoriaId": {
+                    "type": "string"
+                },
+                "titulo": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Permissao": {
+            "type": "string",
+            "enum": [
+                "ADM",
+                "TEC",
+                "SUP",
+                "INF",
+                "VOIP",
+                "IMP",
+                "CAD",
+                "USR",
+                "DEV"
+            ],
+            "x-enum-comments": {
+                "PermADM": "Administrador",
+                "PermCAD": "Cadastro de usuários",
+                "PermDEV": "Desenvolvedor",
+                "PermIMP": "Técnico de Impressoras",
+                "PermINF": "Técnico de Infraestrutura",
+                "PermSUP": "Técnico de Suporte (Help Desk)",
+                "PermTEC": "Técnico",
+                "PermUSR": "Usuário comum (pode apenas abrir chamados)",
+                "PermVOIP": "Técnico de Telefonia"
+            },
+            "x-enum-descriptions": [
+                "Administrador",
+                "Técnico",
+                "Técnico de Suporte (Help Desk)",
+                "Técnico de Infraestrutura",
+                "Técnico de Telefonia",
+                "Técnico de Impressoras",
+                "Cadastro de usuários",
+                "Usuário comum (pode apenas abrir chamados)",
+                "Desenvolvedor"
+            ],
+            "x-enum-varnames": [
+                "PermADM",
+                "PermTEC",
+                "PermSUP",
+                "PermINF",
+                "PermVOIP",
+                "PermIMP",
+                "PermCAD",
+                "PermUSR",
+                "PermDEV"
+            ]
+        },
+        "model.StatusChamado": {
+            "type": "string",
+            "enum": [
+                "ABERTO",
+                "ATRIBUIDO",
+                "RESOLVIDO",
+                "REJEITADO",
+                "FECHADO",
+                "ARQUIVADO"
+            ],
+            "x-enum-varnames": [
+                "StatusAberto",
+                "StatusAtribuido",
+                "StatusResolvido",
+                "StatusRejeitado",
+                "StatusFechado",
+                "StatusArquivado"
+            ]
+        },
+        "model.Usuario": {
+            "type": "object",
+            "properties": {
+                "atualizadoEm": {
+                    "type": "string"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "criadoEm": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "nome": {
+                    "type": "string"
+                },
+                "permissao": {
+                    "$ref": "#/definitions/model.Permissao"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "ultimoLogin": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

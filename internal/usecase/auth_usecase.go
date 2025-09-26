@@ -1,4 +1,4 @@
-package auth
+package usecase
 
 import (
 	"context"
@@ -11,17 +11,18 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/config"
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain/model"
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain/usecase"
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/infra/repository"
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/interface/response"
 )
 
 type authUsecase struct {
-	users usecase.UserUsecase
-	jwt   jwt.JWTInterface
-	ldap  usecase.Authenticator
+	users usecase.UsuarioUsecase
+	jwt   jwt.JWTUsecase
+	ldap  usecase.AuthExternoUsecase
 	cfg   config.Config
 }
 
-func NewAuthUsecase(users usecase.UserUsecase, jwt jwt.JWTInterface, ldap usecase.Authenticator, cfg config.Config) usecase.AuthUsecase {
+func NewAuthInternoUsecase(users usecase.UsuarioUsecase, jwt jwt.JWTUsecase, ldap usecase.AuthExternoUsecase, cfg config.Config) usecase.AuthInternoUsecase {
 	return &authUsecase{users, jwt, ldap, cfg}
 }
 
@@ -44,7 +45,7 @@ func (a *authUsecase) criarUsuarioSeNecessario(ctx context.Context, login string
 		return u, nil
 	}
 
-	name, mail, sLogin, err := a.ldap.SearchByLogin(login)
+	name, mail, sLogin, err := a.ldap.PesquisarPorLogin(login)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao buscar usuário no LDAP: %w", err)
 	}
@@ -57,11 +58,11 @@ func (a *authUsecase) criarUsuarioSeNecessario(ctx context.Context, login string
 		Status:    true,
 	}
 
-	if err := a.users.Criar(ctx, novo); err != nil {
+	if err := a.users.CriarUsuario(ctx, novo); err != nil {
 		return nil, fmt.Errorf("erro ao criar usuário no banco: %w", err)
 	}
 
-	return a.users.BuscarPorLogin(ctx, login)
+	return a.users.BuscarUsuarioPorLogin(ctx, login)
 }
 
 func createClaims(u *model.Usuario) jwt.Claims {
@@ -77,11 +78,11 @@ func createClaims(u *model.Usuario) jwt.Claims {
 // --- Implementações da interface ---
 
 func (a *authUsecase) Login(ctx context.Context, login, senha string) (*response.TokenPair, error) {
-	usuario, err := a.users.BuscarPorLogin(ctx, login)
-	if err != nil && !errors.Is(err, model.ErrUsuarioNaoEncontrado) {
+	usuario, err := a.users.BuscarUsuarioPorLogin(ctx, login)
+	if err != nil && !errors.Is(err, repository.ErrUsuarioNaoEncontrado) {
 		return nil, fmt.Errorf("erro buscando usuário: %w", err)
 	}
-	if errors.Is(err, model.ErrUsuarioNaoEncontrado) {
+	if errors.Is(err, repository.ErrUsuarioNaoEncontrado) {
 		usuario = nil
 	}
 
@@ -95,14 +96,14 @@ func (a *authUsecase) Login(ctx context.Context, login, senha string) (*response
 		return nil, err
 	}
 
-	_ = a.users.AtualizarUltimoLogin(ctx, usuario.ID)
+	_ = a.users.AtualizarUltimoLoginUsuario(ctx, usuario.ID)
 
 	claims := createClaims(usuario)
-	access, err := a.jwt.SignAccess(claims)
+	access, err := a.jwt.GerarToken(claims)
 	if err != nil {
 		return nil, err
 	}
-	refresh, err := a.jwt.SignRefresh(claims)
+	refresh, err := a.jwt.GerarRefreshToken(claims)
 	if err != nil {
 		return nil, err
 	}
@@ -111,25 +112,25 @@ func (a *authUsecase) Login(ctx context.Context, login, senha string) (*response
 }
 
 func (a *authUsecase) Refresh(ctx context.Context, refreshToken string) (*response.TokenPair, error) {
-	claims, err := a.jwt.ParseRefresh(refreshToken)
+	claims, err := a.jwt.ValidarRefreshToken(refreshToken)
 	if err != nil {
 		return nil, fmt.Errorf("refresh inválido: %w", err)
 	}
 
-	usuario, err := a.users.BuscarPorID(ctx, claims.ID)
+	usuario, err := a.users.BuscarUsuarioPorID(ctx, claims.ID)
 	if err != nil || usuario == nil {
 		return nil, errors.New("usuário inválido")
 	}
 
-	_ = a.users.AtualizarUltimoLogin(ctx, usuario.ID)
+	_ = a.users.AtualizarUltimoLoginUsuario(ctx, usuario.ID)
 
 	claims.RegisteredClaims.IssuedAt = gojwt.NewNumericDate(time.Now())
 
-	access, err := a.jwt.SignAccess(*claims)
+	access, err := a.jwt.GerarToken(*claims)
 	if err != nil {
 		return nil, err
 	}
-	refresh, err := a.jwt.SignRefresh(*claims)
+	refresh, err := a.jwt.GerarRefreshToken(*claims)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +139,7 @@ func (a *authUsecase) Refresh(ctx context.Context, refreshToken string) (*respon
 }
 
 func (a *authUsecase) Me(ctx context.Context, userID string) (*response.UsuarioResponse, error) {
-    usuario, err := a.users.BuscarPorID(ctx, userID)
+    usuario, err := a.users.BuscarUsuarioPorID(ctx, userID)
     if err != nil || usuario == nil {
         return nil, err
     }

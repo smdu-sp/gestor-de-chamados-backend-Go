@@ -1,0 +1,1237 @@
+basePath: /
+definitions:
+  handler.LoginDto:
+    properties:
+      login:
+        type: string
+      senha:
+        type: string
+    type: object
+  handler.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  model.Categoria:
+    properties:
+      atualizado_em:
+        type: string
+      criado_em:
+        type: string
+      id:
+        type: string
+      nome:
+        type: string
+      status:
+        type: boolean
+    type: object
+  model.Chamado:
+    properties:
+      atribuidoId:
+        type: string
+      atualizadoEm:
+        type: string
+      categoriaId:
+        type: string
+      criadoEm:
+        type: string
+      criadorId:
+        type: string
+      descricao:
+        type: string
+      fechadoEm:
+        type: string
+      id:
+        type: string
+      solucao:
+        type: string
+      solucionadoEm:
+        type: string
+      status:
+        $ref: '#/definitions/model.StatusChamado'
+      subcategoriaId:
+        type: string
+      titulo:
+        type: string
+    type: object
+  model.Permissao:
+    enum:
+    - ADM
+    - TEC
+    - SUP
+    - INF
+    - VOIP
+    - IMP
+    - CAD
+    - USR
+    - DEV
+    type: string
+    x-enum-comments:
+      PermADM: Administrador
+      PermCAD: Cadastro de usuários
+      PermDEV: Desenvolvedor
+      PermIMP: Técnico de Impressoras
+      PermINF: Técnico de Infraestrutura
+      PermSUP: Técnico de Suporte (Help Desk)
+      PermTEC: Técnico
+      PermUSR: Usuário comum (pode apenas abrir chamados)
+      PermVOIP: Técnico de Telefonia
+    x-enum-descriptions:
+    - Administrador
+    - Técnico
+    - Técnico de Suporte (Help Desk)
+    - Técnico de Infraestrutura
+    - Técnico de Telefonia
+    - Técnico de Impressoras
+    - Cadastro de usuários
+    - Usuário comum (pode apenas abrir chamados)
+    - Desenvolvedor
+    x-enum-varnames:
+    - PermADM
+    - PermTEC
+    - PermSUP
+    - PermINF
+    - PermVOIP
+    - PermIMP
+    - PermCAD
+    - PermUSR
+    - PermDEV
+  model.StatusChamado:
+    enum:
+    - ABERTO
+    - ATRIBUIDO
+    - RESOLVIDO
+    - REJEITADO
+    - FECHADO
+    - ARQUIVADO
+    type: string
+    x-enum-varnames:
+    - StatusAberto
+    - StatusAtribuido
+    - StatusResolvido
+    - StatusRejeitado
+    - StatusFechado
+    - StatusArquivado
+  model.Usuario:
+    properties:
+      atualizadoEm:
+        type: string
+      avatar:
+        type: string
+      criadoEm:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      login:
+        type: string
+      nome:
+        type: string
+      permissao:
+        $ref: '#/definitions/model.Permissao'
+      status:
+        type: boolean
+      ultimoLogin:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API para gestão de chamados
+  title: Gestor de Chamados API
+  version: "1.0"
+paths:
+  /categorias/ativar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Ativa uma categoria pelo ID.
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Categoria'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Ativar categoria
+      tags:
+      - Categorias
+  /categorias/atualizar/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Atualiza uma categoria existente pelo ID com os dados fornecidos
+        no corpo da requisição.
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Categoria
+        in: body
+        name: categoria
+        required: true
+        schema:
+          $ref: '#/definitions/model.Categoria'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Atualizar categoria
+      tags:
+      - Categorias
+  /categorias/buscar-por-id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna uma categoria pelo ID
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Categoria'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Buscar categoria por ID
+      tags:
+      - Categorias
+  /categorias/buscar-por-nome/{nome}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna uma categoria pelo nome
+      parameters:
+      - description: Nome da categoria
+        in: path
+        name: nome
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Categoria'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Buscar categoria por nome
+      tags:
+      - Categorias
+  /categorias/buscar-tudo:
+    get:
+      consumes:
+      - application/json
+      description: Retorna lista paginada de categorias
+      parameters:
+      - description: Página
+        in: query
+        name: pagina
+        type: integer
+      - description: Limite
+        in: query
+        name: limite
+        type: integer
+      - description: Busca
+        in: query
+        name: busca
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Categoria'
+            type: array
+        "400":
+          description: Bad Request
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Listar todas as categorias
+      tags:
+      - Categorias
+  /categorias/criar:
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova categoria com dados fornecidos no corpo da requisição.
+      parameters:
+      - description: Categoria
+        in: body
+        name: categoria
+        required: true
+        schema:
+          $ref: '#/definitions/model.Categoria'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Categoria'
+        "400":
+          description: Bad Request
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Criar uma nova categoria
+      tags:
+      - Categorias
+  /categorias/desativar/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Desativa (soft delete) uma categoria pelo ID.
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Categoria'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Desativar categoria
+      tags:
+      - Categorias
+  /categorias/listar-completa:
+    get:
+      consumes:
+      - application/json
+      description: Retorna lista completa de categorias sem paginação
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Categoria'
+            type: array
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Listar todas as categorias (completa)
+      tags:
+      - Categorias
+  /chamados/arquivar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Arquiva um chamado existente pelo ID.
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Arquiva um chamado existente
+      tags:
+      - chamados
+  /chamados/atribuir-tecnico/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atribui um técnico a um chamado existente pelo ID.
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: ID do técnico
+        in: body
+        name: tecnico
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Atribui um técnico a um chamado existente
+      tags:
+      - chamados
+  /chamados/atualizar-status/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza o status de um chamado existente pelo ID.
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status e solução do chamado
+        in: body
+        name: chamado
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Atualiza o status de um chamado existente
+      tags:
+      - chamados
+  /chamados/atualizar/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um chamado existente pelo ID.
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do chamado
+        in: body
+        name: chamado
+        required: true
+        schema:
+          $ref: '#/definitions/model.Chamado'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Chamado'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Atualiza um chamado existente
+      tags:
+      - chamados
+  /chamados/buscar-por-id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna chamado pelo ID.
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Chamado'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Busca um chamado por ID
+      tags:
+      - chamados
+  /chamados/buscar-tudo:
+    get:
+      consumes:
+      - application/json
+      description: Retorna lista paginada de chamados.
+      parameters:
+      - description: Pagina
+        in: query
+        name: pagina
+        type: integer
+      - description: Limite
+        in: query
+        name: limite
+        type: integer
+      - description: Busca
+        in: query
+        name: busca
+        type: string
+      - description: Status do chamado
+        in: query
+        name: status
+        type: string
+      - description: ID da categoria
+        in: query
+        name: categoriaId
+        type: string
+      - description: ID da subcategoria
+        in: query
+        name: subcategoriaId
+        type: string
+      - description: ID do criador
+        in: query
+        name: criadorId
+        type: string
+      - description: ID do atribuído
+        in: query
+        name: atribuidoId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Chamado'
+            type: array
+        "400":
+          description: Bad Request
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Lista chamados com paginação e filtros
+      tags:
+      - chamados
+  /chamados/criar:
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo chamado com os dados fornecidos no corpo da requisição.
+      parameters:
+      - description: Dados do chamado
+        in: body
+        name: chamado
+        required: true
+        schema:
+          $ref: '#/definitions/model.Chamado'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Chamado'
+        "400":
+          description: Bad Request
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Cria um novo chamado
+      tags:
+      - chamados
+  /chamados/desarquivar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Desarquiva um chamado existente pelo ID.
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Desarquiva um chamado existente
+      tags:
+      - chamados
+  /chamados/lista-completa:
+    get:
+      consumes:
+      - application/json
+      description: Retorna todos os chamados sem paginação, útil para relatórios ou
+        exportação de dados.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Chamado'
+            type: array
+        "400":
+          description: Bad Request
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Retorna todos os chamados sem paginação
+      tags:
+      - chamados
+  /chamados/remover-tecnico/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove o técnico atribuído de um chamado existente pelo ID.
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Remove o técnico atribuído de um chamado existente
+      tags:
+      - chamados
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica um usuário e retorna tokens JWT.
+      parameters:
+      - description: Login e senha do usuário
+        in: body
+        name: loginRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login
+      tags:
+      - auth
+  /refresh:
+    post:
+      consumes:
+      - application/json
+      description: Atualiza os tokens JWT usando um token de refresh.
+      parameters:
+      - description: Token de refresh
+        in: body
+        name: refreshRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh
+      tags:
+      - auth
+  /usuarios/ativar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Ativa (reativa) usuário pelo ID (apenas ADM)
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Ativa usuário
+      tags:
+      - usuarios
+  /usuarios/atualizar-permissao/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza permissão do usuário pelo ID (apenas ADM)
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Permissão do usuário
+        in: body
+        name: permissao
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Atualiza permissão do usuário
+      tags:
+      - usuarios
+  /usuarios/atualizar/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Atualiza dados do usuário (ADM/TEC/USR conforme regra)
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do usuário
+        in: body
+        name: usuario
+        required: true
+        schema:
+          $ref: '#/definitions/model.Usuario'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Usuario'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Atualiza usuário
+      tags:
+      - usuarios
+  /usuarios/autorizar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Autoriza (reativa) usuário pelo ID (apenas ADM)
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Autoriza usuário
+      tags:
+      - usuarios
+  /usuarios/buscar-novo/{login}:
+    get:
+      consumes:
+      - application/json
+      description: Busca usuário no LDAP e retorna dados (apenas ADM)
+      parameters:
+      - description: Login do usuário
+        in: path
+        name: login
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+      summary: Busca usuário novo no LDAP
+      tags:
+      - usuarios
+  /usuarios/buscar-por-id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna usuário pelo ID (apenas ADM)
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Usuario'
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Busca usuário por ID
+      tags:
+      - usuarios
+  /usuarios/buscar-tecnicos:
+    get:
+      consumes:
+      - application/json
+      description: Retorna lista de técnicos (apenas ADM)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Usuario'
+            type: array
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Lista técnicos
+      tags:
+      - usuarios
+  /usuarios/buscar-tudo:
+    get:
+      consumes:
+      - application/json
+      description: Retorna lista paginada de usuários (apenas ADM)
+      parameters:
+      - description: Página
+        in: query
+        name: pagina
+        type: integer
+      - description: Limite
+        in: query
+        name: limite
+        type: integer
+      - description: Busca
+        in: query
+        name: busca
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: string
+      - description: Permissão
+        in: query
+        name: permissao
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Usuario'
+            type: array
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Lista usuários com paginação e filtros
+      tags:
+      - usuarios
+  /usuarios/criar:
+    post:
+      consumes:
+      - application/json
+      description: Cria um usuário com os dados fornecidos no corpo da requisição.
+      parameters:
+      - description: Dados do usuário
+        in: body
+        name: usuario
+        required: true
+        schema:
+          $ref: '#/definitions/model.Usuario'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Cria um novo usuário
+      tags:
+      - usuarios
+  /usuarios/desativar/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Desativa (soft delete) usuário pelo ID (apenas ADM)
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Desativa usuário
+      tags:
+      - usuarios
+  /usuarios/lista-completa:
+    get:
+      consumes:
+      - application/json
+      description: Retorna todos os usuários (apenas ADM)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Usuario'
+            type: array
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Lista completa de usuários
+      tags:
+      - usuarios
+  /usuarios/valida-usuario:
+    get:
+      consumes:
+      - application/json
+      description: Verifica se o usuário está autenticado
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+      summary: Valida usuário autenticado
+      tags:
+      - usuarios
+swagger: "2.0"
