@@ -44,7 +44,6 @@
 │ └── /utils/           # Utilitários gerais e helpers
 │
 ├── /pkg/               # Bibliotecas reutilizáveis por outros projetos
-│ └── /logger/          # Logger configurável (zap, logrus etc.)
 │
 ├── /migrations/        # Scripts de migração de banco de dados
 │ └── V001_init.sql

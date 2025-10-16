@@ -10,11 +10,11 @@ var ErrCategoriaIDInvalido = errors.New("ID da categoria não pode ser vazio")
 
 // Categoria representa uma categoria de chamados no sistema.
 type Categoria struct {
-	ID           string `json:"id"`
-	Nome         string `json:"nome"`
-	Status       bool   `json:"status"`
-	CriadoEm     time.Time `json:"criado_em"`
-	AtualizadoEm time.Time `json:"atualizado_em"`
+	ID           string    `json:"id"`
+	Nome         string    `json:"nome"`
+	Status       bool      `json:"status"`
+	CriadoEm     time.Time `json:"criadoEm"`
+	AtualizadoEm time.Time `json:"atualizadoEm"`
 }
 
 // NewCategoria cria uma nova instância de Categoria com os dados fornecidos.
@@ -36,8 +36,16 @@ func NewCategoria(id, nome string, status bool) (*Categoria, error) {
 
 // CategoriaFiltro representa os critérios de filtro para listar categorias.
 type CategoriaFiltro struct {
-	Pagina 	int
-	Limite 	int
-	Busca 	*string
-	Status 	*bool
+	Pagina int
+	Limite int
+	Busca  *string
+	Status *bool
+}
+
+// String retorna uma representação em string da Categoria para fins de logging.
+func (c *Categoria) String() string {
+	return fmt.Sprintf(
+		"[ID=%s | Nome=%s | Status=%t]", 
+		c.ID, c.Nome, c.Status,
+	)
 }

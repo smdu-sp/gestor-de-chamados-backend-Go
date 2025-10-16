@@ -29,7 +29,7 @@ $directories = @(
   "internal/email",
   "internal/job",
   "internal/utils",
-  "pkg/logger",
+  "pkg",
   "migrations",
   "tests/e2e",
   "tests/mocks",

@@ -52,11 +52,14 @@ func (c *ChamadoUsecase) CriarChamado(ctx context.Context, chamado *model.Chamad
 		chamado.Status = model.StatusAberto
 	}
 
+	chamado.Arquivado = false
+
 	chamado, err = model.NewChamado(
 		chamado.ID,
 		chamado.Titulo,
 		chamado.Descricao,
 		chamado.Status,
+		chamado.Arquivado,
 		chamado.CategoriaID,
 		chamado.SubcategoriaID,
 		chamado.CriadorID,
@@ -132,50 +135,12 @@ func (c *ChamadoUsecase) AtualizarStatusChamado(ctx context.Context, id string, 
 		)
 	}
 
-	if err := model.ValidarStatusChamado(status); err != nil {
+	if err := model.ValidarStatusChamado(model.StatusChamado(status)); err != nil {
 		return fmt.Errorf("[usecase.AtualizarStatusChamado]: %w", err)
 	}
 
 	if err := c.repository.AtualizarStatus(ctx, id, status, solucao); err != nil {
 		return fmt.Errorf("[usecase.AtualizarStatusChamado]: %w", err)
-	}
-
-	return nil
-}
-
-// AtribuirTecnicoChamado atribui um técnico a um chamado existente.
-func (c *ChamadoUsecase) AtribuirTecnicoChamado(ctx context.Context, id string, tecnicoID string) error {
-// TODO adicionar verificação se permissão do usuário é correta em relação a categoria do chamado
-
-	if id == "" || tecnicoID == "" {
-		return utils.NewAppError(
-			"[usecase.AtribuirTecnicoChamado]",
-			utils.LevelInfo,
-			"erro ao atribuir técnico ao chamado",
-			model.ErrIDInvalido,
-		)
-	}
-
-	if err := c.repository.AtribuirTecnico(ctx, id, tecnicoID); err != nil {
-		return fmt.Errorf("[usecase.AtribuirTecnicoChamado]: %w", err)
-	}
-
-	return nil
-}
-
-// RemoverTecnicoChamado remove o técnico atribuído de um chamado existente.
-func (c *ChamadoUsecase) RemoverTecnicoChamado(ctx context.Context, id string) error {
-	if id == "" {
-		return utils.NewAppError(
-			"[usecase.RemoverTecnicoChamado]",
-			utils.LevelInfo,
-			"erro ao remover técnico do chamado",
-			model.ErrIDInvalido,
-		)
-	}
-
-	if err := c.repository.RemoverTecnico(ctx, id); err != nil {
-		return fmt.Errorf("[usecase.RemoverTecnicoChamado]: %w", err)
 	}
 
 	return nil

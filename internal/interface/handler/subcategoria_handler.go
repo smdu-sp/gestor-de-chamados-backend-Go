@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -14,9 +15,22 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/utils"
 )
 
+const (
+	entidadeSubcategoria = "SUBCATEGORIA"
+)
+
 // SubcategoriaHandler gerencia as requisições HTTP relacionadas a subcategorias.
 type SubcategoriaHandler struct {
-	Usecase usecase.SubcategoriaUsecase
+	Usecase    usecase.SubcategoriaUsecase
+	UsecaseLog usecase.LogUsecase
+}
+
+// NewSubcategoriaHandler cria uma nova instância de SubcategoriaHandler.
+func NewSubcategoriaHandler(usecase usecase.SubcategoriaUsecase, usecaseLog usecase.LogUsecase) *SubcategoriaHandler {
+	return &SubcategoriaHandler{
+		Usecase:    usecase,
+		UsecaseLog: usecaseLog,
+	}
 }
 
 // Criar godoc
@@ -30,8 +44,9 @@ type SubcategoriaHandler struct {
 // @Failure 400 {object} any
 // @Failure 404 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
+// @Failure 409 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /subcategorias/criar [post]
 // Criar subcategoria
 func (h *SubcategoriaHandler) Criar(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +66,8 @@ func (h *SubcategoriaHandler) Criar(w http.ResponseWriter, r *http.Request) {
 	if err := h.Usecase.CriarSubcategoria(ctx, &subcategoria); err != nil {
 		switch {
 		// requisições inválidas - 400
-		case errors.Is(err, model.ErrNomeInvalido):
+		case errors.As(err, &utils.ValidacaoErrors{}),
+		errors.Is(err, repository.ErrCategoriaNaoEncontrada):
 			response.ErrorJSON(w, http.StatusBadRequest, "dados inválidos ao criar subcategoria", err.Error())
 
 		// conflito - 409
@@ -64,16 +80,29 @@ func (h *SubcategoriaHandler) Criar(w http.ResponseWriter, r *http.Request) {
 			errors.Is(err, repository.ErrRowsAffected):
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro ao criar subcategoria", err.Error())
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao criar subcategoria", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao criar subcategoria", err.Error())
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao criar subcategoria", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao criar subcategoria", err.Error())
 
 		// fallback de segurança - 500
 		default:
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro inesperado ao criar subcategoria", err.Error())
 		}
+		return
+	}
+
+	err := h.UsecaseLog.CriarLog(
+		ctx,
+		model.AcaoCriar,
+		entidadeSubcategoria,
+		fmt.Sprintf("Subcategoria criada via API: %s", subcategoria.String()),
+	)
+	if err != nil {
+		response.ErrorJSON(w, http.StatusInternalServerError, erroLogMsg, err.Error())
 		return
 	}
 
@@ -93,8 +122,8 @@ func (h *SubcategoriaHandler) Criar(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} []model.Subcategoria
 // @Failure 400 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /subcategorias/buscar-tudo [get]
 // BuscarTudo lista subcategorias com paginação e filtros.
 func (h *SubcategoriaHandler) BuscarTudo(w http.ResponseWriter, r *http.Request) {
@@ -134,12 +163,14 @@ func (h *SubcategoriaHandler) BuscarTudo(w http.ResponseWriter, r *http.Request)
 			response.ErrorJSON(w, http.StatusBadRequest, "erro interno ao listar subcategorias", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao listar categorias", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao listar categorias", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao listar categorias", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao listar categorias", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -167,8 +198,8 @@ func (h *SubcategoriaHandler) BuscarTudo(w http.ResponseWriter, r *http.Request)
 // @Failure 400 {object} any
 // @Failure 404 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /subcategorias/buscar-por-id/{id} [get]
 // BuscarPorID busca uma subcategoria pelo ID.
 func (h *SubcategoriaHandler) BuscarPorID(w http.ResponseWriter, r *http.Request) {
@@ -195,10 +226,12 @@ func (h *SubcategoriaHandler) BuscarPorID(w http.ResponseWriter, r *http.Request
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro ao buscar subcategoria", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao buscar subcategoria", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao buscar subcategoria", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
 			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao buscar subcategoria", err.Error())
 			return
@@ -223,8 +256,8 @@ func (h *SubcategoriaHandler) BuscarPorID(w http.ResponseWriter, r *http.Request
 // @Failure 400 {object} any
 // @Failure 404 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /subcategorias/buscar-por-nome/{nome} [get]
 // BuscarPorNome busca uma subcategoria pelo nome.
 func (h *SubcategoriaHandler) BuscarPorNome(w http.ResponseWriter, r *http.Request) {
@@ -251,12 +284,14 @@ func (h *SubcategoriaHandler) BuscarPorNome(w http.ResponseWriter, r *http.Reque
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro ao buscar subcategoria", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao buscar subcategoria", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao buscar subcategoria", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao buscar subcategoria", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao buscar subcategoria", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -280,9 +315,9 @@ func (h *SubcategoriaHandler) BuscarPorNome(w http.ResponseWriter, r *http.Reque
 // @Failure 400 {object} any
 // @Failure 404 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 409 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /subcategorias/atualizar/{id} [put]
 // Atualizar atualiza uma subcategoria existente.
 func (h *SubcategoriaHandler) Atualizar(w http.ResponseWriter, r *http.Request) {
@@ -321,16 +356,29 @@ func (h *SubcategoriaHandler) Atualizar(w http.ResponseWriter, r *http.Request) 
 			errors.Is(err, repository.ErrRowsAffected):
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro ao atualizar subcategoria", err.Error())
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao atualizar subcategoria", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao atualizar subcategoria", err.Error())
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao atualizar subcategoria", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao atualizar subcategoria", err.Error())
 
 		// fallback de segurança - 500
 		default:
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro inesperado ao atualizar subcategoria", err.Error())
 		}
+		return
+	}
+
+	err := h.UsecaseLog.CriarLog(
+		ctx,
+		model.AcaoAtualizar,
+		entidadeSubcategoria,
+		fmt.Sprintf("Subcategoria atualizada via API: %s", subcategoria.String()),
+	)
+	if err != nil {
+		response.ErrorJSON(w, http.StatusInternalServerError, erroLogMsg, err.Error())
 		return
 	}
 
@@ -345,8 +393,8 @@ func (h *SubcategoriaHandler) Atualizar(w http.ResponseWriter, r *http.Request) 
 // @Produce json
 // @Success 200 {array} model.Subcategoria
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /subcategorias/listar-completa [get]
 // ListaCompleta lista todas as subcategorias sem paginação.
 func (h *SubcategoriaHandler) ListaCompleta(w http.ResponseWriter, r *http.Request) {
@@ -372,12 +420,14 @@ func (h *SubcategoriaHandler) ListaCompleta(w http.ResponseWriter, r *http.Reque
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro interno ao listar subcategorias", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao listar subcategorias", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao listar subcategorias", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao listar subcategorias", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao listar subcategorias", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -400,8 +450,8 @@ func (h *SubcategoriaHandler) ListaCompleta(w http.ResponseWriter, r *http.Reque
 // @Failure 400 {object} any
 // @Failure 404 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /subcategorias/desativar/{id} [delete]
 // Desativar desativa (soft delete) uma subcategoria.
 func (h *SubcategoriaHandler) Desativar(w http.ResponseWriter, r *http.Request) {
@@ -427,12 +477,14 @@ func (h *SubcategoriaHandler) Desativar(w http.ResponseWriter, r *http.Request) 
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro ao desativar subcategoria", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao desativar subcategoria", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao desativar subcategoria", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao desativar subcategoria", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao desativar subcategoria", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -441,6 +493,18 @@ func (h *SubcategoriaHandler) Desativar(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 	}
+
+	err := h.UsecaseLog.CriarLog(
+		ctx,
+		model.AcaoDesativar,
+		entidadeSubcategoria,
+		fmt.Sprintf("Subcategoria desativada via API: subcategoria ID %s", id),
+	)
+	if err != nil {
+		response.ErrorJSON(w, http.StatusInternalServerError, erroLogMsg, err.Error())
+		return
+	}
+
 	response.JSON(w, http.StatusOK, response.StatusSubcategoria{Ativo: false})
 }
 
@@ -455,8 +519,8 @@ func (h *SubcategoriaHandler) Desativar(w http.ResponseWriter, r *http.Request) 
 // @Failure 400 {object} any
 // @Failure 404 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /subcategorias/ativar/{id} [patch]
 // Ativar ativa uma subcategoria.
 func (h *SubcategoriaHandler) Ativar(w http.ResponseWriter, r *http.Request) {
@@ -483,12 +547,14 @@ func (h *SubcategoriaHandler) Ativar(w http.ResponseWriter, r *http.Request) {
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro ao ativar subcategoria", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao ativar subcategoria", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao ativar subcategoria", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao ativar subcategoria", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao ativar subcategoria", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -497,5 +563,17 @@ func (h *SubcategoriaHandler) Ativar(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	err := h.UsecaseLog.CriarLog(
+		ctx,
+		model.AcaoAtivar,
+		entidadeSubcategoria,
+		fmt.Sprintf("Subcategoria ativada via API: subcategoria ID %s", id),
+	)
+	if err != nil {
+		response.ErrorJSON(w, http.StatusInternalServerError, erroLogMsg, err.Error())
+		return
+	}
+
 	response.JSON(w, http.StatusOK, response.StatusSubcategoria{Ativo: true})
 }

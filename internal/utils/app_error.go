@@ -4,14 +4,15 @@ import (
 	"fmt"
 )
 
-// FmtErroWrap formata um erro com contexto extra: %w (erro base), %v (detalhe).
+// FmtErroWrap formata um erro com contexto adicional: %w (erro base), %v (detalhes).
 const FmtErroWrap = "%w: %v"
+
 
 // ErrorLevel representa o nível do erro (pode ser string simples ou const enum)
 type ErrorLevel string
 
 const (
-	LevelError   ErrorLevel = "ERRO"
+	LevelError   ErrorLevel = "ERROR"
 	LevelWarning ErrorLevel = "WARN"
 	LevelInfo    ErrorLevel = "INFO"
 )

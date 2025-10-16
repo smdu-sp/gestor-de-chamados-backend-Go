@@ -31,7 +31,7 @@ func NewUUIDv7Bytes() (UUIDv7, error) {
 			"[utils.NewUUIDv7Bytes]",
 			LevelError,
 			"erro ao gerar UUID v7",
-			fmt.Errorf("%w: %v", ErrUUIDv7Generation, err),
+			fmt.Errorf(FmtErroWrap, ErrUUIDv7Generation, err),
 		)
 	}
 

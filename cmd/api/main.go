@@ -17,8 +17,6 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/interface/router"
 )
 
-// TODO incrementar recover de panics globais
-
 // @title Gestor de Chamados API
 // @version 1.0
 // @description API para gestão de chamados

@@ -24,7 +24,7 @@ func (c *CategoriaUsecase) BuscarCategoriaPorID(ctx context.Context, id string) 
 	if id == "" {
 		return nil, utils.NewAppError(
 			"[usecase.BuscarCategoriaPorID]",
-			utils.LevelWarning,
+			utils.LevelInfo,
 			"erro ao buscar categoria por id",
 			model.ErrIDInvalido,
 		)

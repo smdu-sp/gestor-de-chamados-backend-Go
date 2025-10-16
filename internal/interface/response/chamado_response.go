@@ -45,7 +45,6 @@ func ToChamadoResponse(c *model.Chamado) *ChamadoResponse {
 		CategoriaID:    c.CategoriaID,
 		SubcategoriaID: c.SubcategoriaID,
 		CriadorID:      c.CriadorID,
-		AtribuidoID:    c.AtribuidoID,
 	}
 }
 

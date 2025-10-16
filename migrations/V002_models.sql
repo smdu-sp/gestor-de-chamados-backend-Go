@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   nome          VARCHAR(255)  NOT NULL,
   login         VARCHAR(255)  NOT NULL UNIQUE,
   email         VARCHAR(255)  NOT NULL UNIQUE,
-  permissao     ENUM('ADM','TEC','SUP','INF','VOIP','IMP','CAD','USR','DEV') NOT NULL DEFAULT 'USR',
+  permissao     ENUM('ADM','TEC','USR','DEV') NOT NULL DEFAULT 'USR',
   status        BOOLEAN       NOT NULL DEFAULT TRUE, -- ativo/inativo
   avatar        TEXT NULL,
   ultimo_login  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -34,23 +34,10 @@ CREATE TABLE IF NOT EXISTS subcategorias (
   categoria_id  CHAR(36) NOT NULL,
   criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE (nome, categoria_id),
   
   FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE CASCADE ON UPDATE CASCADE,
   INDEX idx_subcategorias_categoria_id (categoria_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- Permissões específicas para categorias
-CREATE TABLE IF NOT EXISTS categoria_permissoes (
-  categoria_id  CHAR(36) NOT NULL,
-  permissao     ENUM('ADM','TEC','SUP','INF','VOIP','IMP','CAD','USR','DEV') NOT NULL,
-  criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (categoria_id, permissao),
-  FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE CASCADE ON UPDATE CASCADE,
-
-  INDEX idx_categoria_permissoes_categoria_id (categoria_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -59,7 +46,8 @@ CREATE TABLE IF NOT EXISTS chamados (
   id               CHAR(36)     NOT NULL PRIMARY KEY,
   titulo           VARCHAR(255) NOT NULL,
   descricao        TEXT         NOT NULL,
-  status           ENUM('ABERTO','ATRIBUIDO','RESOLVIDO','REJEITADO','FECHADO','ARQUIVADO') NOT NULL DEFAULT 'ABERTO',
+  status           ENUM('ABERTO','ATRIBUIDO','RESOLVIDO','REJEITADO','FECHADO') NOT NULL DEFAULT 'ABERTO',
+  arquivado        BOOLEAN      NOT NULL DEFAULT FALSE,
   criado_em        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   solucionado_em   DATETIME NULL,
@@ -68,18 +56,32 @@ CREATE TABLE IF NOT EXISTS chamados (
   categoria_id     CHAR(36) NOT NULL,
   subcategoria_id  CHAR(36) NOT NULL,
   criador_id       CHAR(36) NOT NULL,
-  atribuido_id     CHAR(36) NULL,
   
   FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE RESTRICT ON UPDATE CASCADE,
   FOREIGN KEY (subcategoria_id) REFERENCES subcategorias(id) ON DELETE RESTRICT ON UPDATE CASCADE,
   FOREIGN KEY (criador_id) REFERENCES usuarios(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-  FOREIGN KEY (atribuido_id) REFERENCES usuarios(id) ON DELETE SET NULL ON UPDATE CASCADE,
 
   INDEX idx_chamados_categoria_id (categoria_id),
   INDEX idx_chamados_subcategoria_id (subcategoria_id),
   INDEX idx_chamados_criador_id (criador_id),
-  INDEX idx_chamados_atribuido_id (atribuido_id),
   INDEX idx_chamados_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- Atendimentos (registros de ações tomadas nos chamados)
+CREATE TABLE IF NOT EXISTS atendimentos (
+  id            CHAR(36) NOT NULL PRIMARY KEY,
+  atribuido_id  CHAR(36) NOT NULL,
+  chamado_id    CHAR(36) NOT NULL,
+  criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (atribuido_id) REFERENCES usuarios(id) ON UPDATE CASCADE,
+  FOREIGN KEY (chamado_id) REFERENCES chamados(id) ON DELETE CASCADE ON UPDATE CASCADE,
+
+  INDEX idx_atendimentos_atribuido_id (atribuido_id),
+  INDEX idx_atendimentos_chamado_id (chamado_id),
+  INDEX idx_atendimentos_chamado_id_criado_em (chamado_id, criado_em DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -87,10 +89,11 @@ CREATE TABLE IF NOT EXISTS chamados (
 CREATE TABLE IF NOT EXISTS acompanhamentos (
   id            CHAR(36) NOT NULL PRIMARY KEY,
   conteudo      TEXT     NOT NULL,
-  criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   chamado_id    CHAR(36) NOT NULL,
   usuario_id    CHAR(36) NOT NULL,
+  criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  remetente     ENUM('TEC', 'USR') NOT NULL DEFAULT 'USR', -- indica se a mensagem foi enviada por um técnico ou usuário
 
   FOREIGN KEY (chamado_id) REFERENCES chamados(id) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON UPDATE CASCADE,
@@ -100,51 +103,30 @@ CREATE TABLE IF NOT EXISTS acompanhamentos (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
--- Relacionamentos auxiliares
-
--- Chamados abertos
-CREATE TABLE IF NOT EXISTS chamados_abertos (
-  usuario_id CHAR(36) NOT NULL,
-  chamado_id CHAR(36) NOT NULL,
-  criado_em  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (usuario_id, chamado_id),
-  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON UPDATE CASCADE,
-  FOREIGN KEY (chamado_id) REFERENCES chamados(id) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Chamados atendidos
-CREATE TABLE IF NOT EXISTS chamados_atendidos (
-  usuario_id CHAR(36) NOT NULL,
-  chamado_id CHAR(36) NOT NULL,
-  criado_em  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (usuario_id, chamado_id),
-  FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON UPDATE CASCADE,
-  FOREIGN KEY (chamado_id) REFERENCES chamados(id) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Relacionamento muitos-para-muitos entre chamados e técnicos
-CREATE TABLE IF NOT EXISTS chamado_tecnicos (
-  chamado_id CHAR(36) NOT NULL,
-  tecnico_id CHAR(36) NOT NULL,
-  criado_em  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (chamado_id, tecnico_id),
-  FOREIGN KEY (chamado_id) REFERENCES chamados(id) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (tecnico_id) REFERENCES usuarios(id) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- TODO : criar tabela de logs de atividades dos usuários no sistema e adicionar triggers para registrar ações importantes
--- Logs de atividades dos usuários
-CREATE TABLE IF NOT EXISTS logs_atividades (
-  id            CHAR(36) NOT NULL PRIMARY KEY,
+-- Permissões específicas para categorias
+CREATE TABLE IF NOT EXISTS categoria_permissoes (
+  categoria_id  CHAR(36) NOT NULL,
+  permissao     ENUM('ADM','TEC','USR','DEV') NOT NULL,
   usuario_id    CHAR(36) NOT NULL,
-  acao          VARCHAR(255) NOT NULL,
-  detalhes      TEXT NULL,
   criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (categoria_id, permissao, usuario_id),
+  FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE CASCADE ON UPDATE CASCADE,
+
+  INDEX idx_categoria_permissoes_categoria_id (categoria_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- Logs de atividades dos usuários
+CREATE TABLE IF NOT EXISTS logs (
+  id            CHAR(36) NOT NULL PRIMARY KEY,
+  usuario_id    CHAR(36) NOT NULL,
+  acao          ENUM('CRIAR', 'ATUALIZAR', 'ATIVAR', 'DESATIVAR', 'ARQUIVAR', 'DESARQUIVAR', 'DELETAR') NOT NULL,
+  entidade      VARCHAR(255) NOT NULL,
+  detalhes      TEXT NULL,
+  criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON UPDATE CASCADE,
-  INDEX idx_logs_atividades_usuario_id (usuario_id),
-  INDEX idx_logs_atividades_acao (acao)
+  INDEX idx_logs_usuario_id (usuario_id),
+  INDEX idx_logs_acao (acao)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

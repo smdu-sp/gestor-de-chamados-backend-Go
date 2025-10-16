@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -16,14 +17,33 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/utils"
 )
 
-const timeoutPadrao = 5 * time.Second
-const payloadInvalidoMsg = "verifique os dados enviados na requisição"
+const (
+	timeoutPadrao      = 5 * time.Second
+	payloadInvalidoMsg = "verifique os dados enviados na requisição"
+	erroLogMsg         = "erro ao criar log"
+	entidadeUsuario    = "USUARIO"
+)
 
 // UsuarioHandler gerencia as requisições HTTP relacionadas a usuários.
 type UsuarioHandler struct {
 	UsecaseUsr  usecase.UsuarioUsecase
 	UsecaseAuth usecase.AuthInternoUsecase
 	UsecaseLDAP usecase.AuthExternoUsecase
+	UsecaseLog  usecase.LogUsecase
+}
+
+// NewUsuarioHandler cria uma nova instância de UsuarioHandler.
+func NewUsuarioHandler(usecaseUsr usecase.UsuarioUsecase,
+	usecaseAuth usecase.AuthInternoUsecase,
+	usecaseLDAP usecase.AuthExternoUsecase,
+	usecaseLog usecase.LogUsecase) *UsuarioHandler {
+
+	return &UsuarioHandler{
+		UsecaseUsr:  usecaseUsr,
+		UsecaseAuth: usecaseAuth,
+		UsecaseLDAP: usecaseLDAP,
+		UsecaseLog:  usecaseLog,
+	}
 }
 
 // Helpers de path
@@ -42,7 +62,7 @@ func metodoHttpValido(w http.ResponseWriter, r *http.Request, metodoEsperado str
 	if r.Method != metodoEsperado {
 		response.ErrorJSON(
 			w,
-			http.StatusMethodNotAllowed,
+			http.StatusMethodNotAllowed, // status 405
 			"método não permitido",
 			response.MethodErrorResponse{
 				MetodoUsado:     r.Method,
@@ -64,9 +84,9 @@ func metodoHttpValido(w http.ResponseWriter, r *http.Request, metodoEsperado str
 // @Success 201 {object} any
 // @Failure 400 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 409 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /usuarios/criar [post]
 // Cria usuário
 func (h *UsuarioHandler) Criar(w http.ResponseWriter, r *http.Request) {
@@ -102,12 +122,14 @@ func (h *UsuarioHandler) Criar(w http.ResponseWriter, r *http.Request) {
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro interno ao criar usuário", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao criar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao criar usuário", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao criar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao criar usuário", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -116,6 +138,18 @@ func (h *UsuarioHandler) Criar(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	err := h.UsecaseLog.CriarLog(
+		ctx,
+		model.AcaoCriar,
+		entidadeUsuario,
+		fmt.Sprintf("Usuário criado via API: %s", usuario.String()),
+	)
+	if err != nil {
+		response.ErrorJSON(w, http.StatusInternalServerError, erroLogMsg, err.Error())
+		return
+	}
+
 	response.JSON(w, http.StatusCreated, response.ToUsuarioResponse(&usuario))
 }
 
@@ -132,8 +166,8 @@ func (h *UsuarioHandler) Criar(w http.ResponseWriter, r *http.Request) {
 // @Param permissao query string false "Permissão"
 // @Success 200 {object} []model.Usuario
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /usuarios/buscar-tudo [get]
 // BuscarTudo lista usuários com paginação e filtros
 func (h *UsuarioHandler) BuscarTudo(w http.ResponseWriter, r *http.Request) {
@@ -178,12 +212,14 @@ func (h *UsuarioHandler) BuscarTudo(w http.ResponseWriter, r *http.Request) {
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro interno ao listar usuários", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao listar usuários", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao listar usuários", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao listar usuários", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao listar usuários", err.Error())
 			return
 
 		default:
@@ -210,8 +246,8 @@ func (h *UsuarioHandler) BuscarTudo(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} model.Usuario
 // @Failure 404 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /usuarios/buscar-por-id/{id} [get]
 // BuscarPorID busca usuário por ID
 func (h *UsuarioHandler) BuscarPorID(w http.ResponseWriter, r *http.Request) {
@@ -238,12 +274,14 @@ func (h *UsuarioHandler) BuscarPorID(w http.ResponseWriter, r *http.Request) {
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro interno ao buscar usuário", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusInternalServerError, "tempo de requisição excedido ao buscar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao buscar usuário", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao buscar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao buscar usuário", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -267,8 +305,8 @@ func (h *UsuarioHandler) BuscarPorID(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} any
 // @Failure 404 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /usuarios/atualizar/{id} [put]
 // Atualizar atualiza usuário por ID
 func (h *UsuarioHandler) Atualizar(w http.ResponseWriter, r *http.Request) {
@@ -309,12 +347,14 @@ func (h *UsuarioHandler) Atualizar(w http.ResponseWriter, r *http.Request) {
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro interno ao atualizar usuário", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao atualizar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao atualizar usuário", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao atualizar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao atualizar usuário", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -323,7 +363,19 @@ func (h *UsuarioHandler) Atualizar(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	response.JSON(w, http.StatusOK, map[string]string{"message": "usuário atualizado com sucesso"})
+
+	err := h.UsecaseLog.CriarLog(
+		ctx,
+		model.AcaoAtualizar,
+		entidadeUsuario,
+		fmt.Sprintf("Usuário atualizado via API: %s", usuario.String()),
+	)
+	if err != nil {
+		response.ErrorJSON(w, http.StatusInternalServerError, erroLogMsg, err.Error())
+		return
+	}
+
+	response.JSON(w, http.StatusOK, response.ToUsuarioResponse(&usuario))
 }
 
 // ListaCompleta godoc
@@ -334,8 +386,8 @@ func (h *UsuarioHandler) Atualizar(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Success 200 {object} []model.Usuario
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /usuarios/lista-completa [get]
 // ListaCompleta retorna todos os usuários sem paginação
 func (h *UsuarioHandler) ListaCompleta(w http.ResponseWriter, r *http.Request) {
@@ -360,12 +412,14 @@ func (h *UsuarioHandler) ListaCompleta(w http.ResponseWriter, r *http.Request) {
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro interno ao listar usuários", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao listar usuários", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao listar usuários", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao listar usuários", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao listar usuários", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -385,8 +439,8 @@ func (h *UsuarioHandler) ListaCompleta(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Success 200 {object} []model.Usuario
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /usuarios/buscar-tecnicos [get]
 func (h *UsuarioHandler) BuscarTecnicos(w http.ResponseWriter, r *http.Request) {
 	if !metodoHttpValido(w, r, http.MethodGet) {
@@ -412,12 +466,14 @@ func (h *UsuarioHandler) BuscarTecnicos(w http.ResponseWriter, r *http.Request) 
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro interno ao listar técnicos", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao listar técnicos", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao listar técnicos", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao listar técnicos", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao listar técnicos", err.Error())
 			return
 
 		default:
@@ -445,8 +501,8 @@ func (h *UsuarioHandler) BuscarTecnicos(w http.ResponseWriter, r *http.Request) 
 // @Success 200 {object} map[string]any
 // @Failure 404 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /usuarios/desativar/{id} [delete]
 func (h *UsuarioHandler) Desativar(w http.ResponseWriter, r *http.Request) {
 	if !metodoHttpValido(w, r, http.MethodDelete) {
@@ -470,12 +526,14 @@ func (h *UsuarioHandler) Desativar(w http.ResponseWriter, r *http.Request) {
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro interno ao desativar usuário", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao desativar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao desativar usuário", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao desativar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao desativar usuário", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -484,6 +542,18 @@ func (h *UsuarioHandler) Desativar(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	err := h.UsecaseLog.CriarLog(
+		ctx,
+		model.AcaoDesativar,
+		entidadeUsuario,
+		fmt.Sprintf("Usuário desativado via API: usuário ID(%s)", id),
+	)
+	if err != nil {
+		response.ErrorJSON(w, http.StatusInternalServerError, erroLogMsg, err.Error())
+		return
+	}
+
 	response.JSON(w, http.StatusOK, response.StatusUsuario{Ativo: false})
 }
 
@@ -498,7 +568,6 @@ func (h *UsuarioHandler) Desativar(w http.ResponseWriter, r *http.Request) {
 // @Failure 404 {object} any
 // @Failure 405 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /usuarios/ativar/{id} [patch]
 func (h *UsuarioHandler) Ativar(w http.ResponseWriter, r *http.Request) {
 	if !metodoHttpValido(w, r, http.MethodPatch) {
@@ -522,12 +591,14 @@ func (h *UsuarioHandler) Ativar(w http.ResponseWriter, r *http.Request) {
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro interno ao ativar usuário", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao ativar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao ativar usuário", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao ativar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao ativar usuário", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -536,6 +607,18 @@ func (h *UsuarioHandler) Ativar(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	err := h.UsecaseLog.CriarLog(
+		ctx,
+		model.AcaoAtivar,
+		entidadeUsuario,
+		fmt.Sprintf("Usuário ativado via API: usuário ID(%s)", id),
+	)
+	if err != nil {
+		response.ErrorJSON(w, http.StatusInternalServerError, erroLogMsg, err.Error())
+		return
+	}
+
 	response.JSON(w, http.StatusOK, response.StatusUsuario{Ativo: true})
 }
 
@@ -549,8 +632,8 @@ func (h *UsuarioHandler) Ativar(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} map[string]any
 // @Failure 404 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /usuarios/autorizar/{id} [patch]
 func (h *UsuarioHandler) Autorizar(w http.ResponseWriter, r *http.Request) {
 	if !metodoHttpValido(w, r, http.MethodPatch) {
@@ -578,12 +661,14 @@ func (h *UsuarioHandler) Autorizar(w http.ResponseWriter, r *http.Request) {
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro interno ao autorizar usuário", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao autorizar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao autorizar usuário", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
-			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao autorizar usuário", err.Error())
+			response.ErrorJSON(w, http.StatusBadRequest, "requisição cancelada ao autorizar usuário", err.Error())
 			return
 
 		// fallback de segurança - 500
@@ -592,6 +677,18 @@ func (h *UsuarioHandler) Autorizar(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	err := h.UsecaseLog.CriarLog(
+		ctx,
+		model.AcaoAtualizar,
+		entidadeUsuario,
+		fmt.Sprintf("Usuário autorizado via API: usuário ID(%s)", id),
+	)
+	if err != nil {
+		response.ErrorJSON(w, http.StatusInternalServerError, erroLogMsg, err.Error())
+		return
+	}
+
 	response.JSON(w, http.StatusOK, response.AutorizacaoUsuario{Autorizado: true})
 }
 
@@ -604,10 +701,11 @@ func (h *UsuarioHandler) Autorizar(w http.ResponseWriter, r *http.Request) {
 // @Param id path string true "ID do usuário"
 // @Param permissao body object true "Permissão do usuário" example({"permissao": "ADM"})
 // @Success 200 {object} map[string]any
+// @Failure 400 {object} any
 // @Failure 404 {object} any
 // @Failure 405 {object} any
+// @Failure 408 {object} any
 // @Failure 500 {object} any
-// @Failure 504 {object} any
 // @Router /usuarios/atualizar-permissao/{id} [patch]
 func (h *UsuarioHandler) AtualizarPermissao(w http.ResponseWriter, r *http.Request) {
 	if !metodoHttpValido(w, r, http.MethodPatch) {
@@ -643,10 +741,12 @@ func (h *UsuarioHandler) AtualizarPermissao(w http.ResponseWriter, r *http.Reque
 			response.ErrorJSON(w, http.StatusInternalServerError, "erro interno ao atualizar permissão do usuário", err.Error())
 			return
 
+		// erros de contexto - 408
 		case errors.Is(err, context.DeadlineExceeded):
-			response.ErrorJSON(w, http.StatusGatewayTimeout, "tempo de requisição excedido ao atualizar permissão do usuário", err.Error())
+			response.ErrorJSON(w, http.StatusRequestTimeout, "tempo de requisição excedido ao atualizar permissão do usuário", err.Error())
 			return
 
+		// erros de contexto - 400
 		case errors.Is(err, context.Canceled):
 			response.ErrorJSON(w, http.StatusInternalServerError, "requisição cancelada ao atualizar permissão do usuário", err.Error())
 			return
@@ -657,6 +757,18 @@ func (h *UsuarioHandler) AtualizarPermissao(w http.ResponseWriter, r *http.Reque
 			return
 		}
 	}
+
+	err := h.UsecaseLog.CriarLog(
+		ctx,
+		model.AcaoAtualizar,
+		entidadeUsuario,
+		fmt.Sprintf("Permissão do usuário atualizada via API: usuário ID(%s), nova permissão(%s)", id, requisicao.Permissao),
+	)
+	if err != nil {
+		response.ErrorJSON(w, http.StatusInternalServerError, erroLogMsg, err.Error())
+		return
+	}
+
 	response.JSON(w, http.StatusOK, response.PermissaoUsuario{Permissao: requisicao.Permissao})
 }
 
@@ -712,6 +824,17 @@ func (h *UsuarioHandler) BuscarNovo(w http.ResponseWriter, r *http.Request) {
 			Nome:  usuario.Nome,
 			Email: usuario.Email,
 		})
+
+		err := h.UsecaseLog.CriarLog(
+			ctx,
+			model.AcaoAtivar,
+			entidadeUsuario,
+			fmt.Sprintf("Usuário reativado via API: usuário ID(%s)", usuario.ID),
+		)
+		if err != nil {
+			response.ErrorJSON(w, http.StatusInternalServerError, erroLogMsg, err.Error())
+		}
+		
 		return
 	}
 

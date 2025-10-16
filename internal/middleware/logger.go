@@ -24,6 +24,7 @@ type responseWriter struct {
 	status int
 }
 
+// WriteHeader captura o status code
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.status = code
 	rw.ResponseWriter.WriteHeader(code)

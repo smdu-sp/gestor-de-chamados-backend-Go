@@ -151,7 +151,7 @@ func (r *MySQLUsuarioRepository) Salvar(ctx context.Context, u *model.Usuario) e
 func (r *MySQLUsuarioRepository) Atualizar(ctx context.Context, id string, u *model.Usuario) error {
 	const metodo = "[MySQLUsuarioRepository.Atualizar]"
 
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteUsuarioPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("%s: %w", metodo, err)
 	}
@@ -198,7 +198,7 @@ func (r *MySQLUsuarioRepository) Atualizar(ctx context.Context, id string, u *mo
 
 // AtualizarPermissao atualiza a permissão de um usuário.
 func (r *MySQLUsuarioRepository) AtualizarPermissao(ctx context.Context, id string, permissao string) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteUsuarioPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLUsuarioRepository.AtualizarPermissao]: %w", err)
 	}
@@ -232,7 +232,7 @@ func (r *MySQLUsuarioRepository) AtualizarPermissao(ctx context.Context, id stri
 
 // Desativar desativa um usuário do banco de dados pelo ID.
 func (r *MySQLUsuarioRepository) Desativar(ctx context.Context, id string) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteUsuarioPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLUsuarioRepository.Desativar]: %w", err)
 	}
@@ -266,7 +266,7 @@ func (r *MySQLUsuarioRepository) Desativar(ctx context.Context, id string) error
 
 // Ativar ativa um usuário do banco de dados pelo ID.
 func (r *MySQLUsuarioRepository) Ativar(ctx context.Context, id string) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteUsuarioPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLUsuarioRepository.Ativar]: %w", err)
 	}
@@ -300,7 +300,7 @@ func (r *MySQLUsuarioRepository) Ativar(ctx context.Context, id string) error {
 
 // AtualizarUltimoLogin atualiza o campo ultimo_login para o horário atual.
 func (r *MySQLUsuarioRepository) AtualizarUltimoLogin(ctx context.Context, id string) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteUsuarioPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLUsuarioRepository.AtualizarUltimoLogin]: %w", err)
 	}
@@ -409,13 +409,13 @@ func (r *MySQLUsuarioRepository) buscar(ctx context.Context, query string, args 
 	return usuario, nil
 }
 
-// ExistePorID verifica se um usuário existe com base no ID.
-func (r *MySQLUsuarioRepository) ExistePorID(ctx context.Context, id string) (bool, error) {
+// ExisteUsuarioPorID verifica se um usuário existe com base no ID.
+func ExisteUsuarioPorID(ctx context.Context, db *sql.DB, id string) (bool, error) {
 	var existe bool
-	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM usuarios WHERE id=?)`, id).Scan(&existe)
+	err := db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM usuarios WHERE id=?)`, id).Scan(&existe)
 	if err != nil {
 		return false, utils.NewAppError(
-			"[MySQLUsuarioRepository.ExistePorID]",
+			"[MySQLUsuarioRepository.ExisteUsuarioPorID]",
 			utils.LevelError,
 			"erro ao verificar existência de usuário no banco de dados",
 			fmt.Errorf(utils.FmtErroWrap, ErrQueryContext, err),

@@ -16,41 +16,52 @@ import (
 )
 
 type authUsecase struct {
-	users usecase.UsuarioUsecase
-	jwt   jwt.JWTUsecase
-	ldap  usecase.AuthExternoUsecase
-	cfg   config.Config
+	UsecaseUsuario usecase.UsuarioUsecase
+	UsecaseJWT     jwt.JWTUsecase
+	UsecaseLDAP    usecase.AuthExternoUsecase
+	UsecaseLog     usecase.LogUsecase
+	Config         config.Config
 }
 
-func NewAuthInternoUsecase(users usecase.UsuarioUsecase, jwt jwt.JWTUsecase, ldap usecase.AuthExternoUsecase, cfg config.Config) usecase.AuthInternoUsecase {
-	return &authUsecase{users, jwt, ldap, cfg}
+func NewAuthInternoUsecase(
+	usecaseUsuario usecase.UsuarioUsecase,
+	usecaseJWT jwt.JWTUsecase,
+	usecaseLDAP usecase.AuthExternoUsecase,
+	usecaseLog usecase.LogUsecase,
+	config config.Config,
+) usecase.AuthInternoUsecase {
+
+	return &authUsecase{usecaseUsuario, usecaseJWT, usecaseLDAP, usecaseLog, config}
 }
 
 // --- Auxiliares internos ---
 
+// getBindString retorna a string de bind para o LDAP, dependendo da configuração.
 func (a *authUsecase) getBindString(login string) string {
-	if a.cfg.LDAPDomain != "" {
-		return login + a.cfg.LDAPDomain
+	if a.Config.LDAPDomain != "" {
+		return login + a.Config.LDAPDomain
 	}
 
 	ou := "users"
 	if login == "admin1" {
 		ou = "admins"
 	}
-	return "uid=" + login + ",ou=" + ou + "," + a.cfg.LDAPBase
+	return "uid=" + login + ",ou=" + ou + "," + a.Config.LDAPBase
 }
 
+// criarUsuarioSeNecessario cria um novo usuário no banco de dados se ele não existir.
 func (a *authUsecase) criarUsuarioSeNecessario(ctx context.Context, login string, u *model.Usuario) (*model.Usuario, error) {
+	const metodo = "[usecase.auth.criarUsuarioSeNecessario]: %w"
 	if u != nil {
 		return u, nil
 	}
 
-	name, mail, sLogin, err := a.ldap.PesquisarPorLogin(login)
+	name, mail, sLogin, err := a.UsecaseLDAP.PesquisarPorLogin(login)
 	if err != nil {
-		return nil, fmt.Errorf("erro ao buscar usuário no LDAP: %w", err)
+		return nil, fmt.Errorf(metodo, err)
 	}
 
-	novo := &model.Usuario{
+	usuario := &model.Usuario{
 		Nome:      name,
 		Login:     sLogin,
 		Email:     mail,
@@ -58,13 +69,18 @@ func (a *authUsecase) criarUsuarioSeNecessario(ctx context.Context, login string
 		Status:    true,
 	}
 
-	if err := a.users.CriarUsuario(ctx, novo); err != nil {
-		return nil, fmt.Errorf("erro ao criar usuário no banco: %w", err)
+	if err := a.UsecaseUsuario.CriarUsuario(ctx, usuario); err != nil {
+		return nil, fmt.Errorf(metodo, err)
 	}
 
-	return a.users.BuscarUsuarioPorLogin(ctx, login)
+	usuarioSalvo, err := a.UsecaseUsuario.BuscarUsuarioPorLogin(ctx, login)
+	if err != nil {
+		return nil, fmt.Errorf(metodo, err)
+	}
+	return usuarioSalvo, nil
 }
 
+// createClaims cria as claims do JWT a partir do usuário.
 func createClaims(u *model.Usuario) jwt.Claims {
 	return jwt.Claims{
 		ID:        u.ID,
@@ -77,71 +93,77 @@ func createClaims(u *model.Usuario) jwt.Claims {
 
 // --- Implementações da interface ---
 
+// Login autentica o usuário e retorna um par de tokens (access e refresh).
 func (a *authUsecase) Login(ctx context.Context, login, senha string) (*response.TokenPair, error) {
-	usuario, err := a.users.BuscarUsuarioPorLogin(ctx, login)
+	const metodo = "[usecase.auth.Login]: %w"
+
+	usuario, err := a.UsecaseUsuario.BuscarUsuarioPorLogin(ctx, login)
 	if err != nil && !errors.Is(err, repository.ErrUsuarioNaoEncontrado) {
-		return nil, fmt.Errorf("erro buscando usuário: %w", err)
+		return nil, fmt.Errorf(metodo, err)
 	}
 	if errors.Is(err, repository.ErrUsuarioNaoEncontrado) {
 		usuario = nil
 	}
 
 	bind := a.getBindString(login)
-	if err := a.ldap.Bind(bind, senha); err != nil {
-		return nil, fmt.Errorf("credenciais inválidas: %w", err)
+	if err := a.UsecaseLDAP.Bind(bind, senha); err != nil {
+		return nil, fmt.Errorf(metodo, err)
 	}
 
 	usuario, err = a.criarUsuarioSeNecessario(ctx, login, usuario)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(metodo, err)
 	}
 
-	_ = a.users.AtualizarUltimoLoginUsuario(ctx, usuario.ID)
+	_ = a.UsecaseUsuario.AtualizarUltimoLoginUsuario(ctx, usuario.ID)
 
 	claims := createClaims(usuario)
-	access, err := a.jwt.GerarToken(claims)
+	access, err := a.UsecaseJWT.GerarToken(claims)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(metodo, err)
 	}
-	refresh, err := a.jwt.GerarRefreshToken(claims)
+	refresh, err := a.UsecaseJWT.GerarRefreshToken(claims)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(metodo, err)
 	}
 
 	return &response.TokenPair{AccessToken: access, RefreshToken: refresh}, nil
 }
 
+// Refresh valida o refresh token e retorna um novo par de tokens (access e refresh).
 func (a *authUsecase) Refresh(ctx context.Context, refreshToken string) (*response.TokenPair, error) {
-	claims, err := a.jwt.ValidarRefreshToken(refreshToken)
+	const metodo = "[usecase.auth.Refresh]: %w"
+	claims, err := a.UsecaseJWT.ValidarRefreshToken(refreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("refresh inválido: %w", err)
+		return nil, fmt.Errorf(metodo, err)
 	}
 
-	usuario, err := a.users.BuscarUsuarioPorID(ctx, claims.ID)
+	usuario, err := a.UsecaseUsuario.BuscarUsuarioPorID(ctx, claims.ID)
 	if err != nil || usuario == nil {
-		return nil, errors.New("usuário inválido")
+		return nil, fmt.Errorf(metodo, err)
 	}
 
-	_ = a.users.AtualizarUltimoLoginUsuario(ctx, usuario.ID)
+	_ = a.UsecaseUsuario.AtualizarUltimoLoginUsuario(ctx, usuario.ID)
 
 	claims.RegisteredClaims.IssuedAt = gojwt.NewNumericDate(time.Now())
 
-	access, err := a.jwt.GerarToken(*claims)
+	access, err := a.UsecaseJWT.GerarToken(*claims)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(metodo, err)
 	}
-	refresh, err := a.jwt.GerarRefreshToken(*claims)
+	refresh, err := a.UsecaseJWT.GerarRefreshToken(*claims)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(metodo, err)
 	}
 
 	return &response.TokenPair{AccessToken: access, RefreshToken: refresh}, nil
 }
 
+// Me retorna os dados do usuário autenticado.
 func (a *authUsecase) Me(ctx context.Context, userID string) (*response.UsuarioResponse, error) {
-    usuario, err := a.users.BuscarUsuarioPorID(ctx, userID)
-    if err != nil || usuario == nil {
-        return nil, err
-    }
-    return response.ToUsuarioResponse(usuario), nil
+	usuario, err := a.UsecaseUsuario.BuscarUsuarioPorID(ctx, userID)
+	if err != nil || usuario == nil {
+		return nil, fmt.Errorf("[usecase.auth.Me]: %w", err)
+	}
+	return response.ToUsuarioResponse(usuario), nil
 }

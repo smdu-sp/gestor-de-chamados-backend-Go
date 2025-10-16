@@ -9,13 +9,23 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/utils"
 )
 
-var ErrParseWithClaims = errors.New("erro ao fazer parse com claims")
+var (
+	ErrParseWithClaims = errors.New("erro ao fazer parse com claims")
+	ErrSignedString    = errors.New("erro ao assinar token")
+)
 
 // JWTUsecase define os métodos que a implementação JWT deve fornecer
 type JWTUsecase interface {
+	// GerarToken gera um token de acesso
 	GerarToken(c Claims) (string, error)
+
+	// GerarRefreshToken gera um token de refresh
 	GerarRefreshToken(c Claims) (string, error)
+
+	// ValidarRefreshToken valida um token de refresh
 	ValidarRefreshToken(token string) (*Claims, error)
+
+	// ValidarToken valida um token de acesso
 	ValidarToken(token string) (*Claims, error)
 }
 
@@ -25,6 +35,16 @@ type GerenteJWT struct {
 	ChaveRefresh []byte
 	TLLAcesso    time.Duration
 	TLLRefresh   time.Duration
+}
+
+// NewGerenteJWT cria uma nova instância de GerenteJWT
+func NewGerenteJWT(chaveAcesso, chaveRefresh []byte, ttlAcesso, ttlRefresh time.Duration) *GerenteJWT {
+	return &GerenteJWT{
+		ChaveAcesso:  chaveAcesso,
+		ChaveRefresh: chaveRefresh,
+		TLLAcesso:    ttlAcesso,
+		TLLRefresh:   ttlRefresh,
+	}
 }
 
 // Claims define as claims personalizadas para o token JWT
@@ -39,29 +59,55 @@ type Claims struct {
 
 // GerarToken gera um token de acesso
 func (g *GerenteJWT) GerarToken(c Claims) (string, error) {
-	return g.gerarJWT(c, g.ChaveAcesso, g.TLLAcesso)
+	tokenGerado, err := g.gerarJWT(c, g.ChaveAcesso, g.TLLAcesso)
+	if err != nil {
+		return "", fmt.Errorf("[jwt.GerarToken]: %w", err)
+	}
+	return tokenGerado, nil
 }
 
 // GerarRefreshToken gera um token de refresh
 func (g *GerenteJWT) GerarRefreshToken(c Claims) (string, error) {
-	return g.gerarJWT(c, g.ChaveRefresh, g.TLLRefresh)
+	refreshTokenGerado, err := g.gerarJWT(c, g.ChaveRefresh, g.TLLRefresh)
+	if err != nil {
+		return "", fmt.Errorf("[jwt.GerarRefreshToken]: %w", err)
+	}
+	return refreshTokenGerado, nil
 }
 
 // ValidarToken valida um token de acesso
 func (g *GerenteJWT) ValidarToken(token string) (*Claims, error) {
-	return g.validarJWT(token, g.ChaveAcesso)
+	claimsValidadas, err := g.validarJWT(token, g.ChaveAcesso)
+	if err != nil {
+		return nil, fmt.Errorf("[jwt.ValidarToken]: %w", err)
+	}
+	return claimsValidadas, nil
 }
 
 // ValidarRefreshToken valida um token de refresh
 func (g *GerenteJWT) ValidarRefreshToken(token string) (*Claims, error) {
-	return g.validarJWT(token, g.ChaveRefresh)
+	claimsValidadas, err := g.validarJWT(token, g.ChaveRefresh)
+	if err != nil {
+		return nil, fmt.Errorf("[jwt.ValidarRefreshToken]: %w", err)
+	}
+	return claimsValidadas, nil
 }
 
 // gerarJWT é uma função helper interna para gerar token
 func (g *GerenteJWT) gerarJWT(c Claims, secret []byte, ttl time.Duration) (string, error) {
 	c.RegisteredClaims.ExpiresAt = goJwt.NewNumericDate(time.Now().Add(ttl))
 	tokenJWT := goJwt.NewWithClaims(goJwt.SigningMethodHS256, c)
-	return tokenJWT.SignedString(secret)
+
+	jwtString, err := tokenJWT.SignedString(secret)
+	if err != nil {
+		return "", utils.NewAppError(
+			"[jwt.gerarJWT]",
+			utils.LevelError,
+			"erro ao tentar assinar token",
+			fmt.Errorf(utils.FmtErroWrap, ErrSignedString, err),
+		)
+	}
+	return jwtString, nil
 }
 
 // validar é uma função helper interna para validar token

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"slices"
 	"strings"
 	"time"
 )
@@ -12,7 +11,7 @@ import (
 // Erros de validação específicos para o modelo Usuario.
 var (
 	ErrEmailInvalido     = errors.New("email inválido")
-	ErrPermissaoInvalida = errors.New("permissão inválida: a permissão deve ser uma das seguintes: ADM, TEC, SUP, INF, VOIP, IMP, CAD, USR, DEV")
+	ErrPermissaoInvalida = errors.New("permissão inválida, a permissão deve ser uma das seguintes: ADM, TEC, USR, DEV")
 	ErrNomeInvalido      = errors.New("nome não pode ser vazio")
 	ErrLoginInvalido     = errors.New("login não pode ser vazio")
 	ErrIDInvalido        = errors.New("ID não pode ser vazio")
@@ -22,16 +21,26 @@ var (
 type Permissao string
 
 const (
-	PermADM  Permissao = "ADM"  // Administrador
-	PermTEC  Permissao = "TEC"  // Técnico
-	PermSUP  Permissao = "SUP"  // Técnico de Suporte (Help Desk)
-	PermINF  Permissao = "INF"  // Técnico de Infraestrutura
-	PermVOIP Permissao = "VOIP" // Técnico de Telefonia
-	PermIMP  Permissao = "IMP"  // Técnico de Impressoras
-	PermCAD  Permissao = "CAD"  // Cadastro de usuários
-	PermUSR  Permissao = "USR"  // Usuário comum (pode apenas abrir chamados)
-	PermDEV  Permissao = "DEV"  // Desenvolvedor
+	// PermADM representa a permissão de Administrador.
+	PermADM Permissao = "ADM"
+
+	// PermTEC representa a permissão de Técnico.
+	PermTEC Permissao = "TEC"
+
+	// PermUSR representa a permissão de Usuário comum (pode apenas abrir chamados).
+	PermUSR Permissao = "USR"
+
+	// PermDEV representa a permissão de Desenvolvedor.
+	PermDEV Permissao = "DEV"
 )
+
+// permissoesValidas contém todas as permissões aceitas.
+var permissoesValidas = map[Permissao]struct{}{
+	PermADM: {},
+	PermTEC: {},
+	PermUSR: {},
+	PermDEV: {},
+}
 
 // Usuario representa um usuário do sistema.
 type Usuario struct {
@@ -81,7 +90,7 @@ func ValidarUsuario(u *Usuario) error {
 	if err := ValidarEmail(u.Email); err != nil {
 		erros = append(erros, err)
 	}
-	if err := ValidarPermissao(string(u.Permissao)); err != nil {
+	if err := ValidarPermissao(u.Permissao); err != nil {
 		erros = append(erros, err)
 	}
 	if len(erros) > 0 {
@@ -96,19 +105,18 @@ func ValidarEmail(email string) error {
 
 	re := regexp.MustCompile(`^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$`)
 	if !re.MatchString(email) {
-		return fmt.Errorf("[model.ValidarEmail] %w: %s", ErrEmailInvalido, email)
+		return fmt.Errorf("[model.ValidarEmail]: %w", ErrEmailInvalido)
 	}
 
 	return nil
 }
 
 // ValidarPermissao verifica se a permissão do usuário é válida.
-func ValidarPermissao(permissao string) error {
-	validPermissoes := [9]string{"ADM", "TEC", "SUP", "INF", "VOIP", "IMP", "CAD", "USR", "DEV"}
-	if slices.Contains(validPermissoes[:], permissao) {
+func ValidarPermissao(permissao Permissao) error {
+	if _, ok := permissoesValidas[permissao]; ok {
 		return nil
 	}
-	return fmt.Errorf("[model.ValidarPermissao] %w: %s", ErrPermissaoInvalida, permissao)
+	return fmt.Errorf("[model.ValidarPermissao]: %w", ErrPermissaoInvalida)
 }
 
 // UsuarioFiltro representa os filtros para listar usuários.
@@ -118,4 +126,12 @@ type UsuarioFiltro struct {
 	Busca     *string
 	Status    *bool
 	Permissao *string
+}
+
+// String retorna uma representação em string do usuário para fins de logging.
+func (u *Usuario) String() string {
+	return fmt.Sprintf(
+		"[ID=%s | Nome=%s | Login=%s | Email=%s]",
+		u.ID, u.Nome, u.Login, u.Email,
+	)
 }

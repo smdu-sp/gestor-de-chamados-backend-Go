@@ -12,6 +12,22 @@ definitions:
       refresh_token:
         type: string
     type: object
+  model.Acao:
+    enum:
+    - CRIACAO
+    - ATUALIZACAO
+    - DESATIVACAO
+    - ATIVACAO
+    - ARQUIVAMENTO
+    - DESARQUIVAMENTO
+    type: string
+    x-enum-varnames:
+    - AcaoCriacao
+    - AcaoAtualizacao
+    - AcaoDesativacao
+    - AcaoAtivacao
+    - AcaoArquivamento
+    - AcaoDesarquivamento
   model.Categoria:
     properties:
       atualizado_em:
@@ -52,6 +68,21 @@ definitions:
       subcategoriaId:
         type: string
       titulo:
+        type: string
+    type: object
+  model.Log:
+    properties:
+      acao:
+        $ref: '#/definitions/model.Acao'
+      criado_em:
+        type: string
+      detalhes:
+        type: string
+      entidade:
+        type: string
+      id:
+        type: string
+      usuario_id:
         type: string
     type: object
   model.Permissao:
@@ -112,6 +143,21 @@ definitions:
     - StatusRejeitado
     - StatusFechado
     - StatusArquivado
+  model.Subcategoria:
+    properties:
+      atualizado_em:
+        type: string
+      categoria_id:
+        type: string
+      criado_em:
+        type: string
+      id:
+        type: string
+      nome:
+        type: string
+      status:
+        type: boolean
+    type: object
   model.Usuario:
     properties:
       atualizadoEm:
@@ -169,6 +215,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -211,6 +260,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "409":
           description: Conflict
           schema: {}
@@ -247,6 +299,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -279,6 +334,9 @@ paths:
           schema: {}
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
@@ -322,6 +380,9 @@ paths:
           schema: {}
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
@@ -390,6 +451,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -410,8 +474,14 @@ paths:
             items:
               $ref: '#/definitions/model.Categoria'
             type: array
+        "400":
+          description: Bad Request
+          schema: {}
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
@@ -446,6 +516,9 @@ paths:
           schema: {}
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
@@ -487,6 +560,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -527,6 +603,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -566,6 +645,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -598,6 +680,9 @@ paths:
           schema: {}
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
@@ -658,6 +743,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -688,6 +776,9 @@ paths:
           schema: {}
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
@@ -723,6 +814,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -749,6 +843,9 @@ paths:
           schema: {}
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
@@ -783,6 +880,9 @@ paths:
           schema: {}
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
@@ -826,6 +926,129 @@ paths:
       summary: Login
       tags:
       - auth
+  /logs:
+    get:
+      consumes:
+      - application/json
+      description: Retorna lista paginada de logs.
+      parameters:
+      - description: Página
+        in: query
+        name: pagina
+        type: integer
+      - description: Limite
+        in: query
+        name: limite
+        type: integer
+      - description: Busca
+        in: query
+        name: busca
+        type: string
+      - description: ID do usuário
+        in: query
+        name: usuario_id
+        type: string
+      - description: Ação
+        in: query
+        name: acao
+        type: string
+      - description: Entidade
+        in: query
+        name: entidade
+        type: string
+      - description: 'Data de início (formato: YYYY-MM-DD)'
+        in: query
+        name: data_inicio
+        type: string
+      - description: 'Data de fim (formato: YYYY-MM-DD)'
+        in: query
+        name: data_fim
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Log'
+            type: array
+        "400":
+          description: Bad Request
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Lista todos os logs com paginação e filtros
+      tags:
+      - Logs
+  /logs/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna um log específico pelo seu ID.
+      parameters:
+      - description: ID do Log
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Log'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Busca um log pelo ID
+      tags:
+      - Logs
+  /me:
+    get:
+      description: Retorna os detalhes do usuário autenticado.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Usuario'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Me
+      tags:
+      - auth
   /refresh:
     post:
       consumes:
@@ -862,6 +1085,309 @@ paths:
       summary: Refresh
       tags:
       - auth
+  /subcategorias/ativar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Ativa uma subcategoria pelo ID.
+      parameters:
+      - description: ID da subcategoria
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Subcategoria'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Ativar subcategoria
+      tags:
+      - Subcategorias
+  /subcategorias/atualizar/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de uma subcategoria existente com os dados fornecidos
+        no corpo da requisição.
+      parameters:
+      - description: ID da subcategoria
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Subcategoria
+        in: body
+        name: subcategoria
+        required: true
+        schema:
+          $ref: '#/definitions/model.Subcategoria'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Subcategoria'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Atualizar subcategoria
+      tags:
+      - Subcategorias
+  /subcategorias/buscar-por-id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna os detalhes de uma subcategoria pelo seu ID.
+      parameters:
+      - description: ID da subcategoria
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Subcategoria'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Busca uma subcategoria pelo ID
+      tags:
+      - Subcategorias
+  /subcategorias/buscar-por-nome/{nome}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna os detalhes de uma subcategoria pelo seu nome.
+      parameters:
+      - description: Nome da subcategoria
+        in: path
+        name: nome
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Subcategoria'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Busca uma subcategoria pelo nome
+      tags:
+      - Subcategorias
+  /subcategorias/buscar-tudo:
+    get:
+      consumes:
+      - application/json
+      description: Retorna lista paginada de subcategorias
+      parameters:
+      - description: Página
+        in: query
+        name: pagina
+        type: integer
+      - description: Limite
+        in: query
+        name: limite
+        type: integer
+      - description: Busca
+        in: query
+        name: busca
+        type: string
+      - description: Status
+        in: query
+        name: status
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Subcategoria'
+            type: array
+        "400":
+          description: Bad Request
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Lista todas as subcategorias
+      tags:
+      - Subcategorias
+  /subcategorias/criar:
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova subcategoria com os dados fornecidos no corpo da
+        requisição.
+      parameters:
+      - description: Dados da subcategoria
+        in: body
+        name: subcategoria
+        required: true
+        schema:
+          $ref: '#/definitions/model.Subcategoria'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Subcategoria'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Cria uma nova subcategoria
+      tags:
+      - Subcategorias
+  /subcategorias/desativar/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Desativa (soft delete) uma subcategoria pelo ID.
+      parameters:
+      - description: ID da subcategoria
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Subcategoria'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Desativar subcategoria
+      tags:
+      - Subcategorias
+  /subcategorias/listar-completa:
+    get:
+      consumes:
+      - application/json
+      description: Retorna uma lista completa de todas as subcategorias, sem paginação.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Subcategoria'
+            type: array
+        "405":
+          description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Lista todas as subcategorias sem paginação
+      tags:
+      - Subcategorias
   /usuarios/ativar/{id}:
     patch:
       consumes:
@@ -918,11 +1444,17 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "400":
+          description: Bad Request
+          schema: {}
         "404":
           description: Not Found
           schema: {}
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
@@ -963,6 +1495,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -993,6 +1528,9 @@ paths:
           schema: {}
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
@@ -1052,6 +1590,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -1074,6 +1615,9 @@ paths:
             type: array
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
@@ -1119,6 +1663,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -1148,6 +1695,9 @@ paths:
           schema: {}
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "409":
           description: Conflict
@@ -1183,6 +1733,9 @@ paths:
         "405":
           description: Method Not Allowed
           schema: {}
+        "408":
+          description: Request Timeout
+          schema: {}
         "500":
           description: Internal Server Error
           schema: {}
@@ -1205,6 +1758,9 @@ paths:
             type: array
         "405":
           description: Method Not Allowed
+          schema: {}
+        "408":
+          description: Request Timeout
           schema: {}
         "500":
           description: Internal Server Error
