@@ -15,7 +15,6 @@ import (
 )
 
 func main() {
-
 	// Carrega variáveis de ambiente
 	err := godotenv.Load()
 	if err != nil {
@@ -51,31 +50,51 @@ func main() {
 	// Cria roteador HTTP nativo (ServeMux).
 	mux := httpx.NewMux()
 
+	// Adicionar middleware CORS para todas as rotas
+	corsHandler := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+
 	// ------------------------
 	// Rotas públicas
 	// ------------------------
 
 	// Endpoint público raiz "/"
-	mux.HandleFunc("/", httpx.Method(userH.Publico, http.MethodGet))
+	mux.Handle("/", corsHandler(http.HandlerFunc(userH.Publico)))
 
 	// Endpoint de login "/login" (gera token JWT)
-	mux.HandleFunc("/login", httpx.Method(authH.Login, http.MethodPost))
+	mux.Handle("/login", corsHandler(httpx.Method(authH.Login, http.MethodPost)))
 
 	// ------------------------
 	// Rotas protegidas
 	// ------------------------
 
-	// Cria uma cadeia de middlewares: autenticação JWT + timeout + recover
+	// Cria uma cadeia de middlewares: CORS + autenticação JWT + timeout + recover
 	authChain := func(h http.Handler) http.Handler {
-		return httpx.Chain(h, 
+		return corsHandler(httpx.Chain(h, 
 			httpx.AuthMiddleware(tm),			// valida token
 			httpx.Timeout(5*time.Second), // timeout por request
 			httpx.Recover,								// captura panics
-		)
+		))
 	}
 
 	// Rota autenticada: retorna dados do usuário logado (/me)
 	mux.Handle("/me", authChain(http.HandlerFunc(authH.Me)))
+
+	// Rota para listar usuários (exemplo de integração com frontend)
+	mux.Handle("/api/users", authChain(http.HandlerFunc(userH.Publico)))
 
 	// ------------------------
 	// RBAC (controle de acesso por papel)
@@ -96,7 +115,7 @@ func main() {
 	// ------------------------
 
 	// Exibe no log a porta em que a API está escutando
-	log.Printf("listening on %s", cfg.Addr)
+	log.Printf("🚀 Servidor rodando em %s", cfg.Addr)
 
 	// Inicia servidor HTTP com o roteador configurado
 	if err := http.ListenAndServe(cfg.Addr, mux); err != nil {
