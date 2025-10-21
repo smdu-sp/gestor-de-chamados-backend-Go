@@ -250,13 +250,13 @@ func (r *MySQLChamadoRepository) Listar(ctx context.Context, filtro model.Chamad
 	var query strings.Builder
 	args := []any{}
 
-	// TODO nao trazer os arquivados, incluir flag para exibir ou nao arquivados
+	// Não trazer os arquivados por padrão
 	query.WriteString(
 		`SELECT SQL_CALC_FOUND_ROWS
 		id, titulo, descricao, status, criado_em, 
 		atualizado_em, solucionado_em, solucao, fechado_em, 
-		categoria_id, subcategoria_id, criador_id
-		FROM chamados WHERE 1=1`,
+		categoria_id, subcategoria_id, criador_id, arquivado
+		FROM chamados WHERE arquivado = FALSE`,
 	)
 
 	if filtro.Busca != nil && *filtro.Busca != "" {
@@ -370,6 +370,7 @@ func scanChamado(scanner interface{ Scan(dest ...any) error }) (*model.Chamado, 
 		&chamado.CategoriaID,
 		&chamado.SubcategoriaID,
 		&chamado.CriadorID,
+		&chamado.Arquivado,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

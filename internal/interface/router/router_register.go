@@ -24,27 +24,29 @@ func HealthCheckRegistrarRotas(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		resp := response.HealthResponse{
 			Status:    "ok",
+			DB:        "ok",
 			Timestamp: time.Now().Format(time.RFC3339),
 		}
 
-		// Verifica conexão com o banco de dados
+		// Testa a conexão com o banco
 		if err := db.Ping(); err != nil {
 			resp.Status = "fail"
 			resp.DB = "fail"
-		} else {
-			resp.DB = "ok"
 		}
 
-		w.Header().Set("Content-Type", "application/json")
-
+		// Define o Content-Type com charset UTF-8
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		
 		if resp.Status == "fail" {
 			w.WriteHeader(http.StatusServiceUnavailable)
 		} else {
 			w.WriteHeader(http.StatusOK)
 		}
 
-		if err := json.NewEncoder(w).Encode(resp); err != nil {
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+		encoder := json.NewEncoder(w)
+		encoder.SetEscapeHTML(false)
+		if err := encoder.Encode(resp); err != nil {
+			response.ErrorJSON(w, http.StatusInternalServerError, "erro ao codificar resposta", err.Error())
 		}
 	})
 }

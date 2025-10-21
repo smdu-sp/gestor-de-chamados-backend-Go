@@ -44,15 +44,11 @@ func (a *authUsecase) getBindString(login string) string {
 
 	// Para o usuário admin do OpenLDAP
 	if login == "admin" {
-		return "cn=admin," + a.cfg.LDAPBase
+		return "cn=admin," + a.Config.LDAPBase
 	}
-<<<<<<< HEAD
-
-	// Para usuários normais (sem OU, diretamente na base)
-	return "uid=" + login + "," + a.cfg.LDAPBase
-=======
-	return "uid=" + login + ",ou=" + ou + "," + a.Config.LDAPBase
->>>>>>> 73911a9788af391f69d2bbdbfaf048d55877c2bb
+	
+	// Para usuários normais, usar diretamente na base (sem ou=people)
+	return "uid=" + login + "," + a.Config.LDAPBase
 }
 
 // criarUsuarioSeNecessario cria um novo usuário no banco de dados se ele não existir.

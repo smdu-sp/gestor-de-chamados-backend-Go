@@ -2,11 +2,8 @@ package handler
 
 import (
 	"encoding/json"
-<<<<<<< HEAD:internal/interface/handler/auth_handle.go
 	"errors"
-=======
 	"fmt"
->>>>>>> 73911a9788af391f69d2bbdbfaf048d55877c2bb:internal/interface/handler/auth_handler.go
 	"net/http"
 
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/auth/jwt"

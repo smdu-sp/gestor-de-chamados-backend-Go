@@ -12,6 +12,7 @@ func RecuperarDePanico(next http.Handler) http.Handler {
         defer func() {
             if err := recover(); err != nil {
                 log.Printf("[PANIC] %v\n%s", err, debug.Stack())
+                w.Header().Set("Content-Type", "application/json; charset=utf-8")
                 http.Error(w, "Erro interno no servidor", http.StatusInternalServerError)
             }
         }()
