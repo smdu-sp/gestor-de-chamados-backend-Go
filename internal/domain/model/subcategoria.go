@@ -10,9 +10,9 @@ type Subcategoria struct {
 	ID           string    `json:"id"`
 	Nome         string    `json:"nome"`
 	Status       bool      `json:"status"`
-	CategoriaID  string    `json:"categoria_id"`
-	CriadoEm     time.Time `json:"criado_em"`
-	AtualizadoEm time.Time `json:"atualizado_em"`
+	CategoriaID  string    `json:"categoriaId"`
+	CriadoEm     time.Time `json:"criadoEm"`
+	AtualizadoEm time.Time `json:"atualizadoEm"`
 }
 
 // NewSubcategoria cria uma nova instância de Subcategoria com os dados fornecidos.
@@ -42,4 +42,12 @@ type SubcategoriaFiltro struct {
 	Limite      int
 	Busca       *string
 	Status      *bool
+}
+
+// String retorna uma representação em string da subcategoria para fins de logging.
+func (s *Subcategoria) String() string {
+    return fmt.Sprintf(
+        "[ID=%s | Nome=%s | Status=%t | CategoriaID=%s]",
+        s.ID, s.Nome, s.Status, s.CategoriaID,
+    )
 }

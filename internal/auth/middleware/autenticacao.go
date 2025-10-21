@@ -11,13 +11,18 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/interface/response"
 )
 
-var ErrFormatoCabecalhoInvalido = errors.New("formato do cabeçalho inválido")
+var (
+	ErrFormatoCabecalhoInvalido = errors.New("formato do cabeçalho inválido")
+	ErrUsuarioNaoAutenticado    = errors.New("usuário não autenticado")
+	ErrUsuarioNaoAutorizado		 = errors.New("usuário não autorizado")
+)
 
+// ctxKey é um tipo personalizado para evitar colisões de chaves no contexto
 type ctxKey string
 
-const ChaveUsuario  ctxKey = "user"
-const prefixoBearer  string = "Bearer "
-const mensagemNaoAutorizado  = "Você não está autorizado a acessar este recurso"
+const ChaveUsuario ctxKey = "user"
+const prefixoBearer string = "Bearer "
+const mensagemNaoAutorizado = "Você não está autorizado a acessar este recurso"
 
 // AutenticarUsuario autentica o usuário e atualiza o último login diretamente via svc
 func AutenticarUsuario(next http.Handler, gJWT jwt.JWTUsecase, usecase usecase.UsuarioUsecase) http.Handler {
@@ -27,7 +32,7 @@ func AutenticarUsuario(next http.Handler, gJWT jwt.JWTUsecase, usecase usecase.U
 		// Verifica o cabeçalho Authorization
 		auth := r.Header.Get("Authorization")
 		if !strings.HasPrefix(auth, prefixoBearer) {
-			response.ErrorJSON(w, http.StatusUnauthorized, mensagemNaoAutorizado, nil)
+			response.ErrorJSON(w, http.StatusUnauthorized, mensagemNaoAutorizado, ErrUsuarioNaoAutorizado.Error())
 			return
 		}
 

@@ -139,7 +139,7 @@ func (u *UsuarioUsecase) AtualizarPermissaoUsuario(ctx context.Context, id strin
 		)
 	}
 
-	if err := model.ValidarPermissao(permissao); err != nil {
+	if err := model.ValidarPermissao(model.Permissao(permissao)); err != nil {
 		return fmt.Errorf("[usecase.AtualizarPermissaoUsuario]: %w", err)
 	}
 

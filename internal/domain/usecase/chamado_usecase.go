@@ -31,12 +31,6 @@ type ArmazenarChamado interface {
 type AtualizarChamado interface {
 	// AtualizarStatusChamado atualiza o status de um chamado, podendo incluir uma solução.
 	AtualizarStatusChamado(ctx context.Context, id string, status string, solucao *string) error
-
-	// AtribuirTecnicoChamado atribui um técnico a um chamado.
-	AtribuirTecnicoChamado(ctx context.Context, id string, tecnicoID string) error
-
-	// RemoverTecnicoChamado remove o técnico atribuído de um chamado.
-	RemoverTecnicoChamado(ctx context.Context, id string) error
 }
 
 // ListarChamados é a interface que define os métodos para listar e buscar chamados com filtros.

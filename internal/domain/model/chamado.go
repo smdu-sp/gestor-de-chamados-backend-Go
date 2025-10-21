@@ -3,7 +3,6 @@ package model
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"time"
 )
 
@@ -29,12 +28,23 @@ const (
 	StatusArquivado StatusChamado = "ARQUIVADO"
 )
 
+// statusChamadoValidos contém todos os status aceitos.
+var statusChamadoValidos = map[StatusChamado]struct{}{
+	StatusAberto:    {},
+	StatusAtribuido: {},
+	StatusResolvido: {},
+	StatusRejeitado: {},
+	StatusFechado:   {},
+	StatusArquivado: {},
+}
+
 // Chamado representa um chamado no sistema
 type Chamado struct {
 	ID             string        `json:"id"`
 	Titulo         string        `json:"titulo"`
 	Descricao      string        `json:"descricao"`
 	Status         StatusChamado `json:"status"`
+	Arquivado      bool          `json:"arquivado"`
 	CriadoEm       time.Time     `json:"criadoEm"`
 	AtualizadoEm   time.Time     `json:"atualizadoEm"`
 	SolucionadoEm  *time.Time    `json:"solucionadoEm,omitempty"`
@@ -43,17 +53,17 @@ type Chamado struct {
 	CategoriaID    string        `json:"categoriaId"`
 	SubcategoriaID string        `json:"subcategoriaId"`
 	CriadorID      string        `json:"criadorId"`
-	AtribuidoID    *string        `json:"atribuidoId"`
 }
 
 // NewChamado cria uma nova instância de Chamado com os dados fornecidos
-func NewChamado(id, titulo, descricao string, status StatusChamado, categoriaID, subcategoriaID, criadorID string) (*Chamado, error) {
+func NewChamado(id, titulo, descricao string, status StatusChamado, arquivado bool, categoriaID, subcategoriaID, criadorID string) (*Chamado, error) {
 	now := time.Now()
 	chamado := &Chamado{
 		ID:             id,
 		Titulo:         titulo,
 		Descricao:      descricao,
 		Status:         status,
+		Arquivado:      arquivado,
 		CriadoEm:       now,
 		AtualizadoEm:   now,
 		CategoriaID:    categoriaID,
@@ -62,7 +72,7 @@ func NewChamado(id, titulo, descricao string, status StatusChamado, categoriaID,
 	}
 
 	if err := ValidarChamado(chamado); err != nil {
-		return nil, fmt.Errorf("[model.NewChamado] %w", err)
+		return nil, fmt.Errorf("[model.NewChamado]: %w", err)
 	}
 	return chamado, nil
 }
@@ -77,7 +87,7 @@ func ValidarChamado(c *Chamado) error {
 	if c.Descricao == "" {
 		erros = append(erros, ErrDescricaoChamadoInvalido)
 	}
-	if err := ValidarStatusChamado(string(c.Status)); err != nil {
+	if err := ValidarStatusChamado(c.Status); err != nil {
 		erros = append(erros, err)
 	}
 	if c.CategoriaID == "" {
@@ -96,15 +106,11 @@ func ValidarChamado(c *Chamado) error {
 }
 
 // ValidarStatusChamado verifica se o status do chamado é válido
-func ValidarStatusChamado(status string) error {
-	validStatus := [6]string{"ABERTO", "ATRIBUIDO", "RESOLVIDO", "REJEITADO", "FECHADO", "ARQUIVADO"}
-	if slices.Contains(validStatus[:], status) {
+func ValidarStatusChamado(status StatusChamado) error {
+	if _, ok := statusChamadoValidos[status]; ok {
 		return nil
 	}
-	return fmt.Errorf(
-		"[validator.ValidarStatusChamado] erro ao validar status do chamado: %w",
-		ErrStatusChamadoInvalido,
-	)
+	return fmt.Errorf("[model.ValidarStatusChamado]: %w", ErrStatusChamadoInvalido)
 }
 
 // AdiconarSolucao adiciona uma solução ao chamado e atualiza seu status
@@ -113,14 +119,6 @@ func (c *Chamado) AdiconarSolucao(solucao string) {
 	c.Solucao = &solucao
 	c.SolucionadoEm = &now
 	c.Status = StatusResolvido
-	c.AtualizadoEm = now
-}
-
-// AtribuirTecnico atribui um técnico ao chamado e atualiza seu status
-func (c *Chamado) AtribuirTecnico(tecnicoID string) {
-	now := time.Now()
-	c.AtribuidoID = &tecnicoID
-	c.Status = StatusAtribuido
 	c.AtualizadoEm = now
 }
 
@@ -133,5 +131,12 @@ type ChamadoFiltro struct {
 	CategoriaID    *string
 	SubcategoriaID *string
 	CriadorID      *string
-	AtribuidoID    *string
+}
+
+// String retorna uma representação de Chamado para fins de logging.
+func (c *Chamado) String() string {
+	return fmt.Sprintf(
+		"[ID=%s | Título=%s | Status=%s | CategoriaID=%s | SubcategoriaID=%s | CriadorID=%s | Arquivado=%t]",
+		c.ID, c.Titulo, c.Status, c.CategoriaID, c.SubcategoriaID, c.CriadorID, c.Arquivado,
+	)
 }

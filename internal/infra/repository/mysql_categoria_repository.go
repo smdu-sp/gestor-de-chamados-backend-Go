@@ -130,7 +130,7 @@ func (r *MySQLCategoriaRepository) Salvar(ctx context.Context, c *model.Categori
 func (r *MySQLCategoriaRepository) Atualizar(ctx context.Context, id string, c *model.Categoria) error {
 	const metodo = "[MySQLCategoriaRepository.Atualizar]"
 
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteCategoriaPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("%s: %w", metodo, err)
 	}
@@ -176,7 +176,7 @@ func (r *MySQLCategoriaRepository) Atualizar(ctx context.Context, id string, c *
 
 // Ativar ativa uma categoria pelo seu ID.
 func (r *MySQLCategoriaRepository) Ativar(ctx context.Context, id string) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteCategoriaPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLCategoriaRepository.Ativar]: %w", err)
 	}
@@ -210,7 +210,7 @@ func (r *MySQLCategoriaRepository) Ativar(ctx context.Context, id string) error 
 
 // Desativar desativa (soft delete) uma categoria pelo seu ID.
 func (r *MySQLCategoriaRepository) Desativar(ctx context.Context, id string) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteCategoriaPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLCategoriaRepository.Desativar]: %w", err)
 	}
@@ -305,7 +305,7 @@ func (r *MySQLCategoriaRepository) Listar(ctx context.Context, filtro model.Cate
 // Metodos auxiliares
 
 // buscar executa uma consulta que retorna uma única categoria.
-func (r *MySQLCategoriaRepository) buscar(ctx context.Context, query string, args ...interface{}) (*model.Categoria, error) {
+func (r *MySQLCategoriaRepository) buscar(ctx context.Context, query string, args ...any) (*model.Categoria, error) {
 	row := r.db.QueryRowContext(ctx, query, args...)
 	categoria, err := scanCategoria(row)
 	if err != nil {
@@ -314,13 +314,13 @@ func (r *MySQLCategoriaRepository) buscar(ctx context.Context, query string, arg
 	return categoria, nil
 }
 
-// ExistePorID verifica se uma categoria existe pelo seu ID.
-func (r *MySQLCategoriaRepository) ExistePorID(ctx context.Context, id string) (bool, error) {
+// ExisteCategoriaPorID verifica se uma categoria existe pelo seu ID.
+func ExisteCategoriaPorID(ctx context.Context, db *sql.DB, id string) (bool, error) {
 	var exists bool
-	err := r.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM categorias WHERE id = ?)", id).Scan(&exists)
+	err := db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM categorias WHERE id = ?)", id).Scan(&exists)
 	if err != nil {
 		return false, utils.NewAppError(
-			"[MySQLCategoriaRepository.ExistePorID]",
+			"[MySQLCategoriaRepository.ExisteCategoriaPorID]",
 			utils.LevelError,
 			"Falha ao verificar existência da categoria por ID",
 			fmt.Errorf(utils.FmtErroWrap, ErrQueryContext, err),
@@ -341,7 +341,7 @@ func scanCategoria(scanner interface{ Scan(dest ...any) error }) (*model.Categor
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // Retorna nil se não encontrar a categoria
+			return nil, nil 
 		}
 		return nil, utils.NewAppError(
 			"[MySQLCategoriaRepository.scanCategoria]",

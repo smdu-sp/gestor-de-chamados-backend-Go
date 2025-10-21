@@ -2,14 +2,21 @@ package ldap
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"strings"
 
 	goLdap "github.com/go-ldap/ldap/v3"
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain/usecase"
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/utils"
 )
 
-var ErrUsuarioNaoEncontradoNoLDAP = fmt.Errorf("usuário não encontrado no LDAP")
+var (
+	ErrUsuarioNaoEncontradoNoLDAP = errors.New("usuário não encontrado no LDAP")
+	ErrConectarLDAPViaDialURL     = errors.New("erro ao conectar ao servidor LDAP via DialURL")
+	ErrIniciarTLSNoLDAP           = errors.New("erro ao iniciar TLS na conexão LDAP")
+	ErrBindLDAP                   = errors.New("erro ao fazer bind no servidor LDAP")
+)
 
 // LDAPConnection é a interface que abstrai uma conexão LDAP do go-ldap
 type ConexaoLDAP interface {
@@ -39,6 +46,18 @@ type Client struct {
 
 	// ConnectFunc permite injeção de mock em testes
 	ConnectFunc func(user, pass string) (ConexaoLDAP, error)
+}
+
+// NewClient cria uma nova instância de Client
+func NewClienteLDAP(server, domain, base, user, pass, loginAttr string) *Client {
+	return &Client{
+		Server:    server,
+		Domain:    domain,
+		Base:      base,
+		User:      user,
+		Pass:      pass,
+		LoginAttr: loginAttr,
+	}
 }
 
 // Garantia de que Client implementa usecase.AuthExternoUsecase
@@ -99,13 +118,19 @@ func (c *Client) PesquisarPorLogin(login string) (nome, email, outLogin string, 
 
 // connect cria conexão LDAP e faz bind com usuário e senha
 func (c *Client) conectar(user, pass string) (ConexaoLDAP, error) {
+	const metodo = "[ldap.conectar]"
 	if c.ConnectFunc != nil {
 		return c.ConnectFunc(user, pass)
 	}
 
 	ldapConn, err := goLdap.DialURL(c.Server)
 	if err != nil {
-		return nil, err
+		return nil, utils.NewAppError(
+			metodo,
+			utils.LevelError,
+			"Erro ao conectar ao servidor LDAP",
+			fmt.Errorf(utils.FmtErroWrap, ErrConectarLDAPViaDialURL, err),
+		)
 	}
 
 	conn := &conexaoLDAPReal{ldapConn}
@@ -113,13 +138,23 @@ func (c *Client) conectar(user, pass string) (ConexaoLDAP, error) {
 	if strings.HasPrefix(c.Server, "ldaps") {
 		if err := conn.StartTLS(&tls.Config{InsecureSkipVerify: true}); err != nil {
 			conn.Close()
-			return nil, err
+			return nil, utils.NewAppError(
+				metodo,
+				utils.LevelError,
+				"Erro ao conectar ao servidor LDAP",
+				fmt.Errorf(utils.FmtErroWrap, ErrIniciarTLSNoLDAP, err),
+			)
 		}
 	}
 
 	if err := conn.Bind(user, pass); err != nil {
 		conn.Close()
-		return nil, err
+		return nil, utils.NewAppError(
+			metodo,
+			utils.LevelError,
+			"Erro ao autenticar no servidor LDAP",
+			fmt.Errorf(utils.FmtErroWrap, ErrBindLDAP, err),
+		)
 	}
 
 	return conn, nil

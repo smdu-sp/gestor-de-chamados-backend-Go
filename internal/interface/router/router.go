@@ -18,7 +18,7 @@ import (
 	uc "github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/usecase"
 )
 
-var prefixosPublicos = []string{
+var prefixosPublicos = [4]string{
 	"/health",
 	"/login",
 	"/refresh",
@@ -45,38 +45,53 @@ func InicializarRoteadorHTTP(cfg config.Config, db *sql.DB) http.Handler {
 	subcategoriaRepository := repository.NewMySQLSubcategoriaRepository(db)
 	subcategoriaUsecase := uc.NewSubcategoriaUsecase(subcategoriaRepository)
 
+	// Repositório e caso de uso de logs
+	logRepository := repository.NewMySQLLogRepository(db)
+	logUsecase := uc.NewLogUsecase(logRepository)
+
+	// Repositório e caso de uso de acompanhamentos
+	acompanhamentoRepository := repository.NewMySQLAcompanhamentoRepository(db)
+	acompanhamentoUsecase := uc.NewAcompanhamentoUsecase(acompanhamentoRepository)
+
+	// Repositório e caso de uso de atendimentos
+	atendimentoRepository := repository.NewMySQLAtendimentoRepository(db)
+	atendimentoUsecase := uc.NewAtendimentoUsecase(atendimentoRepository)
+
+	// Repositório e caso de uso de categoriaPermissão
+	categoriaPermissaoRepository := repository.NewMySQLCategoriaPermissaoRepository(db)
+	categoriaPermissaoUsecase := uc.NewCategoriaPermissaoUsecase(categoriaPermissaoRepository)
+
 	// Gerenciador JWT
-	gerenteJWT := &jwt.GerenteJWT{
-		ChaveAcesso:  []byte(cfg.JWTSecret),
-		ChaveRefresh: []byte(cfg.RTSecret),
-		TLLAcesso:    converterDuracao(cfg.AccessTTL),
-		TLLRefresh:   converterDuracao(cfg.RefreshTTL),
-	}
-
-	// Cliente LDAP
-	clienteLDAP := &ldap.Client{
-		Server:    cfg.LDAPServer,
-		Domain:    cfg.LDAPDomain,
-		Base:      cfg.LDAPBase,
-		User:      cfg.LDAPUser,
-		Pass:      cfg.LDAPPass,
-		LoginAttr: cfg.LDAPLoginAttr,
-	}
-
-	// Caso de uso de autenticação
-	authUsecase := auth.NewAuthInternoUsecase(
-		usuarioUsecase,
-		gerenteJWT,
-		clienteLDAP,
-		cfg,
+	gerenteJWT := jwt.NewGerenteJWT(
+		[]byte(cfg.JWTSecret),
+		[]byte(cfg.RTSecret),
+		converterDuracao(cfg.AccessTTL),
+		converterDuracao(cfg.RefreshTTL),
 	)
 
+	// Cliente LDAP
+	clienteLDAP := ldap.NewClienteLDAP(
+		cfg.LDAPServer,
+		cfg.LDAPDomain,
+		cfg.LDAPBase,
+		cfg.LDAPUser,
+		cfg.LDAPPass,
+		cfg.LDAPLoginAttr,
+	)
+
+	// Caso de uso de autenticação
+	authUsecase := auth.NewAuthInternoUsecase(usuarioUsecase, gerenteJWT, clienteLDAP, logUsecase, cfg)
+
 	// Handlers
-	AuthHandler := &handler.AuthHandler{Usecase: authUsecase}
-	usuarioHandler := &handler.UsuarioHandler{UsecaseUsr: usuarioUsecase, UsecaseAuth: authUsecase, UsecaseLDAP: clienteLDAP,}
-	chamadoHandler := &handler.ChamadoHandler{Usecase: chamadoUsecase}
-	categoriaHandler := &handler.CategoriaHandler{Usecase: categoriaUsecase}
-	subcategoriaHandler := &handler.SubcategoriaHandler{Usecase: subcategoriaUsecase}
+	AuthHandler := handler.NewAuthHandler(authUsecase)
+	usuarioHandler := handler.NewUsuarioHandler(usuarioUsecase, authUsecase, clienteLDAP, logUsecase)
+	chamadoHandler := handler.NewChamadoHandler(chamadoUsecase, logUsecase)
+	categoriaHandler := handler.NewCategoriaHandler(categoriaUsecase, logUsecase)
+	subcategoriaHandler := handler.NewSubcategoriaHandler(subcategoriaUsecase, logUsecase)
+	logHandler := handler.NewLogHandler(logUsecase)
+	acompanhamentoHandler := handler.NewAcompanhamentoHandler(acompanhamentoUsecase, logUsecase)
+	atendimentoHandler := handler.NewAtendimentoHandler(atendimentoUsecase, logUsecase)
+	categoriaPermissaoHandler := handler.NewCategoriaPermissaoHandler(categoriaPermissaoUsecase, logUsecase)
 
 	// Rotas públicas
 	publico := http.NewServeMux()
@@ -91,10 +106,15 @@ func InicializarRoteadorHTTP(cfg config.Config, db *sql.DB) http.Handler {
 	ChamadoRegistrarRotas(muxProtegido, chamadoHandler, gerenteJWT, usuarioUsecase)
 	CategoriaRegistrarRotas(muxProtegido, categoriaHandler, gerenteJWT, usuarioUsecase)
 	SubcategoriaRegistrarRotas(muxProtegido, subcategoriaHandler, gerenteJWT, usuarioUsecase)
+	LogRegistrarRotas(muxProtegido, logHandler, gerenteJWT, usuarioUsecase)
+	AcompanhamentoRegistrarRotas(muxProtegido, acompanhamentoHandler, gerenteJWT, usuarioUsecase)
+	AtendimentoRegistrarRotas(muxProtegido, atendimentoHandler, gerenteJWT, usuarioUsecase)
+	CategoriaPermissaoRegistrarRotas(muxProtegido, categoriaPermissaoHandler, gerenteJWT, usuarioUsecase)
 
 	// Roteador principal com CORS
 	rotas := CriarRoteadorAutenticacao(publico, muxProtegido, gerenteJWT, usuarioUsecase)
 	rotas = middleware.CORS(cfg.CORSOrigin)(rotas)
+	rotas = middleware.RecuperarDePanico(rotas)
 
 	log.Println("CORS liberado para:", cfg.CORSOrigin)
 	return rotas

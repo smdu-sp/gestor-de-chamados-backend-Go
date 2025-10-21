@@ -2,7 +2,11 @@ package handler
 
 import (
 	"encoding/json"
+<<<<<<< HEAD:internal/interface/handler/auth_handle.go
 	"errors"
+=======
+	"fmt"
+>>>>>>> 73911a9788af391f69d2bbdbfaf048d55877c2bb:internal/interface/handler/auth_handler.go
 	"net/http"
 
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/auth/jwt"
@@ -14,6 +18,11 @@ import (
 // AuthHandler gerencia as requisições HTTP relacionadas à autenticação.
 type AuthHandler struct {
 	Usecase usecase.AuthInternoUsecase
+}
+
+// NewAuthHandler cria uma nova instância de AuthHandler.
+func NewAuthHandler(usecase usecase.AuthInternoUsecase) *AuthHandler {
+	return &AuthHandler{Usecase: usecase}
 }
 
 // RefreshRequest representa o payload para a requisição de refresh de tokens.
@@ -32,7 +41,7 @@ type LoginDto struct {
 func parseLoginRequest(r *http.Request) (*LoginDto, error) {
 	var req LoginDto
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("falha ao decodificar JSON: %w", err)
 	}
 	if req.Login == "" || req.Senha == "" {
 		return nil, errors.New("login e senha são obrigatórios")
@@ -67,7 +76,7 @@ func jwtClaimsFromRequest(r *http.Request) *jwt.Claims {
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	req, err := parseLoginRequest(r)
 	if err != nil {
-		response.ErrorJSON(w, http.StatusBadRequest, "payload inválido", err.Error())
+		response.ErrorJSON(w, http.StatusBadRequest, payloadInvalidoMsg, err.Error())
 		return
 	}
 
@@ -95,7 +104,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var body RefreshRequest
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		response.ErrorJSON(w, http.StatusBadRequest, "payload inválido", err.Error())
+		response.ErrorJSON(w, http.StatusBadRequest, payloadInvalidoMsg, err.Error())
 		return
 	}
 
@@ -108,6 +117,16 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, tokens)
 }
 
+// Me godoc
+// @Summary      Me
+// @Description  Retorna os detalhes do usuário autenticado.
+// @Tags         auth
+// @Produce      json
+// @Success      200  {object}  model.Usuario
+// @Failure      401  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Router       /me [get]
+// Me retorna os detalhes do usuário autenticado.
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	claims := jwtClaimsFromRequest(r)
 	if claims == nil {
@@ -117,7 +136,7 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 
 	usuario, err := h.Usecase.Me(r.Context(), claims.ID)
 	if err != nil || usuario == nil {
-		response.ErrorJSON(w, http.StatusNotFound, "usuário não encontrado", nil)
+		response.ErrorJSON(w, http.StatusNotFound, "usuário não encontrado", err.Error())
 		return
 	}
 

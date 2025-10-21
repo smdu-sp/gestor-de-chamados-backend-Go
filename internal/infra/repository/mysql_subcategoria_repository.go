@@ -81,6 +81,19 @@ func (r *MySQLSubcategoriaRepository) BuscarPorNome(ctx context.Context, nome st
 func (r *MySQLSubcategoriaRepository) Salvar(ctx context.Context, s *model.Subcategoria) error {
 	const metodo = "[MySQLSubcategoriaRepository.Salvar]"
 
+	existe, err := ExisteCategoriaPorID(ctx, r.db, s.CategoriaID)
+	if err != nil {
+		return fmt.Errorf("%s: %w", metodo, err)
+	}
+	if !existe {
+		return utils.NewAppError(
+			metodo,
+			utils.LevelInfo,
+			"não foi possível salvar a subcategoria",
+			ErrCategoriaNaoEncontrada,
+		)
+	}
+
 	resultado, err := r.db.ExecContext(
 		ctx,
 		`INSERT INTO subcategorias (
@@ -132,7 +145,7 @@ func (r *MySQLSubcategoriaRepository) Salvar(ctx context.Context, s *model.Subca
 func (r *MySQLSubcategoriaRepository) Atualizar(ctx context.Context, id string, s *model.Subcategoria) error {
 	const metodo = "[MySQLSubcategoriaRepository.Atualizar]"
 
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteSubcategoriaPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("%s: %w", metodo, err)
 	}
@@ -181,7 +194,7 @@ func (r *MySQLSubcategoriaRepository) Atualizar(ctx context.Context, id string, 
 
 // Ativar ativa uma subcategoria.
 func (r *MySQLSubcategoriaRepository) Ativar(ctx context.Context, id string) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteSubcategoriaPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLSubcategoriaRepository.Ativar]: %w", err)
 	}
@@ -215,7 +228,7 @@ func (r *MySQLSubcategoriaRepository) Ativar(ctx context.Context, id string) err
 
 // Desativar desativa uma subcategoria.
 func (r *MySQLSubcategoriaRepository) Desativar(ctx context.Context, id string) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteSubcategoriaPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLSubcategoriaRepository.Desativar]: %w", err)
 	}
@@ -309,7 +322,7 @@ func (r *MySQLSubcategoriaRepository) Listar(ctx context.Context, filtro model.S
 // Metodos auxiliares
 
 // buscar executa uma consulta que retorna uma única subcategoria.
-func (r *MySQLSubcategoriaRepository) buscar(ctx context.Context, query string, args ...interface{}) (*model.Subcategoria, error) {
+func (r *MySQLSubcategoriaRepository) buscar(ctx context.Context, query string, args ...any) (*model.Subcategoria, error) {
 	row := r.db.QueryRowContext(ctx, query, args...)
 
 	subcategoria, err := scanSubcategoria(row)
@@ -320,13 +333,13 @@ func (r *MySQLSubcategoriaRepository) buscar(ctx context.Context, query string, 
 	return subcategoria, nil
 }
 
-// ExistePorID verifica se uma subcategoria existe pelo seu ID.
-func (r *MySQLSubcategoriaRepository) ExistePorID(ctx context.Context, id string) (bool, error) {
+// ExisteSubcategoriaPorID verifica se uma subcategoria existe pelo seu ID.
+func ExisteSubcategoriaPorID(ctx context.Context, db *sql.DB, id string) (bool, error) {
 	var existe bool
-	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM subcategorias WHERE id=?)`, id).Scan(&existe)
+	err := db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM subcategorias WHERE id=?)`, id).Scan(&existe)
 	if err != nil {
 		return false, utils.NewAppError(
-			"[MySQLSubcategoriaRepository.ExistePorID]",
+			"[MySQLSubcategoriaRepository.ExisteSubcategoriaPorID]",
 			utils.LevelError,
 			"erro ao verificar a existência da subcategoria pelo ID no banco de dados",
 			fmt.Errorf(utils.FmtErroWrap, ErrQueryContext, err),

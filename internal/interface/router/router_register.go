@@ -89,16 +89,14 @@ func ChamadoRegistrarRotas(mux *http.ServeMux, chmH *handler.ChamadoHandler, jwt
 		)
 	}
 
-	mux.Handle("/chamados/criar", aplicarPermissoes(chmH.Criar, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/chamados/atualizar/", aplicarPermissoes(chmH.Atualizar, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/chamados/buscar-por-id/", aplicarPermissoes(chmH.BuscarPorID, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/chamados/buscar-tudo", aplicarPermissoes(chmH.BuscarTudo, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/chamados/lista-completa", aplicarPermissoes(chmH.ListaCompleta, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/chamados/atualizar-status/", aplicarPermissoes(chmH.AtualizarStatus, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/chamados/arquivar/", aplicarPermissoes(chmH.Arquivar, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/chamados/desarquivar/", aplicarPermissoes(chmH.Desarquivar, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/chamados/atribuir-tecnico/", aplicarPermissoes(chmH.AtribuirTecnico, "ADM", "TEC", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/chamados/remover-tecnico/", aplicarPermissoes(chmH.RemoverTecnicoChamado, "ADM", "TEC", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
+	mux.Handle("/chamados/criar", aplicarPermissoes(chmH.Criar, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/chamados/atualizar/", aplicarPermissoes(chmH.Atualizar, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/chamados/buscar-por-id/", aplicarPermissoes(chmH.BuscarPorID, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/chamados/buscar-tudo", aplicarPermissoes(chmH.BuscarTudo, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/chamados/lista-completa", aplicarPermissoes(chmH.ListaCompleta, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/chamados/atualizar-status/", aplicarPermissoes(chmH.AtualizarStatus, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/chamados/arquivar/", aplicarPermissoes(chmH.Arquivar, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/chamados/desarquivar/", aplicarPermissoes(chmH.Desarquivar, "ADM", "TEC", "USR", "DEV"))
 }
 
 // CategoriaRegistrarRotas registra as rotas de categoria
@@ -113,9 +111,9 @@ func CategoriaRegistrarRotas(mux *http.ServeMux, catH *handler.CategoriaHandler,
 
 	mux.Handle("/categorias/criar", aplicarPermissoes(catH.Criar, "ADM"))
 	mux.Handle("/categorias/atualizar/", aplicarPermissoes(catH.Atualizar, "ADM"))
-	mux.Handle("/categorias/buscar-por-id/", aplicarPermissoes(catH.BuscarPorID, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/categorias/buscar-tudo", aplicarPermissoes(catH.BuscarTudo, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/categorias/lista-completa", aplicarPermissoes(catH.ListaCompleta, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
+	mux.Handle("/categorias/buscar-por-id/", aplicarPermissoes(catH.BuscarPorID, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/categorias/buscar-tudo", aplicarPermissoes(catH.BuscarTudo, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/categorias/lista-completa", aplicarPermissoes(catH.ListaCompleta, "ADM", "TEC", "USR", "DEV"))
 	mux.Handle("/categorias/desativar/", aplicarPermissoes(catH.Desativar, "ADM"))
 	mux.Handle("/categorias/ativar/", aplicarPermissoes(catH.Ativar, "ADM"))
 }
@@ -132,9 +130,73 @@ func SubcategoriaRegistrarRotas(mux *http.ServeMux, subcatH *handler.Subcategori
 
 	mux.Handle("/subcategorias/criar", aplicarPermissoes(subcatH.Criar, "ADM"))
 	mux.Handle("/subcategorias/atualizar/", aplicarPermissoes(subcatH.Atualizar, "ADM"))
-	mux.Handle("/subcategorias/buscar-por-id/", aplicarPermissoes(subcatH.BuscarPorID, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/subcategorias/buscar-tudo", aplicarPermissoes(subcatH.BuscarTudo, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
-	mux.Handle("/subcategorias/lista-completa", aplicarPermissoes(subcatH.ListaCompleta, "ADM", "TEC", "USR", "CAD", "DEV", "SUP", "INF", "VOIP", "IMP"))
+	mux.Handle("/subcategorias/buscar-por-id/", aplicarPermissoes(subcatH.BuscarPorID, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/subcategorias/buscar-tudo", aplicarPermissoes(subcatH.BuscarTudo, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/subcategorias/lista-completa", aplicarPermissoes(subcatH.ListaCompleta, "ADM", "TEC", "USR", "DEV"))
 	mux.Handle("/subcategorias/desativar/", aplicarPermissoes(subcatH.Desativar, "ADM"))
 	mux.Handle("/subcategorias/ativar/", aplicarPermissoes(subcatH.Ativar, "ADM"))
+}
+
+// LogRegistrarRotas registra as rotas de log
+func LogRegistrarRotas(mux *http.ServeMux, logH *handler.LogHandler, jwtManager *jwt.GerenteJWT, svc usecase.UsuarioUsecase) {
+	// helper para aplicar autenticação + permissões
+	aplicarPermissoes := func(handler http.HandlerFunc, perms ...string) http.Handler {
+		return middleware.AutenticarUsuario(
+			middleware.RequerPermissoes(perms...)(handler),
+			jwtManager, svc,
+		)
+	}
+
+	mux.Handle("/logs/buscar-por-id/", aplicarPermissoes(logH.BuscarPorID, "ADM", "TEC"))
+	mux.Handle("/logs/buscar-tudo", aplicarPermissoes(logH.BuscarTudo, "ADM", "TEC"))
+}
+
+// AcompanhamentoRegistrarRotas registra as rotas de acompanhamento
+func AcompanhamentoRegistrarRotas(mux *http.ServeMux, acmH *handler.AcompanhamentoHandler, jwtManager *jwt.GerenteJWT, svc usecase.UsuarioUsecase) {
+	// helper para aplicar autenticação + permissões
+	aplicarPermissoes := func(handler http.HandlerFunc, perms ...string) http.Handler {
+		return middleware.AutenticarUsuario(
+			middleware.RequerPermissoes(perms...)(handler),
+			jwtManager, svc,
+		)
+	}
+
+	mux.Handle("/acompanhamentos/criar", aplicarPermissoes(acmH.Criar, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/acompanhamentos/buscar-por-id/", aplicarPermissoes(acmH.BuscarPorID, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/acompanhamentos/buscar-tudo", aplicarPermissoes(acmH.BuscarTudo, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/acompanhamentos/atualizar/", aplicarPermissoes(acmH.Atualizar, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/acompanhamentos/deletar/", aplicarPermissoes(acmH.Deletar, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/acompanhamentos/buscar-por-chamado-id/", aplicarPermissoes(acmH.BuscarPorChamadoID, "ADM", "TEC", "USR", "DEV"))
+}
+
+// AtendimentoRegistrarRotas registra as rotas de atendimento
+func AtendimentoRegistrarRotas(mux *http.ServeMux, atdH *handler.AtendimentoHandler, jwtManager *jwt.GerenteJWT, svc usecase.UsuarioUsecase) {
+	// helper para aplicar autenticação + permissões
+	aplicarPermissoes := func(handler http.HandlerFunc, perms ...string) http.Handler {
+		return middleware.AutenticarUsuario(
+			middleware.RequerPermissoes(perms...)(handler),
+			jwtManager, svc,
+		)
+	}
+
+	mux.Handle("/atendimentos/criar", aplicarPermissoes(atdH.Criar, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/atendimentos/buscar-por-id/", aplicarPermissoes(atdH.BuscarPorID, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/atendimentos/buscar-tudo", aplicarPermissoes(atdH.BuscarTudo, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/atendimentos/atualizar/", aplicarPermissoes(atdH.Atualizar, "ADM", "TEC", "USR", "DEV"))
+}
+
+// CategoriaPermissaoRegistrarRotas registra as rotas de categoria-permissão
+func CategoriaPermissaoRegistrarRotas(mux *http.ServeMux, catPermH *handler.CategoriaPermissaoHandler, jwtManager *jwt.GerenteJWT, svc usecase.UsuarioUsecase) {
+	// helper para aplicar autenticação + permissões
+	aplicarPermissoes := func(handler http.HandlerFunc, perms ...string) http.Handler {
+		return middleware.AutenticarUsuario(
+			middleware.RequerPermissoes(perms...)(handler),
+			jwtManager, svc,
+		)
+	}
+
+	mux.Handle("/categoria-permissoes/criar", aplicarPermissoes(catPermH.Criar, "ADM"))
+	mux.Handle("/categoria-permissoes/atualizar/", aplicarPermissoes(catPermH.Atualizar, "ADM"))
+	mux.Handle("/categoria-permissoes/buscar-tudo", aplicarPermissoes(catPermH.BuscarTudo, "ADM", "TEC", "USR", "DEV"))
+	mux.Handle("/categoria-permissoes/deletar/", aplicarPermissoes(catPermH.Deletar, "ADM"))
 }

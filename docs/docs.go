@@ -56,6 +56,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -116,6 +120,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "409": {
                         "description": "Conflict",
                         "schema": {}
@@ -168,6 +176,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -214,6 +226,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -278,6 +294,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -378,6 +398,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -408,8 +432,16 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -459,6 +491,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -519,6 +555,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -575,6 +615,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -634,6 +678,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -680,6 +728,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -770,6 +822,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -814,6 +870,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -865,6 +925,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -901,6 +965,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -950,6 +1018,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -1014,6 +1086,188 @@ const docTemplate = `{
                 }
             }
         },
+        "/logs": {
+            "get": {
+                "description": "Retorna lista paginada de logs.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Logs"
+                ],
+                "summary": "Lista todos os logs com paginação e filtros",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Página",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limite",
+                        "name": "limite",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Busca",
+                        "name": "busca",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID do usuário",
+                        "name": "usuario_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ação",
+                        "name": "acao",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Entidade",
+                        "name": "entidade",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Data de início (formato: YYYY-MM-DD)",
+                        "name": "data_inicio",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Data de fim (formato: YYYY-MM-DD)",
+                        "name": "data_fim",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Log"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/logs/{id}": {
+            "get": {
+                "description": "Retorna um log específico pelo seu ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Logs"
+                ],
+                "summary": "Busca um log pelo ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do Log",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Log"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/me": {
+            "get": {
+                "description": "Retorna os detalhes do usuário autenticado.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Me",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Usuario"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/refresh": {
             "post": {
                 "description": "Atualiza os tokens JWT usando um token de refresh.",
@@ -1065,6 +1319,443 @@ const docTemplate = `{
                                 "type": "string"
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/subcategorias/ativar/{id}": {
+            "patch": {
+                "description": "Ativa uma subcategoria pelo ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subcategorias"
+                ],
+                "summary": "Ativar subcategoria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da subcategoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Subcategoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/subcategorias/atualizar/{id}": {
+            "put": {
+                "description": "Atualiza os dados de uma subcategoria existente com os dados fornecidos no corpo da requisição.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subcategorias"
+                ],
+                "summary": "Atualizar subcategoria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da subcategoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Subcategoria",
+                        "name": "subcategoria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Subcategoria"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Subcategoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/subcategorias/buscar-por-id/{id}": {
+            "get": {
+                "description": "Retorna os detalhes de uma subcategoria pelo seu ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subcategorias"
+                ],
+                "summary": "Busca uma subcategoria pelo ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da subcategoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Subcategoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/subcategorias/buscar-por-nome/{nome}": {
+            "get": {
+                "description": "Retorna os detalhes de uma subcategoria pelo seu nome.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subcategorias"
+                ],
+                "summary": "Busca uma subcategoria pelo nome",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Nome da subcategoria",
+                        "name": "nome",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Subcategoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/subcategorias/buscar-tudo": {
+            "get": {
+                "description": "Retorna lista paginada de subcategorias",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subcategorias"
+                ],
+                "summary": "Lista todas as subcategorias",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Página",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limite",
+                        "name": "limite",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Busca",
+                        "name": "busca",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Subcategoria"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/subcategorias/criar": {
+            "post": {
+                "description": "Cria uma nova subcategoria com os dados fornecidos no corpo da requisição.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subcategorias"
+                ],
+                "summary": "Cria uma nova subcategoria",
+                "parameters": [
+                    {
+                        "description": "Dados da subcategoria",
+                        "name": "subcategoria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.Subcategoria"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/model.Subcategoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/subcategorias/desativar/{id}": {
+            "delete": {
+                "description": "Desativa (soft delete) uma subcategoria pelo ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subcategorias"
+                ],
+                "summary": "Desativar subcategoria",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da subcategoria",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Subcategoria"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/subcategorias/listar-completa": {
+            "get": {
+                "description": "Retorna uma lista completa de todas as subcategorias, sem paginação.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subcategorias"
+                ],
+                "summary": "Lista todas as subcategorias sem paginação",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Subcategoria"
+                            }
+                        }
+                    },
+                    "405": {
+                        "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
                     }
                 }
             }
@@ -1153,12 +1844,20 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {}
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -1218,6 +1917,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -1261,6 +1964,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -1348,6 +2055,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -1380,6 +2091,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -1448,6 +2163,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -1490,6 +2209,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "409": {
@@ -1541,6 +2264,10 @@ const docTemplate = `{
                         "description": "Method Not Allowed",
                         "schema": {}
                     },
+                    "408": {
+                        "description": "Request Timeout",
+                        "schema": {}
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {}
@@ -1573,6 +2300,10 @@ const docTemplate = `{
                     },
                     "405": {
                         "description": "Method Not Allowed",
+                        "schema": {}
+                    },
+                    "408": {
+                        "description": "Request Timeout",
                         "schema": {}
                     },
                     "500": {
@@ -1635,6 +2366,25 @@ const docTemplate = `{
                 }
             }
         },
+        "model.Acao": {
+            "type": "string",
+            "enum": [
+                "CRIACAO",
+                "ATUALIZACAO",
+                "DESATIVACAO",
+                "ATIVACAO",
+                "ARQUIVAMENTO",
+                "DESARQUIVAMENTO"
+            ],
+            "x-enum-varnames": [
+                "AcaoCriacao",
+                "AcaoAtualizacao",
+                "AcaoDesativacao",
+                "AcaoAtivacao",
+                "AcaoArquivamento",
+                "AcaoDesarquivamento"
+            ]
+        },
         "model.Categoria": {
             "type": "object",
             "properties": {
@@ -1695,6 +2445,29 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "titulo": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Log": {
+            "type": "object",
+            "properties": {
+                "acao": {
+                    "$ref": "#/definitions/model.Acao"
+                },
+                "criado_em": {
+                    "type": "string"
+                },
+                "detalhes": {
+                    "type": "string"
+                },
+                "entidade": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "usuario_id": {
                     "type": "string"
                 }
             }
@@ -1764,6 +2537,29 @@ const docTemplate = `{
                 "StatusFechado",
                 "StatusArquivado"
             ]
+        },
+        "model.Subcategoria": {
+            "type": "object",
+            "properties": {
+                "atualizado_em": {
+                    "type": "string"
+                },
+                "categoria_id": {
+                    "type": "string"
+                },
+                "criado_em": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nome": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
         },
         "model.Usuario": {
             "type": "object",

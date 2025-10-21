@@ -30,7 +30,7 @@ func NewMySQLChamadoRepository(db *sql.DB) *MySQLChamadoRepository {
 func (r *MySQLChamadoRepository) BuscarPorID(ctx context.Context, id string) (*model.Chamado, error) {
 	chamado, err := r.buscar(
 		ctx,
-		`SELECT id, titulo, descricao, status, criado_em, 
+		`SELECT id, titulo, descricao, status, arquivado, criado_em, 
 		 atualizado_em, solucionado_em, solucao, fechado_em, 
 		 categoria_id, subcategoria_id, criador_id
 		 FROM chamados 
@@ -61,10 +61,10 @@ func (r *MySQLChamadoRepository) Salvar(ctx context.Context, c *model.Chamado) e
 	resultado, err := r.db.ExecContext(
 		ctx,
 		`INSERT INTO chamados (
-		 id, titulo, descricao, status, categoria_id, 
+		 id, titulo, descricao, status, arquivado, categoria_id, 
 		 subcategoria_id, criador_id, criado_em, atualizado_em
-		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-		c.ID, c.Titulo, c.Descricao, c.Status, c.CategoriaID, c.SubcategoriaID, c.CriadorID,
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+		c.ID, c.Titulo, c.Descricao, c.Status, c.Arquivado, c.CategoriaID, c.SubcategoriaID, c.CriadorID,
 	)
 
 	if err != nil {
@@ -100,7 +100,7 @@ func (r *MySQLChamadoRepository) Salvar(ctx context.Context, c *model.Chamado) e
 
 // Atualizar atualiza as informações de um chamado existente.
 func (r *MySQLChamadoRepository) Atualizar(ctx context.Context, id string, c *model.Chamado) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteChamadoPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLChamadoRepository.Atualizar]: %w", err)
 	}
@@ -116,10 +116,10 @@ func (r *MySQLChamadoRepository) Atualizar(ctx context.Context, id string, c *mo
 	_, err = r.db.ExecContext(
 		ctx,
 		`UPDATE chamados 
-		 SET titulo=?, descricao=?, status=?, categoria_id=?, 
+		 SET titulo=?, descricao=?, status=?, arquivado=?, categoria_id=?, 
 		 subcategoria_id=?, atualizado_em=NOW()
 		 WHERE id=?`,
-		c.Titulo, c.Descricao, c.Status, c.CategoriaID, c.SubcategoriaID, id,
+		c.Titulo, c.Descricao, c.Status, c.Arquivado, c.CategoriaID, c.SubcategoriaID, id,
 	)
 	if err != nil {
 		return utils.NewAppError(
@@ -135,7 +135,7 @@ func (r *MySQLChamadoRepository) Atualizar(ctx context.Context, id string, c *mo
 
 // Arquivar marca um chamado como arquivado.
 func (r *MySQLChamadoRepository) Arquivar(ctx context.Context, id string) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteChamadoPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLChamadoRepository.Arquivar]: %w", err)
 	}
@@ -151,7 +151,7 @@ func (r *MySQLChamadoRepository) Arquivar(ctx context.Context, id string) error 
 	_, err = r.db.ExecContext(
 		ctx,
 		`UPDATE chamados 
-		 SET status="ARQUIVADO", atualizado_em=NOW()
+		 SET arquivado=true, atualizado_em=NOW()
 		 WHERE id=?`,
 		id,
 	)
@@ -169,7 +169,7 @@ func (r *MySQLChamadoRepository) Arquivar(ctx context.Context, id string) error 
 
 // Desarquivar marca um chamado como não arquivado.
 func (r *MySQLChamadoRepository) Desarquivar(ctx context.Context, id string) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteChamadoPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLChamadoRepository.Desarquivar]: %w", err)
 	}
@@ -185,7 +185,7 @@ func (r *MySQLChamadoRepository) Desarquivar(ctx context.Context, id string) err
 	_, err = r.db.ExecContext(
 		ctx,
 		`UPDATE chamados 
-		 SET status="ABERTO", atualizado_em=NOW()
+		 SET arquivado=false, atualizado_em=NOW()
 		 WHERE id=?`,
 		id,
 	)
@@ -204,7 +204,7 @@ func (r *MySQLChamadoRepository) Desarquivar(ctx context.Context, id string) err
 
 // AtualizarStatus atualiza o status de um chamado, podendo incluir uma solução.
 func (r *MySQLChamadoRepository) AtualizarStatus(ctx context.Context, id string, status string, solucao *string) error {
-	existe, err := r.ExistePorID(ctx, id)
+	existe, err := ExisteChamadoPorID(ctx, r.db, id)
 	if err != nil {
 		return fmt.Errorf("[MySQLChamadoRepository.AtualizarStatus]: %w", err)
 	}
@@ -238,74 +238,6 @@ func (r *MySQLChamadoRepository) AtualizarStatus(ctx context.Context, id string,
 			"[MySQLChamadoRepository.AtualizarStatus]",
 			utils.LevelError,
 			"erro ao atualizar status do chamado no banco de dados",
-			fmt.Errorf(utils.FmtErroWrap, ErrExecContext, err),
-		)
-	}
-
-	return nil
-}
-
-// AtribuirTecnico atribui um técnico a um chamado.
-func (r *MySQLChamadoRepository) AtribuirTecnico(ctx context.Context, id string, tecnicoID string) error {
-	existe, err := r.ExistePorID(ctx, id)
-	if err != nil {
-		return fmt.Errorf("[MySQLChamadoRepository.AtribuirTecnico]: %w", err)
-	}
-	if !existe {
-		return utils.NewAppError(
-			"[MySQLChamadoRepository.AtribuirTecnico]",
-			utils.LevelInfo,
-			"não foi possível atribuir o técnico ao chamado",
-			ErrChamadoNaoEncontrado,
-		)
-	}
-
-	_, err = r.db.ExecContext(
-		ctx,
-		`UPDATE chamados 
-		 SET atribuido_id=?, atualizado_em=NOW()
-		 WHERE id=?`,
-		tecnicoID, id,
-	)
-	if err != nil {
-		return utils.NewAppError(
-			"[MySQLChamadoRepository.AtribuirTecnico]",
-			utils.LevelError,
-			"erro ao atribuir técnico ao chamado no banco de dados",
-			fmt.Errorf(utils.FmtErroWrap, ErrExecContext, err),
-		)
-	}
-
-	return nil
-}
-
-// RemoverTecnico remove o técnico atribuído de um chamado.
-func (r *MySQLChamadoRepository) RemoverTecnico(ctx context.Context, id string) error {
-	existe, err := r.ExistePorID(ctx, id)
-	if err != nil {
-		return fmt.Errorf("[MySQLChamadoRepository.RemoverTecnico]: %w", err)
-	}
-	if !existe {
-		return utils.NewAppError(
-			"[MySQLChamadoRepository.RemoverTecnico]",
-			utils.LevelInfo,
-			"não foi possível remover o técnico do chamado",
-			ErrChamadoNaoEncontrado,
-		)
-	}
-
-	_, err = r.db.ExecContext(
-		ctx,
-		`UPDATE chamados 
-		 SET atribuido_id=NULL, atualizado_em=NOW()
-		 WHERE id=?`,
-		id,
-	)
-	if err != nil {
-		return utils.NewAppError(
-			"[MySQLChamadoRepository.RemoverTecnico]",
-			utils.LevelError,
-			"erro ao remover técnico do chamado no banco de dados",
 			fmt.Errorf(utils.FmtErroWrap, ErrExecContext, err),
 		)
 	}
@@ -353,11 +285,6 @@ func (r *MySQLChamadoRepository) Listar(ctx context.Context, filtro model.Chamad
 		args = append(args, *filtro.CriadorID)
 	}
 
-	if filtro.AtribuidoID != nil && *filtro.AtribuidoID != "" {
-		query.WriteString(" AND atribuido_id = ?")
-		args = append(args, *filtro.AtribuidoID)
-	}
-
 	query.WriteString(" ORDER BY criado_em DESC LIMIT ? OFFSET ?")
 	args = append(args, filtro.Limite, (filtro.Pagina-1)*filtro.Limite)
 
@@ -398,7 +325,7 @@ func (r *MySQLChamadoRepository) Listar(ctx context.Context, filtro model.Chamad
 // Métodos auxiliares
 
 // buscar é um método auxiliar para buscar um chamado com base em uma consulta SQL.
-func (r *MySQLChamadoRepository) buscar(ctx context.Context, query string, args ...interface{}) (*model.Chamado, error) {
+func (r *MySQLChamadoRepository) buscar(ctx context.Context, query string, args ...any) (*model.Chamado, error) {
 	row := r.db.QueryRowContext(ctx, query, args...)
 	chamado, err := scanChamado(row)
 	if err != nil {
@@ -407,13 +334,13 @@ func (r *MySQLChamadoRepository) buscar(ctx context.Context, query string, args 
 	return chamado, nil
 }
 
-// ExistePorID verifica se um chamado existe pelo ID.
-func (r *MySQLChamadoRepository) ExistePorID(ctx context.Context, id string) (bool, error) {
+// ExisteChamadoPorID verifica se um chamado existe pelo ID.
+func ExisteChamadoPorID(ctx context.Context, db *sql.DB, id string) (bool, error) {
 	var existe bool
-	err := r.db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM chamados WHERE id=?)`, id).Scan(&existe)
+	err := db.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM chamados WHERE id=?)`, id).Scan(&existe)
 	if err != nil {
 		return false, utils.NewAppError(
-			"[MySQLChamadoRepository.ExistePorID]",
+			"[MySQLChamadoRepository.ExisteChamadoPorID]",
 			utils.LevelError,
 			"erro ao verificar existência do chamado no banco de dados",
 			fmt.Errorf(utils.FmtErroWrap, ErrQueryContext, err),
