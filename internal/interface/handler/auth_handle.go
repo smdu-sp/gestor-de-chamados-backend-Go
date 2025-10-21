@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/auth/jwt"
@@ -34,7 +35,7 @@ func parseLoginRequest(r *http.Request) (*LoginDto, error) {
 		return nil, err
 	}
 	if req.Login == "" || req.Senha == "" {
-		return nil, http.ErrNoCookie
+		return nil, errors.New("login e senha são obrigatórios")
 	}
 	return &req, nil
 }

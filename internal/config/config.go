@@ -42,7 +42,7 @@ func Load() Config {
 		Env:           getenv("ENVIRONMENT", "local"),
 		CORSOrigin:    getenv("CORS_ORIGIN", ""),
 		DBHost:        getenv("DB_HOST", "127.0.0.1"),
-		DBPort:        getenv("DB_PORT", "3306"),
+		DBPort:        getenv("DB_PORT", "3307"),
 		DBUser:        getenv("DB_USER", "user"),
 		DBPass:        getenv("DB_PASS", "userpassword"),
 		DBName:        getenv("DB_NAME", "mydatabase"),

@@ -130,5 +130,6 @@ func (c *Client) UsuarioComDominio() string {
 	if c.Domain != "" {
 		return c.User + c.Domain
 	}
-	return fmt.Sprintf("uid=%s,ou=users,%s", c.User, c.Base)
+	// Se não há domínio, retorna o usuário como está (já deve estar no formato DN completo)
+	return c.User
 }

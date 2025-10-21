@@ -11,7 +11,7 @@ services:
       MYSQL_USER: user
       MYSQL_PASSWORD: userpassword
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
@@ -19,11 +19,11 @@ services:
 
   ldap:
     image: osixia/openldap:1.5.0
-    container_name: ldap-test
+    container_name: ldapserver
     environment:
-      LDAP_ORGANISATION: "Rede SP"
-      LDAP_DOMAIN: "rede.sp"
-      LDAP_ADMIN_PASSWORD: "Prodam0"
+      LDAP_ORGANISATION: "Minha Empresa"
+      LDAP_DOMAIN: "minhaempresa.local"
+      LDAP_ADMIN_PASSWORD: "admin"
     ports:
       - "389:389"
     volumes:

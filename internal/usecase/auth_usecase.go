@@ -33,11 +33,13 @@ func (a *authUsecase) getBindString(login string) string {
 		return login + a.cfg.LDAPDomain
 	}
 
-	ou := "users"
-	if login == "admin1" {
-		ou = "admins"
+	// Para o usuário admin do OpenLDAP
+	if login == "admin" {
+		return "cn=admin," + a.cfg.LDAPBase
 	}
-	return "uid=" + login + ",ou=" + ou + "," + a.cfg.LDAPBase
+
+	// Para usuários normais (sem OU, diretamente na base)
+	return "uid=" + login + "," + a.cfg.LDAPBase
 }
 
 func (a *authUsecase) criarUsuarioSeNecessario(ctx context.Context, login string, u *model.Usuario) (*model.Usuario, error) {
