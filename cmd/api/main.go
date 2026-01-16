@@ -1,20 +1,13 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"log"
-	"net/http"
+	"log/slog"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
+	"runtime/debug"
 
-	_ "github.com/smdu-sp/gestor-de-chamados-backend-Go/docs" // Swagger docs
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/config"
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/infra/db"
-	_ "github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/interface/handler"
-	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/interface/router"
+	_ "github.com/smdu-sp/gestor-de-chamados-backend-Go/docs"
+	cfg "github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/config"
 )
 
 // @title Gestor de Chamados API
@@ -23,53 +16,43 @@ import (
 // @host localhost:8080
 // @BasePath /
 func main() {
-	if err := run(); err != nil {
-		log.Fatalf("[main] erro ao iniciar a aplicação: %v", err)
+	// 1. Carregar configuração
+	config, err := cfg.Carregar()
+	if err != nil {
+		tratarErroConfiguracao(err)
+	}
+
+	// 2. Configurar logger
+	logger := configurarLogger(config)
+	slog.SetDefault(logger)
+
+	// 3. Executar comando especificado via CLI
+	if err := executarComando(os.Args, config, logger); err != nil {
+		logger.Error(
+			"falha ao executar comando CLI",
+			"error", err,
+			"stack", string(debug.Stack()),
+		)
+
+		fmt.Fprintf(os.Stderr, "\nErro: %v\n\n", err)
+		exibirAjuda()
+		os.Exit(1)
 	}
 }
 
-func run() error {
-	// Carrega configuração
-	cfg := config.Load()
+// tratarErroConfiguracao trata erros relacionados ao carregamento e validação da configuração.
+func tratarErroConfiguracao(err error) {
+	if erros, ok := err.(*cfg.ErrosConfig); ok {
+		fmt.Fprintln(os.Stderr, erros.Error())
 
-	// Conecta ao banco de dados passando a configuração
-	dbConn, err := db.ConectarMySQL(cfg)
-	if err != nil {
-		return fmt.Errorf("[main.run]: %w", err)
-	}
-	// Garante que a conexão será fechada ao final
-	defer dbConn.Close()
-
-	// Monta o router
-	r := router.InicializarRoteadorHTTP(cfg, dbConn)
-
-	// Cria o servidor HTTP
-	srv := &http.Server{
-		Addr:         ":" + cfg.Port,
-		Handler:      r,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		l := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+		l.Error(
+			"falha na validação da configuração",
+			"errors", erros.Erros(),
+		)
+		os.Exit(1)
 	}
 
-	// Inicia o servidor em goroutine
-	go func() {
-		log.Printf("API rodando em http://localhost:%s", cfg.Port)
-		log.Printf("Swagger em http://localhost:%s/swagger/index.html", cfg.Port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("[main] erro no servidor: %v", err)
-		}
-	}()
-
-	// Aguarda sinal de interrupção para desligar o servidor graciosamente
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("[main] Desligando o servidor...")
-
-	// Cria um contexto com timeout para o desligamento
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	return srv.Shutdown(ctx)
+	fmt.Fprintf(os.Stderr, "Erro ao carregar configuração: %v\n", err)
+	os.Exit(1)
 }

@@ -1,38 +1,254 @@
 basePath: /
 definitions:
-  handler.LoginDto:
+  auth.ErroResposta:
+    properties:
+      detalhes:
+        description: Descrição detalhada do erro
+      instancia:
+        description: URI que identifica a instância do erro
+        type: string
+      status:
+        description: Código de status HTTP
+        type: integer
+      tipo:
+        description: URI que identifica o tipo de erro
+        type: string
+      titulo:
+        description: Título curto do erro
+        type: string
+    type: object
+  auth.LoginReq:
     properties:
       login:
         type: string
       senha:
         type: string
     type: object
-  handler.RefreshRequest:
+  auth.RefreshReq:
     properties:
-      refresh_token:
+      refreshToken:
         type: string
     type: object
-  model.Acao:
-    enum:
-    - CRIACAO
-    - ATUALIZACAO
-    - DESATIVACAO
-    - ATIVACAO
-    - ARQUIVAMENTO
-    - DESARQUIVAMENTO
-    type: string
-    x-enum-varnames:
-    - AcaoCriacao
-    - AcaoAtualizacao
-    - AcaoDesativacao
-    - AcaoAtivacao
-    - AcaoArquivamento
-    - AcaoDesarquivamento
-  model.Categoria:
+  auth.TokenResp:
     properties:
-      atualizado_em:
+      accessToken:
         type: string
-      criado_em:
+      refreshToken:
+        type: string
+    type: object
+  auth.UsuarioResp:
+    properties:
+      atualizadoEm:
+        type: string
+      avatar:
+        type: string
+      criadoEm:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      login:
+        type: string
+      nome:
+        type: string
+      permissao:
+        type: string
+      status:
+        type: boolean
+      ultimoLogin:
+        type: string
+    type: object
+  dto.AcompanhamentoPaginado:
+    description: Estrutura paginada contendo uma lista de acompanhamentos.
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.AcompanhamentoResp'
+        type: array
+      limite:
+        type: integer
+      pagina:
+        type: integer
+      total:
+        type: integer
+      totalPaginas:
+        type: integer
+    type: object
+  dto.AcompanhamentoResp:
+    properties:
+      atualizadoEm:
+        type: string
+      chamadoId:
+        type: string
+      conteudo:
+        type: string
+      criadoEm:
+        type: string
+      id:
+        type: string
+      remetente:
+        type: string
+      usuarioId:
+        type: string
+    type: object
+  dto.AtendimentoPaginado:
+    description: Estrutura paginada contendo uma lista de atendimentos.
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.AtendimentoResp'
+        type: array
+      limite:
+        type: integer
+      pagina:
+        type: integer
+      total:
+        type: integer
+      totalPaginas:
+        type: integer
+    type: object
+  dto.AtendimentoResp:
+    properties:
+      atribuidoId:
+        type: string
+      atualizadoEm:
+        type: string
+      chamadoId:
+        type: string
+      criadoEm:
+        type: string
+      id:
+        type: string
+    type: object
+  dto.AtualizarAcompanhamentoReq:
+    properties:
+      conteudo:
+        type: string
+    type: object
+  dto.AtualizarAtendimentoReq:
+    properties:
+      atribuidoId:
+        type: string
+      chamadoId:
+        type: string
+    type: object
+  dto.AtualizarCategoriaPermissaoReq:
+    properties:
+      permissao:
+        type: string
+    type: object
+  dto.AtualizarCategoriaReq:
+    properties:
+      nome:
+        type: string
+      status:
+        type: boolean
+    type: object
+  dto.AtualizarChamadoReq:
+    properties:
+      arquivado:
+        type: boolean
+      categoriaId:
+        type: string
+      descricao:
+        type: string
+      subcategoriaId:
+        type: string
+      titulo:
+        type: string
+    type: object
+  dto.AtualizarPermissaoUsuarioReq:
+    properties:
+      permissao:
+        type: string
+    type: object
+  dto.AtualizarSolucaoReq:
+    properties:
+      solucao:
+        type: string
+    type: object
+  dto.AtualizarStatusReq:
+    properties:
+      solucao:
+        type: string
+      status:
+        type: string
+    type: object
+  dto.AtualizarSubcategoriaReq:
+    properties:
+      categoriaid:
+        type: string
+      nome:
+        type: string
+      status:
+        type: boolean
+    type: object
+  dto.AtualizarUsuarioReq:
+    properties:
+      avatar:
+        type: string
+      email:
+        type: string
+      login:
+        type: string
+      nome:
+        type: string
+      permissao:
+        type: string
+      status:
+        type: boolean
+    type: object
+  dto.CategoriaPaginado:
+    description: Estrutura paginada contendo uma lista de categorias.
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.CategoriaResp'
+        type: array
+      limite:
+        type: integer
+      pagina:
+        type: integer
+      total:
+        type: integer
+      totalPaginas:
+        type: integer
+    type: object
+  dto.CategoriaPermissaoPaginado:
+    description: Estrutura paginada contendo uma lista de categorias e permissões.
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.CategoriaPermissaoResp'
+        type: array
+      limite:
+        type: integer
+      pagina:
+        type: integer
+      total:
+        type: integer
+      totalPaginas:
+        type: integer
+    type: object
+  dto.CategoriaPermissaoResp:
+    properties:
+      atualizadoEm:
+        type: string
+      categoriaId:
+        type: string
+      criadoEm:
+        type: string
+      permissao:
+        type: string
+      usuarioId:
+        type: string
+    type: object
+  dto.CategoriaResp:
+    properties:
+      atualizadoEm:
+        type: string
+      criadoEm:
         type: string
       id:
         type: string
@@ -41,10 +257,26 @@ definitions:
       status:
         type: boolean
     type: object
-  model.Chamado:
+  dto.ChamadoPaginado:
+    description: Estrutura paginada contendo uma lista de chamados.
     properties:
-      atribuidoId:
-        type: string
+      items:
+        items:
+          $ref: '#/definitions/dto.ChamadoResp'
+        type: array
+      limite:
+        type: integer
+      pagina:
+        type: integer
+      total:
+        type: integer
+      totalPaginas:
+        type: integer
+    type: object
+  dto.ChamadoResp:
+    properties:
+      arquivado:
+        type: boolean
       atualizadoEm:
         type: string
       categoriaId:
@@ -64,17 +296,94 @@ definitions:
       solucionadoEm:
         type: string
       status:
-        $ref: '#/definitions/model.StatusChamado'
+        type: string
       subcategoriaId:
         type: string
       titulo:
         type: string
     type: object
-  model.Log:
+  dto.CriarAcompanhamentoReq:
+    properties:
+      chamadoId:
+        type: string
+      conteudo:
+        type: string
+    type: object
+  dto.CriarAtendimentoReq:
+    properties:
+      atribuidoId:
+        type: string
+      chamadoId:
+        type: string
+    type: object
+  dto.CriarCategoriaPermissaoReq:
+    properties:
+      categoriaId:
+        type: string
+      permissao:
+        type: string
+      usuarioId:
+        type: string
+    type: object
+  dto.CriarCategoriaReq:
+    properties:
+      nome:
+        type: string
+    type: object
+  dto.CriarChamadoReq:
+    properties:
+      categoriaId:
+        type: string
+      criadorId:
+        type: string
+      descricao:
+        type: string
+      subcategoriaId:
+        type: string
+      titulo:
+        type: string
+    type: object
+  dto.CriarSubcategoriaReq:
+    properties:
+      categoriaid:
+        type: string
+      nome:
+        type: string
+    type: object
+  dto.CriarUsuarioReq:
+    properties:
+      avatar:
+        type: string
+      email:
+        type: string
+      login:
+        type: string
+      nome:
+        type: string
+      permissao:
+        type: string
+    type: object
+  dto.LogPaginado:
+    description: Estrutura paginada contendo uma lista de logs.
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.LogResp'
+        type: array
+      limite:
+        type: integer
+      pagina:
+        type: integer
+      total:
+        type: integer
+      totalPaginas:
+        type: integer
+    type: object
+  dto.LogResp:
     properties:
       acao:
-        $ref: '#/definitions/model.Acao'
-      criado_em:
+        type: string
+      criadoEm:
         type: string
       detalhes:
         type: string
@@ -82,74 +391,32 @@ definitions:
         type: string
       id:
         type: string
-      usuario_id:
+      usuarioid:
         type: string
     type: object
-  model.Permissao:
-    enum:
-    - ADM
-    - TEC
-    - SUP
-    - INF
-    - VOIP
-    - IMP
-    - CAD
-    - USR
-    - DEV
-    type: string
-    x-enum-comments:
-      PermADM: Administrador
-      PermCAD: Cadastro de usuários
-      PermDEV: Desenvolvedor
-      PermIMP: Técnico de Impressoras
-      PermINF: Técnico de Infraestrutura
-      PermSUP: Técnico de Suporte (Help Desk)
-      PermTEC: Técnico
-      PermUSR: Usuário comum (pode apenas abrir chamados)
-      PermVOIP: Técnico de Telefonia
-    x-enum-descriptions:
-    - Administrador
-    - Técnico
-    - Técnico de Suporte (Help Desk)
-    - Técnico de Infraestrutura
-    - Técnico de Telefonia
-    - Técnico de Impressoras
-    - Cadastro de usuários
-    - Usuário comum (pode apenas abrir chamados)
-    - Desenvolvedor
-    x-enum-varnames:
-    - PermADM
-    - PermTEC
-    - PermSUP
-    - PermINF
-    - PermVOIP
-    - PermIMP
-    - PermCAD
-    - PermUSR
-    - PermDEV
-  model.StatusChamado:
-    enum:
-    - ABERTO
-    - ATRIBUIDO
-    - RESOLVIDO
-    - REJEITADO
-    - FECHADO
-    - ARQUIVADO
-    type: string
-    x-enum-varnames:
-    - StatusAberto
-    - StatusAtribuido
-    - StatusResolvido
-    - StatusRejeitado
-    - StatusFechado
-    - StatusArquivado
-  model.Subcategoria:
+  dto.SubcategoriaPaginado:
+    description: Estrutura paginada contendo uma lista de subcategorias.
     properties:
-      atualizado_em:
+      items:
+        items:
+          $ref: '#/definitions/dto.SubcategoriaResp'
+        type: array
+      limite:
+        type: integer
+      pagina:
+        type: integer
+      total:
+        type: integer
+      totalPaginas:
+        type: integer
+    type: object
+  dto.SubcategoriaResp:
+    properties:
+      atualizadoEm:
         type: string
-      categoria_id:
+      categoriaid:
         type: string
-      criado_em:
+      criadoEm:
         type: string
       id:
         type: string
@@ -158,7 +425,39 @@ definitions:
       status:
         type: boolean
     type: object
-  model.Usuario:
+  dto.TecnicoResp:
+    properties:
+      id:
+        type: string
+      nome:
+        type: string
+    type: object
+  dto.UsuarioLdapResp:
+    properties:
+      email:
+        type: string
+      login:
+        type: string
+      nome:
+        type: string
+    type: object
+  dto.UsuarioPaginado:
+    description: Estrutura paginada contendo uma lista de usuários.
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.UsuarioResp'
+        type: array
+      limite:
+        type: integer
+      pagina:
+        type: integer
+      total:
+        type: integer
+      totalPaginas:
+        type: integer
+    type: object
+  dto.UsuarioResp:
     properties:
       atualizadoEm:
         type: string
@@ -175,10 +474,27 @@ definitions:
       nome:
         type: string
       permissao:
-        $ref: '#/definitions/model.Permissao'
+        type: string
       status:
         type: boolean
       ultimoLogin:
+        type: string
+    type: object
+  handler.ErroResposta:
+    properties:
+      detalhes:
+        description: Descrição detalhada do erro
+      instancia:
+        description: URI que identifica a instância do erro
+        type: string
+      status:
+        description: Código de status HTTP
+        type: integer
+      tipo:
+        description: URI que identifica o tipo de erro
+        type: string
+      titulo:
+        description: Título curto do erro
         type: string
     type: object
 host: localhost:8080
@@ -188,13 +504,99 @@ info:
   title: Gestor de Chamados API
   version: "1.0"
 paths:
-  /categorias/ativar/{id}:
+  /acompanhamentos:
+    post:
+      consumes:
+      - application/json
+      description: Cria um acompanhamento com os dados fornecidos no corpo da requisição
+      parameters:
+      - description: Dados para criação de acompanhamento
+        in: body
+        name: acompanhamento
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CriarAcompanhamentoReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Acompanhamento criado com sucesso
+          schema:
+            $ref: '#/definitions/dto.AcompanhamentoResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao criar acompanhamento
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Cria um novo acompanhamento
+      tags:
+      - Acompanhamento
+  /acompanhamentos/atualizar/{id}:
     patch:
       consumes:
       - application/json
-      description: Ativa uma categoria pelo ID.
+      description: Atualiza informações de um acompanhamento pelo ID
       parameters:
-      - description: ID da categoria
+      - description: ID do acompanhamento
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados para atualização do acompanhamento
+        in: body
+        name: acompanhamento
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarAcompanhamentoReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Acompanhamento atualizado com sucesso
+          schema:
+            $ref: '#/definitions/dto.AcompanhamentoResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Acompanhamento não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao atualizar acompanhamento
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Atualiza acompanhamento
+      tags:
+      - Acompanhamento
+  /acompanhamentos/buscar-por-chamado/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna uma lista de acompanhamentos associados a um chamado pelo
+        ID do chamado
+      parameters:
+      - description: ID do chamado
         in: path
         name: id
         required: true
@@ -203,75 +605,723 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Acompanhamentos encontrados com sucesso
           schema:
-            $ref: '#/definitions/model.Categoria'
+            items:
+              $ref: '#/definitions/dto.AcompanhamentoResp'
+            type: array
         "400":
-          description: Bad Request
-          schema: {}
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: Acompanhamento não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Ativar categoria
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Busca acompanhamentos por ID do chamado
       tags:
-      - Categorias
-  /categorias/atualizar/{id}:
-    put:
+      - Acompanhamento
+  /acompanhamentos/buscar-por-id/{id}:
+    get:
       consumes:
       - application/json
-      description: Atualiza uma categoria existente pelo ID com os dados fornecidos
-        no corpo da requisição.
+      description: Retorna os dados completos de um acompanhamento pelo seu ID
       parameters:
-      - description: ID da categoria
+      - description: ID do acompanhamento
         in: path
         name: id
         required: true
         type: string
-      - description: Categoria
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Acompanhamento encontrado com sucesso
+          schema:
+            $ref: '#/definitions/dto.AcompanhamentoResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Acompanhamento não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Busca acompanhamento por ID
+      tags:
+      - Acompanhamento
+  /acompanhamentos/deletar/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deleta um acompanhamento pelo ID
+      parameters:
+      - description: ID do acompanhamento
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Acompanhamento deletado com sucesso
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Acompanhamento não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao deletar acompanhamento
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Deleta acompanhamento
+      tags:
+      - Acompanhamento
+  /acompanhamentos/listar-paginado:
+    get:
+      consumes:
+      - application/json
+      description: Retorna uma lista paginada de acompanhamentos com base nos filtros
+        fornecidos
+      parameters:
+      - default: 1
+        description: Número da página
+        in: query
+        name: pagina
+        type: integer
+      - default: 10
+        description: Número de itens por página
+        in: query
+        name: limite
+        type: integer
+      - description: Filtra por ID do chamado
+        in: query
+        name: chamadoId
+        type: string
+      - description: Filtra por ID do usuário
+        in: query
+        name: usuarioId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista paginada de acompanhamentos retornada com sucesso
+          schema:
+            $ref: '#/definitions/dto.AcompanhamentoPaginado'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Lista acompanhamentos com paginação
+      tags:
+      - Acompanhamento
+  /atendimentos:
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo atendimento com os dados fornecidos no corpo da requisição
+      parameters:
+      - description: Dados do atendimento
+        in: body
+        name: atendimento
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CriarAtendimentoReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Atendimento criado com sucesso
+          schema:
+            $ref: '#/definitions/dto.AtendimentoResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao criar atendimento
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Cria um novo atendimento
+      tags:
+      - Atendimento
+  /atendimentos/atualizar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza as informações de um atendimento existente pelo seu ID
+      parameters:
+      - description: ID do atendimento
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados para atualização do atendimento
+        in: body
+        name: atendimento
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarAtendimentoReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Atendimento atualizado com sucesso
+          schema:
+            $ref: '#/definitions/dto.AtendimentoResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Atendimento não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao atualizar atendimento
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Atualiza um atendimento existente
+      tags:
+      - Atendimento
+  /atendimentos/buscar-por-id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Busca um atendimento existente pelo seu ID
+      parameters:
+      - description: ID do atendimento
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Atendimento encontrado com sucesso
+          schema:
+            $ref: '#/definitions/dto.AtendimentoResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Atendimento não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao buscar atendimento
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Busca um atendimento pelo ID
+      tags:
+      - Atendimento
+  /atendimentos/buscar-por-ids/chamados/{chamadoId}/tecnicos/{tecnicoId}:
+    get:
+      consumes:
+      - application/json
+      description: Busca um atendimento existente pelo ID do chamado e do técnico
+        atribuído
+      parameters:
+      - description: ID do chamado
+        in: query
+        name: chamadoId
+        required: true
+        type: string
+      - description: ID do técnico atribuído
+        in: query
+        name: atribuidoId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Atendimento encontrado com sucesso
+          schema:
+            $ref: '#/definitions/dto.AtendimentoResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Atendimento não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao buscar atendimento
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Busca um atendimento pelo ID do chamado e do técnico atribuído
+      tags:
+      - Atendimento
+  /atendimentos/listar-paginado:
+    get:
+      consumes:
+      - application/json
+      description: Lista atendimentos existentes com suporte a paginação e filtros
+        opcionais
+      parameters:
+      - default: 1
+        description: Número da página
+        in: query
+        name: pagina
+        type: integer
+      - default: 10
+        description: Número de itens por página
+        in: query
+        name: limite
+        type: integer
+      - description: Filtra por ID do chamado
+        in: query
+        name: chamadoId
+        type: string
+      - description: Filtra por ID do usuário atribuído
+        in: query
+        name: atribuidoId
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista paginada de atendimentos retornada com sucesso
+          schema:
+            $ref: '#/definitions/dto.AtendimentoPaginado'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao listar atendimentos
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Lista atendimentos com paginação e filtros
+      tags:
+      - Atendimento
+  /categoria-permissoes:
+    post:
+      consumes:
+      - application/json
+      description: Adiciona uma nova categoria e permissão ao sistema
+      parameters:
+      - description: Dados da nova categoria e permissão
+        in: body
+        name: categoria_permissao
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CriarCategoriaPermissaoReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: CategoriaPermissao criada com sucesso
+          schema:
+            $ref: '#/definitions/dto.CategoriaPermissaoResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "409":
+          description: CategoriaPermissao já existe
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao criar usuário
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Cria uma nova categoria e permissão
+      tags:
+      - CategoriaPermissao
+  /categorias:
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova categoria com os dados fornecidos no corpo da requisição
+      parameters:
+      - description: Dados para criação de categoria
         in: body
         name: categoria
         required: true
         schema:
-          $ref: '#/definitions/model.Categoria'
+          $ref: '#/definitions/dto.CriarCategoriaReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Categoria criada com sucesso
+          schema:
+            $ref: '#/definitions/dto.CategoriaResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "409":
+          description: Categoria já existe
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Criar nova categoria
+      tags:
+      - Categoria
+  /categorias-permissoes/{categoriaId}/usuarios/{usuarioId}:
+    get:
+      consumes:
+      - application/json
+      description: Recupera os detalhes de uma categoria e permissão específica usando
+        seu ID
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: categoriaId
+        required: true
+        type: string
+      - description: ID do usuário
+        in: path
+        name: usuarioId
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: CategoriaPermissao encontrada com sucesso
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dto.CategoriaPermissaoResp'
         "400":
-          description: Bad Request
-          schema: {}
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: CategoriaPermissao não encontrada
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
-        "409":
-          description: Conflict
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: Erro interno ao buscar categoriaPermissao
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Busca uma categoria e permissão por ID
+      tags:
+      - CategoriaPermissao
+  /categorias-permissoes/atualizar/{categoriaId}/usuarios/{usuarioId}:
+    patch:
+      consumes:
+      - application/json
+      description: Modifica os detalhes de uma categoria e permissão específica
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: categoriaId
+        required: true
+        type: string
+      - description: ID do usuário
+        in: path
+        name: usuarioId
+        required: true
+        type: string
+      - description: Dados para atualizar a categoria e permissão
+        in: body
+        name: categoriaPermissao
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarCategoriaPermissaoReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: CategoriaPermissao atualizada com sucesso
+          schema:
+            $ref: '#/definitions/dto.CategoriaPermissaoResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: CategoriaPermissao não encontrada
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "409":
+          description: CategoriaPermissao já existe
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao atualizar categoriaPermissao
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Atualiza uma categoria e permissão existente
+      tags:
+      - CategoriaPermissao
+  /categorias-permissoes/deletar/{categoriaId}/usuarios/{usuarioId}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove uma categoria e permissão específica do sistema
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: categoriaId
+        required: true
+        type: string
+      - description: ID do usuário
+        in: path
+        name: usuarioId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: CategoriaPermissao deletada com sucesso
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: CategoriaPermissao não encontrada
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao deletar categoriaPermissao
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Deleta uma categoria e permissão
+      tags:
+      - CategoriaPermissao
+  /categorias-permissoes/listar-paginado:
+    get:
+      consumes:
+      - application/json
+      description: Recupera uma lista paginada de categorias e permissões com base
+        nos filtros fornecidos
+      parameters:
+      - default: 1
+        description: Número da página
+        in: query
+        name: pagina
+        type: integer
+      - default: 10
+        description: Número de itens por página
+        in: query
+        name: limite
+        type: integer
+      - description: Filtra por ID da categoria
+        in: query
+        name: categoriaId
+        type: string
+      - description: Filtra por ID do usuário
+        in: query
+        name: usuarioId
+        type: string
+      - description: Filtra por permissão
+        in: query
+        name: permissao
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista paginada de categorias e permissões retornada com sucesso
+          schema:
+            $ref: '#/definitions/dto.CategoriaPermissaoPaginado'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao listar categorias e permissões
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Lista categorias e permissões com paginação
+      tags:
+      - CategoriaPermissao
+  /categorias/ativar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Ativa uma categoria pelo ID
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Categoria ativada com sucesso
+          schema:
+            $ref: '#/definitions/dto.CategoriaResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Categoria não encontrada
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Ativar categoria
+      tags:
+      - Categoria
+  /categorias/atualizar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza informações de uma categoria pelo ID
+      parameters:
+      - description: ID da categoria
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados para atualização da categoria
+        in: body
+        name: categoria
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarCategoriaReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Categoria atualizada com sucesso
+          schema:
+            $ref: '#/definitions/dto.CategoriaResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Categoria não encontrada
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "409":
+          description: Categoria já existe
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
       summary: Atualizar categoria
       tags:
-      - Categorias
+      - Categoria
   /categorias/buscar-por-id/{id}:
     get:
       consumes:
@@ -287,27 +1337,28 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Categoria encontrada com sucesso
           schema:
-            $ref: '#/definitions/model.Categoria'
+            $ref: '#/definitions/dto.CategoriaResp'
         "400":
-          description: Bad Request
-          schema: {}
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: Categoria não encontrada
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
       summary: Buscar categoria por ID
       tags:
-      - Categorias
+      - Categoria
   /categorias/buscar-por-nome/{nome}:
     get:
       consumes:
@@ -323,112 +1374,33 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Categoria encontrada com sucesso
           schema:
-            $ref: '#/definitions/model.Categoria'
+            $ref: '#/definitions/dto.CategoriaResp'
         "400":
-          description: Bad Request
-          schema: {}
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: Categoria não encontrada
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
       summary: Buscar categoria por nome
       tags:
-      - Categorias
-  /categorias/buscar-tudo:
-    get:
-      consumes:
-      - application/json
-      description: Retorna lista paginada de categorias
-      parameters:
-      - description: Página
-        in: query
-        name: pagina
-        type: integer
-      - description: Limite
-        in: query
-        name: limite
-        type: integer
-      - description: Busca
-        in: query
-        name: busca
-        type: string
-      - description: Status
-        in: query
-        name: status
-        type: boolean
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.Categoria'
-            type: array
-        "400":
-          description: Bad Request
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Listar todas as categorias
-      tags:
-      - Categorias
-  /categorias/criar:
-    post:
-      consumes:
-      - application/json
-      description: Cria uma nova categoria com dados fornecidos no corpo da requisição.
-      parameters:
-      - description: Categoria
-        in: body
-        name: categoria
-        required: true
-        schema:
-          $ref: '#/definitions/model.Categoria'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/model.Categoria'
-        "400":
-          description: Bad Request
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "409":
-          description: Conflict
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Criar uma nova categoria
-      tags:
-      - Categorias
+      - Categoria
   /categorias/desativar/{id}:
-    delete:
+    patch:
       consumes:
       - application/json
-      description: Desativa (soft delete) uma categoria pelo ID.
+      description: Desativa uma categoria pelo ID
       parameters:
       - description: ID da categoria
         in: path
@@ -439,32 +1411,397 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Categoria desativada com sucesso
           schema:
-            $ref: '#/definitions/model.Categoria'
+            $ref: '#/definitions/dto.CategoriaResp'
         "400":
-          description: Bad Request
-          schema: {}
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: Categoria não encontrada
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
       summary: Desativar categoria
       tags:
-      - Categorias
-  /categorias/listar-completa:
+      - Categoria
+  /categorias/listar:
     get:
       consumes:
       - application/json
-      description: Retorna lista completa de categorias sem paginação
+      description: Retorna lista de todas as categorias
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de categorias retornada com sucesso
+          schema:
+            items:
+              $ref: '#/definitions/dto.CategoriaResp'
+            type: array
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Listar todas as categorias
+      tags:
+      - Categoria
+  /categorias/listar-paginado:
+    get:
+      consumes:
+      - application/json
+      description: Retorna uma lista paginada de categorias com base nos filtros fornecidos
+        nos parâmetros da URL
+      parameters:
+      - description: Termo de busca no nome da categoria
+        in: query
+        name: busca
+        type: string
+      - description: Filtrar por status (ativo/inativo)
+        in: query
+        name: status
+        type: boolean
+      - description: 'Número da página (padrão: 1)'
+        in: query
+        name: pagina
+        type: integer
+      - description: 'Número de itens por página (padrão: 10)'
+        in: query
+        name: limite
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista paginada de categorias retornada com sucesso
+          schema:
+            $ref: '#/definitions/dto.CategoriaPaginado'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Listar categorias com paginação e filtros
+      tags:
+      - Categoria
+  /chamados:
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo chamado com os dados fornecidos no corpo da requisição
+      parameters:
+      - description: Dados para criação de chamado
+        in: body
+        name: chamado
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CriarChamadoReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Chamado criado com sucesso
+          schema:
+            $ref: '#/definitions/dto.ChamadoResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Cria um novo chamado
+      tags:
+      - Chamado
+  /chamados/arquivar/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Arquiva um chamado existente pelo ID
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chamado arquivado com sucesso
+          schema:
+            $ref: '#/definitions/dto.ChamadoResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Chamado não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Arquiva um chamado existente
+      tags:
+      - Chamado
+  /chamados/atualizar-solucao/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza a solução de um chamado existente pelo ID
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Nova solução do chamado
+        in: body
+        name: chamado
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarSolucaoReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chamado atualizado com sucesso
+          schema:
+            $ref: '#/definitions/dto.ChamadoResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Chamado não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Atualiza a solução de um chamado existente
+      tags:
+      - Chamado
+  /chamados/atualizar-status/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza o status de um chamado existente pelo ID
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Novo status do chamado
+        in: body
+        name: chamado
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarStatusReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chamado atualizado com sucesso
+          schema:
+            $ref: '#/definitions/dto.ChamadoResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Chamado não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Atualiza o status de um chamado existente
+      tags:
+      - Chamado
+  /chamados/atualizar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza as informações de um chamado existente pelo ID
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados para atualização do chamado
+        in: body
+        name: chamado
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarChamadoReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chamado atualizado com sucesso
+          schema:
+            $ref: '#/definitions/dto.ChamadoResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Chamado não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Atualiza um chamado existente
+      tags:
+      - Chamado
+  /chamados/buscar/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna os detalhes de um chamado específico pelo seu ID
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chamado encontrado com sucesso
+          schema:
+            $ref: '#/definitions/dto.ChamadoResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Chamado não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Busca um chamado pelo ID
+      tags:
+      - Chamado
+  /chamados/desarquivar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Desarquiva um chamado existente pelo ID
+      parameters:
+      - description: ID do chamado
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chamado desarquivado com sucesso
+          schema:
+            $ref: '#/definitions/dto.ChamadoResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Chamado não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Desarquiva um chamado existente
+      tags:
+      - Chamado
+  /chamados/listar:
+    get:
+      consumes:
+      - application/json
+      description: Retorna lista de todos os chamados
       produces:
       - application/json
       responses:
@@ -472,239 +1809,40 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.Categoria'
+              $ref: '#/definitions/dto.ChamadoResp'
             type: array
         "400":
-          description: Bad Request
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Listar todas as categorias (completa)
-      tags:
-      - Categorias
-  /chamados/arquivar/{id}:
-    patch:
-      consumes:
-      - application/json
-      description: Arquiva um chamado existente pelo ID.
-      parameters:
-      - description: ID do chamado
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
+          description: Contexto cancelado
           schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Arquiva um chamado existente
-      tags:
-      - chamados
-  /chamados/atribuir-tecnico/{id}:
-    patch:
-      consumes:
-      - application/json
-      description: Atribui um técnico a um chamado existente pelo ID.
-      parameters:
-      - description: ID do chamado
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: ID do técnico
-        in: body
-        name: tecnico
-        required: true
-        schema:
-          type: object
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
+          description: Tempo de requisição excedido
           schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Atribui um técnico a um chamado existente
-      tags:
-      - chamados
-  /chamados/atualizar-status/{id}:
-    patch:
-      consumes:
-      - application/json
-      description: Atualiza o status de um chamado existente pelo ID.
-      parameters:
-      - description: ID do chamado
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Status e solução do chamado
-        in: body
-        name: chamado
-        required: true
-        schema:
-          type: object
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
+          description: Erro interno do servidor
           schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Atualiza o status de um chamado existente
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Lista todos os chamados
       tags:
-      - chamados
-  /chamados/atualizar/{id}:
-    put:
-      consumes:
-      - application/json
-      description: Atualiza os dados de um chamado existente pelo ID.
-      parameters:
-      - description: ID do chamado
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Dados do chamado
-        in: body
-        name: chamado
-        required: true
-        schema:
-          $ref: '#/definitions/model.Chamado'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Chamado'
-        "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Atualiza um chamado existente
-      tags:
-      - chamados
-  /chamados/buscar-por-id/{id}:
+      - Chamado
+  /chamados/listar-paginado:
     get:
       consumes:
       - application/json
-      description: Retorna chamado pelo ID.
+      description: Retorna uma lista paginada de chamados com base nos filtros fornecidos
       parameters:
-      - description: ID do chamado
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Chamado'
-        "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Busca um chamado por ID
-      tags:
-      - chamados
-  /chamados/buscar-tudo:
-    get:
-      consumes:
-      - application/json
-      description: Retorna lista paginada de chamados.
-      parameters:
-      - description: Pagina
+      - default: 1
+        description: Número da página
         in: query
         name: pagina
         type: integer
-      - description: Limite
+      - default: 10
+        description: Número de itens por página
         in: query
         name: limite
         type: integer
-      - description: Busca
+      - description: Termo de busca
         in: query
         name: busca
         type: string
@@ -724,454 +1862,260 @@ paths:
         in: query
         name: criadorId
         type: string
-      - description: ID do atribuído
-        in: query
-        name: atribuidoId
-        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Lista paginada de chamados
           schema:
-            items:
-              $ref: '#/definitions/model.Chamado'
-            type: array
+            $ref: '#/definitions/dto.ChamadoPaginado'
         "400":
-          description: Bad Request
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
       summary: Lista chamados com paginação e filtros
       tags:
-      - chamados
-  /chamados/criar:
-    post:
-      consumes:
-      - application/json
-      description: Cria um novo chamado com os dados fornecidos no corpo da requisição.
-      parameters:
-      - description: Dados do chamado
-        in: body
-        name: chamado
-        required: true
-        schema:
-          $ref: '#/definitions/model.Chamado'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/model.Chamado'
-        "400":
-          description: Bad Request
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Cria um novo chamado
-      tags:
-      - chamados
-  /chamados/desarquivar/{id}:
-    patch:
-      consumes:
-      - application/json
-      description: Desarquiva um chamado existente pelo ID.
-      parameters:
-      - description: ID do chamado
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Desarquiva um chamado existente
-      tags:
-      - chamados
-  /chamados/lista-completa:
-    get:
-      consumes:
-      - application/json
-      description: Retorna todos os chamados sem paginação, útil para relatórios ou
-        exportação de dados.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.Chamado'
-            type: array
-        "400":
-          description: Bad Request
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Retorna todos os chamados sem paginação
-      tags:
-      - chamados
-  /chamados/remover-tecnico/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Remove o técnico atribuído de um chamado existente pelo ID.
-      parameters:
-      - description: ID do chamado
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Remove o técnico atribuído de um chamado existente
-      tags:
-      - chamados
+      - Chamado
   /login:
     post:
       consumes:
       - application/json
       description: Autentica um usuário e retorna tokens JWT.
       parameters:
-      - description: Login e senha do usuário
+      - description: Credenciais de login
         in: body
-        name: loginRequest
+        name: login
         required: true
         schema:
-          $ref: '#/definitions/handler.LoginDto'
+          $ref: '#/definitions/auth.LoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tokens JWT retornados com sucesso
+          schema:
+            $ref: '#/definitions/auth.TokenResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/auth.ErroResposta'
+        "401":
+          description: Credenciais inválidas
+          schema:
+            $ref: '#/definitions/auth.ErroResposta'
+      summary: Login de usuário
+      tags:
+      - Auth
+  /logs/buscar-por-id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna os dados completos de um log pelo seu ID
+      parameters:
+      - description: ID do log
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dto.LogResp'
         "400":
-          description: Bad Request
+          description: Contexto cancelado
           schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Log não encontrado
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Login
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Busca log por ID
       tags:
-      - auth
-  /logs:
+      - Log
+  /logs/listar-paginado:
     get:
       consumes:
       - application/json
-      description: Retorna lista paginada de logs.
+      description: Retorna uma lista paginada de logs com base nos filtros fornecidos
       parameters:
-      - description: Página
+      - default: 1
+        description: Número da página
         in: query
         name: pagina
         type: integer
-      - description: Limite
+      - default: 10
+        description: Número de itens por página
         in: query
         name: limite
         type: integer
-      - description: Busca
+      - description: Termo de busca
         in: query
         name: busca
         type: string
       - description: ID do usuário
         in: query
-        name: usuario_id
+        name: usuarioId
         type: string
-      - description: Ação
+      - description: Ação realizada
         in: query
         name: acao
         type: string
-      - description: Entidade
+      - description: Entidade afetada
         in: query
         name: entidade
         type: string
-      - description: 'Data de início (formato: YYYY-MM-DD)'
+      - description: Data de início no formato YYYY-MM-DD
         in: query
-        name: data_inicio
+        name: dataInicio
         type: string
-      - description: 'Data de fim (formato: YYYY-MM-DD)'
+      - description: Data de fim no formato YYYY-MM-DD
         in: query
-        name: data_fim
+        name: dataFim
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Lista paginada de logs
           schema:
-            items:
-              $ref: '#/definitions/model.Log'
-            type: array
+            $ref: '#/definitions/dto.LogPaginado'
         "400":
-          description: Bad Request
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Lista todos os logs com paginação e filtros
-      tags:
-      - Logs
-  /logs/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Retorna um log específico pelo seu ID.
-      parameters:
-      - description: ID do Log
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
+          description: Parâmetros de consulta inválidos
           schema:
-            $ref: '#/definitions/model.Log'
-        "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Busca um log pelo ID
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Lista logs com paginação e filtros
       tags:
-      - Logs
+      - Log
   /me:
     get:
-      description: Retorna os detalhes do usuário autenticado.
+      description: Retorna os dados do usuário autenticado com base no token JWT.
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Dados do usuário retornados com sucesso
           schema:
-            $ref: '#/definitions/model.Usuario'
+            $ref: '#/definitions/auth.UsuarioResp'
         "401":
-          description: Unauthorized
+          description: Token inválido ou ausente
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/auth.ErroResposta'
         "404":
-          description: Not Found
+          description: Usuário não encontrado
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Me
+            $ref: '#/definitions/auth.ErroResposta'
+        "500":
+          description: Erro interno ao buscar dados do usuário
+          schema:
+            $ref: '#/definitions/auth.ErroResposta'
+      summary: Dados do usuário autenticado
       tags:
-      - auth
+      - Auth
   /refresh:
     post:
       consumes:
       - application/json
-      description: Atualiza os tokens JWT usando um token de refresh.
+      description: Atualiza os tokens JWT usando um refresh token válido.
       parameters:
-      - description: Token de refresh
+      - description: Refresh token
         in: body
-        name: refreshRequest
+        name: refresh
         required: true
         schema:
-          $ref: '#/definitions/handler.RefreshRequest'
+          $ref: '#/definitions/auth.RefreshReq'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Tokens JWT atualizados com sucesso
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/auth.TokenResp'
         "400":
-          description: Bad Request
+          description: Payload inválido ou JSON malformado
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/auth.ErroResposta'
         "401":
-          description: Unauthorized
+          description: Refresh token inválido ou expirado
           schema:
-            additionalProperties:
-              type: string
-            type: object
-      summary: Refresh
+            $ref: '#/definitions/auth.ErroResposta'
+      summary: Refresh de tokens
       tags:
-      - auth
-  /subcategorias/ativar/{id}:
-    patch:
+      - Auth
+  /subcategorias:
+    post:
       consumes:
       - application/json
-      description: Ativa uma subcategoria pelo ID.
+      description: Cria uma nova subcategoria com os dados fornecidos no corpo da
+        requisição
       parameters:
-      - description: ID da subcategoria
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/model.Subcategoria'
-        "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Ativar subcategoria
-      tags:
-      - Subcategorias
-  /subcategorias/atualizar/{id}:
-    put:
-      consumes:
-      - application/json
-      description: Atualiza os dados de uma subcategoria existente com os dados fornecidos
-        no corpo da requisição.
-      parameters:
-      - description: ID da subcategoria
-        in: path
-        name: id
-        required: true
-        type: string
       - description: Subcategoria
         in: body
         name: subcategoria
         required: true
         schema:
-          $ref: '#/definitions/model.Subcategoria'
+          $ref: '#/definitions/dto.CriarSubcategoriaReq'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Subcategoria criada com sucesso
           schema:
-            $ref: '#/definitions/model.Subcategoria'
+            $ref: '#/definitions/dto.SubcategoriaResp'
         "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "409":
-          description: Conflict
-          schema: {}
+          description: Conflito ao criar subcategoria
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Atualizar subcategoria
+          description: Erro interno ao criar subcategoria
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Cria uma nova subcategoria
       tags:
-      - Subcategorias
-  /subcategorias/buscar-por-id/{id}:
-    get:
+      - Subcategoria
+  /subcategorias/ativar/{id}:
+    patch:
       consumes:
       - application/json
-      description: Retorna os detalhes de uma subcategoria pelo seu ID.
+      description: Ativa uma subcategoria pelo ID
       parameters:
       - description: ID da subcategoria
         in: path
@@ -1184,30 +2128,119 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Subcategoria'
+            $ref: '#/definitions/dto.SubcategoriaResp'
         "400":
-          description: Bad Request
-          schema: {}
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: ' subcategoria não encontrada'
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Ativar subcategoria
+      tags:
+      - Subcategoria
+  /subcategorias/atualizar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza informações de uma subcategoria pelo seu ID
+      parameters:
+      - description: ID da subcategoria
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados para atualização da subcategoria
+        in: body
+        name: subcategoria
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarSubcategoriaReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subcategoria atualizada com sucesso
+          schema:
+            $ref: '#/definitions/dto.SubcategoriaResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Subcategoria não encontrada
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "409":
+          description: Conflito ao atualizar subcategoria
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Atualiza uma subcategoria
+      tags:
+      - Subcategoria
+  /subcategorias/buscar-por-id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retorna os dados de uma subcategoria pelo seu ID
+      parameters:
+      - description: ID da subcategoria
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SubcategoriaResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Subcategoria não encontrada
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
       summary: Busca uma subcategoria pelo ID
       tags:
-      - Subcategorias
+      - Subcategoria
   /subcategorias/buscar-por-nome/{nome}:
     get:
       consumes:
       - application/json
-      description: Retorna os detalhes de uma subcategoria pelo seu nome.
+      description: Retorna os dados de uma subcategoria pelo seu nome
       parameters:
       - description: Nome da subcategoria
         in: path
@@ -1220,117 +2253,31 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Subcategoria'
+            $ref: '#/definitions/dto.SubcategoriaResp'
         "400":
-          description: Bad Request
-          schema: {}
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: Subcategoria não encontrada
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
       summary: Busca uma subcategoria pelo nome
       tags:
-      - Subcategorias
-  /subcategorias/buscar-tudo:
-    get:
-      consumes:
-      - application/json
-      description: Retorna lista paginada de subcategorias
-      parameters:
-      - description: Página
-        in: query
-        name: pagina
-        type: integer
-      - description: Limite
-        in: query
-        name: limite
-        type: integer
-      - description: Busca
-        in: query
-        name: busca
-        type: string
-      - description: Status
-        in: query
-        name: status
-        type: boolean
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/model.Subcategoria'
-            type: array
-        "400":
-          description: Bad Request
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Lista todas as subcategorias
-      tags:
-      - Subcategorias
-  /subcategorias/criar:
-    post:
-      consumes:
-      - application/json
-      description: Cria uma nova subcategoria com os dados fornecidos no corpo da
-        requisição.
-      parameters:
-      - description: Dados da subcategoria
-        in: body
-        name: subcategoria
-        required: true
-        schema:
-          $ref: '#/definitions/model.Subcategoria'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/model.Subcategoria'
-        "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "409":
-          description: Conflict
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Cria uma nova subcategoria
-      tags:
-      - Subcategorias
+      - Subcategoria
   /subcategorias/desativar/{id}:
-    delete:
+    patch:
       consumes:
       - application/json
-      description: Desativa (soft delete) uma subcategoria pelo ID.
+      description: Desativa uma subcategoria pelo ID
       parameters:
       - description: ID da subcategoria
         in: path
@@ -1343,30 +2290,31 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/model.Subcategoria'
+            $ref: '#/definitions/dto.SubcategoriaResp'
         "400":
-          description: Bad Request
-          schema: {}
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: ' subcategoria não encontrada'
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
       summary: Desativar subcategoria
       tags:
-      - Subcategorias
-  /subcategorias/listar-completa:
+      - Subcategoria
+  /subcategorias/listar:
     get:
       consumes:
       - application/json
-      description: Retorna uma lista completa de todas as subcategorias, sem paginação.
+      description: Retorna todas as subcategorias sem paginação
       produces:
       - application/json
       responses:
@@ -1374,141 +2322,115 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.Subcategoria'
+              $ref: '#/definitions/dto.SubcategoriaResp'
             type: array
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Lista todas as subcategorias sem paginação
-      tags:
-      - Subcategorias
-  /usuarios/ativar/{id}:
-    patch:
-      consumes:
-      - application/json
-      description: Ativa (reativa) usuário pelo ID (apenas ADM)
-      parameters:
-      - description: ID do usuário
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Ativa usuário
-      tags:
-      - usuarios
-  /usuarios/atualizar-permissao/{id}:
-    patch:
-      consumes:
-      - application/json
-      description: Atualiza permissão do usuário pelo ID (apenas ADM)
-      parameters:
-      - description: ID do usuário
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Permissão do usuário
-        in: body
-        name: permissao
-        required: true
-        schema:
-          type: object
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
         "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Atualiza permissão do usuário
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Lista todas as subcategorias
       tags:
-      - usuarios
-  /usuarios/atualizar/{id}:
-    put:
+      - Subcategoria
+  /subcategorias/listar-paginado:
+    get:
       consumes:
       - application/json
-      description: Atualiza dados do usuário (ADM/TEC/USR conforme regra)
+      description: Retorna uma lista paginada de subcategorias com base nos parâmetros
+        de filtro fornecidos
       parameters:
-      - description: ID do usuário
-        in: path
-        name: id
-        required: true
+      - description: 'Número da página (padrão: 1)'
+        in: query
+        name: pagina
+        type: integer
+      - description: 'Número de itens por página (padrão: 10)'
+        in: query
+        name: limite
+        type: integer
+      - description: Termo de busca no nome da subcategoria
+        in: query
+        name: busca
         type: string
-      - description: Dados do usuário
+      - description: Filtrar por status ativo/inativo
+        in: query
+        name: status
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista paginada de subcategorias
+          schema:
+            $ref: '#/definitions/dto.SubcategoriaPaginado'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Lista subcategorias com paginação
+      tags:
+      - Subcategoria
+  /usuarios:
+    post:
+      consumes:
+      - application/json
+      description: Cria um usuário com os dados fornecidos no corpo da requisição
+      parameters:
+      - description: Dados para criação de usuário
         in: body
         name: usuario
         required: true
         schema:
-          $ref: '#/definitions/model.Usuario'
+          $ref: '#/definitions/dto.CriarUsuarioReq'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Usuário criado com sucesso
           schema:
-            $ref: '#/definitions/model.Usuario'
+            $ref: '#/definitions/dto.UsuarioResp'
         "400":
-          description: Bad Request
-          schema: {}
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "409":
+          description: Usuário já existe
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Atualiza usuário
+          description: Erro interno ao criar usuário
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Cria um novo usuário
       tags:
-      - usuarios
-  /usuarios/autorizar/{id}:
+      - Usuario
+  /usuarios/ativar/{id}:
     patch:
       consumes:
       - application/json
-      description: Autoriza (reativa) usuário pelo ID (apenas ADM)
+      description: Ativa usuário pelo ID
       parameters:
       - description: ID do usuário
         in: path
@@ -1521,28 +2443,166 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/dto.UsuarioResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: Usuário não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Ativa usuário
+      tags:
+      - Usuario
+  /usuarios/atualizar-permissao/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza a permissão de um usuário pelo ID
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados para atualização da permissão do usuário
+        in: body
+        name: permissao
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarPermissaoUsuarioReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permissão do usuário atualizada com sucesso
+          schema:
+            $ref: '#/definitions/dto.UsuarioResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Usuário não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Atualiza permissão do usuário
+      tags:
+      - Usuario
+  /usuarios/atualizar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza informações de um usuário pelo ID
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados para atualização do usuário
+        in: body
+        name: usuario
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AtualizarUsuarioReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuário atualizado com sucesso
+          schema:
+            $ref: '#/definitions/dto.UsuarioResp'
+        "400":
+          description: Payload inválido ou JSON malformado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Usuário não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "409":
+          description: Conflito ao atualizar usuário
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "422":
+          description: Erro de validação nos dados enviados
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno ao atualizar usuário
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Atualiza usuário
+      tags:
+      - Usuario
+  /usuarios/autorizar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Autoriza (reativa) usuário pelo ID
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UsuarioResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Usuário não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
       summary: Autoriza usuário
       tags:
-      - usuarios
+      - Usuario
   /usuarios/buscar-novo/{login}:
     get:
       consumes:
       - application/json
-      description: Busca usuário no LDAP e retorna dados (apenas ADM)
+      description: Busca um novo usuário pelo login no LDAP
       parameters:
       - description: Login do usuário
         in: path
@@ -1555,22 +2615,35 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/dto.UsuarioLdapResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-      summary: Busca usuário novo no LDAP
+          description: Usuário não encontrado no LDAP
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "409":
+          description: Conflito ao atualizar usuário
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Busca novo usuário no LDAP
       tags:
-      - usuarios
+      - Usuario
   /usuarios/buscar-por-id/{id}:
     get:
       consumes:
       - application/json
-      description: Retorna usuário pelo ID (apenas ADM)
+      description: Retorna os dados completos de um usuário pelo seu ID
       parameters:
       - description: ID do usuário
         in: path
@@ -1581,29 +2654,33 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Usuário encontrado com sucesso
           schema:
-            $ref: '#/definitions/model.Usuario'
+            $ref: '#/definitions/dto.UsuarioResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
+          description: Usuário não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
       summary: Busca usuário por ID
       tags:
-      - usuarios
+      - Usuario
   /usuarios/buscar-tecnicos:
     get:
       consumes:
       - application/json
-      description: Retorna lista de técnicos (apenas ADM)
+      description: Retorna uma lista de todos os usuários com permissão de técnico
       produces:
       - application/json
       responses:
@@ -1611,43 +2688,114 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/model.Usuario'
+              $ref: '#/definitions/dto.TecnicoResp'
             type: array
-        "405":
-          description: Method Not Allowed
-          schema: {}
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Lista técnicos
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Lista todos os técnicos
       tags:
-      - usuarios
-  /usuarios/buscar-tudo:
+      - Usuario
+  /usuarios/desativar/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Desativa usuário pelo ID
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuário desativado com sucesso
+          schema:
+            $ref: '#/definitions/dto.UsuarioResp'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "404":
+          description: Usuário não encontrado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Desativa usuário
+      tags:
+      - Usuario
+  /usuarios/listar:
     get:
       consumes:
       - application/json
-      description: Retorna lista paginada de usuários (apenas ADM)
+      description: Retorna uma lista de todos os usuários do sistema
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de usuários retornada com sucesso
+          schema:
+            items:
+              $ref: '#/definitions/dto.UsuarioResp'
+            type: array
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "408":
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
+      summary: Lista todos os usuários
+      tags:
+      - Usuario
+  /usuarios/listar-paginado:
+    get:
+      consumes:
+      - application/json
+      description: Retorna uma lista paginada de usuários com base nos filtros fornecidos
       parameters:
-      - description: Página
+      - default: 1
+        description: Número da página
         in: query
         name: pagina
         type: integer
-      - description: Limite
+      - default: 10
+        description: Número de itens por página
         in: query
         name: limite
         type: integer
-      - description: Busca
+      - description: Termo de busca no nome ou email do usuário
         in: query
         name: busca
         type: string
-      - description: Status
+      - description: Filtra por status do usuário (ativo/inativo)
         in: query
         name: status
-        type: string
-      - description: Permissão
+        type: boolean
+      - description: Filtra por permissão do usuário
         in: query
         name: permissao
         type: string
@@ -1655,139 +2803,39 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Lista paginada de usuários retornada com sucesso
           schema:
-            items:
-              $ref: '#/definitions/model.Usuario'
-            type: array
-        "405":
-          description: Method Not Allowed
-          schema: {}
+            $ref: '#/definitions/dto.UsuarioPaginado'
+        "400":
+          description: Contexto cancelado
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "408":
-          description: Request Timeout
-          schema: {}
+          description: Tempo de requisição excedido
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
         "500":
-          description: Internal Server Error
-          schema: {}
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/handler.ErroResposta'
       summary: Lista usuários com paginação e filtros
       tags:
-      - usuarios
-  /usuarios/criar:
-    post:
-      consumes:
-      - application/json
-      description: Cria um usuário com os dados fornecidos no corpo da requisição.
-      parameters:
-      - description: Dados do usuário
-        in: body
-        name: usuario
-        required: true
-        schema:
-          $ref: '#/definitions/model.Usuario'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema: {}
-        "400":
-          description: Bad Request
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "409":
-          description: Conflict
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Cria um novo usuário
-      tags:
-      - usuarios
-  /usuarios/desativar/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Desativa (soft delete) usuário pelo ID (apenas ADM)
-      parameters:
-      - description: ID do usuário
-        in: path
-        name: id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Desativa usuário
-      tags:
-      - usuarios
-  /usuarios/lista-completa:
+      - Usuario
+  /usuarios/validar-usuario:
     get:
       consumes:
       - application/json
-      description: Retorna todos os usuários (apenas ADM)
+      description: Valida se o usuário autenticado está ativo no sistema
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Usuário válido
           schema:
-            items:
-              $ref: '#/definitions/model.Usuario'
-            type: array
-        "405":
-          description: Method Not Allowed
-          schema: {}
-        "408":
-          description: Request Timeout
-          schema: {}
-        "500":
-          description: Internal Server Error
-          schema: {}
-      summary: Lista completa de usuários
-      tags:
-      - usuarios
-  /usuarios/valida-usuario:
-    get:
-      consumes:
-      - application/json
-      description: Verifica se o usuário está autenticado
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
+            additionalProperties:
+              type: boolean
             type: object
-        "404":
-          description: Not Found
-          schema: {}
-        "405":
-          description: Method Not Allowed
-          schema: {}
       summary: Valida usuário autenticado
       tags:
-      - usuarios
+      - Usuario
 swagger: "2.0"

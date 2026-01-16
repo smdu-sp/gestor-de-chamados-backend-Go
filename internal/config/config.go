@@ -1,74 +1,237 @@
 package config
 
 import (
-	"log"
+	"fmt"
+	"log/slog"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
 
-// Config armazena as configurações da aplicação
+const (
+	GoVersion       = "1.25.0"                // GoVersion define a versão mínima do Go necessária
+	TimeoutPadrao   = 5 * time.Second         // TimeoutPadrao define um tempo padrão de timeout para operações
+	asterisco       = "*"                     // asterisco representa qualquer origem em CORS
+	stringVazia     = ""                      // stringVazia representa uma string vazia
+	localhost8080   = "http://localhost:8080" // localhost8080 representa o localhost na porta 8080
+	ipLocalhost8080 = "http://127.0.0.1:8080" // ipLocalhost8080 representa o IP localhost na porta 8080
+	ipLocalhost     = "127.0.0.1"             // ipLocalhost representa o IP localhost
+	localhost       = "localhost"             // localhost representa o nome localhost
+	production      = "production"            // production representa o ambiente de produção
+	development     = "development"           // development representa o ambiente de desenvolvimento
+	APP             = "APP"                   // APP representa a seção de configuração da aplicação
+	SERVER          = "SERVER"                // SERVER representa a seção de configuração do servidor
+	DATABASE        = "DATABASE"              // DATABASE representa a seção de configuração do banco de dados
+	AUTH            = "AUTH"                  // AUTH representa a seção de configuração de autenticação
+	LDAP            = "LDAP"                  // LDAP representa a seção de configuração do LDAP
+	PRODUCAO        = "EM PRODUÇÃO"           // PRODUCAO representa a seção de validação para ambiente de produção
+)
+
+// Config representa todas as configurações carregadas da aplicação
 type Config struct {
-	Port          string // Porta onde o servidor irá escutar
-	Env           string // Ambiente: local, development, production
-	CORSOrigin    string // Origem permitida para CORS
-	DBHost        string // Host do banco de dados
-	DBPort        string // Porta do banco de dados
-	DBUser        string // Usuário do banco de dados
-	DBPass        string // Senha do banco de dados
-	DBName        string // Nome do banco de dados
-	JWTSecret     string // Segredo para assinar JWTs
-	RTSecret      string // Segredo para assinar Refresh Tokens
-	AccessTTL     string // Tempo de vida do Access Token
-	RefreshTTL    string // Tempo de vida do Refresh Token
-	LDAPServer    string // Endereço do servidor LDAP
-	LDAPDomain    string // Domínio LDAP
-	LDAPBase      string // Base DN para buscas LDAP
-	LDAPUser      string // Usuário para bind no LDAP
-	LDAPPass      string // Senha para bind no LDAP
-	LDAPLoginAttr string // Atributo usado para login (ex: uid, cn, mail)
+	app      AppConfig      // Configuração da aplicação
+	server   ServerConfig   // Configuração do servidor
+	database DatabaseConfig // Configuração do banco de dados
+	auth     AuthConfig     // Configuração de autenticação
+	ldap     LDAPConfig     // Configuração do LDAP
 }
 
-// Load carrega as configurações do ambiente ou usa valores padrão
-func Load() Config {
-	// Tenta carregar o .env
-	if err := godotenv.Load(); err != nil {
-		log.Println("Não foi possível carregar o .env, usando variáveis de ambiente do sistema")
+// Carregar carrega as configurações do ambiente ou usa valores padrão.
+//
+// Em caso de erros de validação, retorna um erro do tipo ErrosConfig.
+func Carregar() (*Config, error) {
+	// Tenta carregar .env (não é crítico se não existir)
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		return nil, fmt.Errorf("falha ao carregar .env: %w", err)
 	}
 
-	// Carrega as variáveis de ambiente com valores padrão
-	cfg := Config{
-		Port:          getenv("PORT", "8080"),
-		Env:           getenv("ENVIRONMENT", "local"),
-		CORSOrigin:    getenv("CORS_ORIGIN", ""),
-		DBHost:        getenv("DB_HOST", "127.0.0.1"),
-		DBPort:        getenv("DB_PORT", "3306"),
-		DBUser:        getenv("DB_USER", "user"),
-		DBPass:        getenv("DB_PASS", "userpassword"),
-		DBName:        getenv("DB_NAME", "mydatabase"),
-		JWTSecret:     os.Getenv("JWT_SECRET"),
-		RTSecret:      os.Getenv("RT_SECRET"),
-		AccessTTL:     getenv("ACCESS_TTL", "24h"),
-		RefreshTTL:    getenv("REFRESH_TTL", "168h"),
-		LDAPServer:    getenv("LDAP_SERVER", ""),
-		LDAPDomain:    getenv("LDAP_DOMAIN", ""),
-		LDAPBase:      getenv("LDAP_BASE", ""),
-		LDAPUser:      getenv("LDAP_USER", ""),
-		LDAPPass:      getenv("LDAP_PASS", ""),
-		LDAPLoginAttr: getenv("LDAP_LOGIN_ATTR", "uid"),
+	config := Config{
+		app:      carregarAppConfig(),
+		server:   carregarServerConfig(),
+		database: carregarDatabaseConfig(),
+		auth:     carregarAuthConfig(),
+		ldap:     carregarLDAPConfig(),
 	}
 
-	if cfg.JWTSecret == "" || cfg.RTSecret == "" {
-		log.Println("[aviso] defina JWT_SECRET e RT_SECRET no .env")
+	if err := config.validar(); err != nil {
+		return nil, err
 	}
 
-	return cfg
+	return &config, nil
 }
 
-// getenv retorna o valor da variável de ambiente ou o valor padrão se não estiver definida
-func getenv(k, def string) string {
-	if valor := os.Getenv(k); valor != "" {
+// validar verifica todas as configurações.
+//
+// Em caso de erros de validação, retorna um erro do tipo ErrosConfig.
+func (c *Config) validar() error {
+	erros := NovoErrosConfig()
+
+	if err := c.app.Validar(); err != nil {
+		erros.Add(APP, err.Error())
+	}
+
+	if err := c.server.Validar(); err != nil {
+		erros.Add(SERVER, err.Error())
+	}
+
+	if err := c.database.Validar(); err != nil {
+		erros.Add(DATABASE, err.Error())
+	}
+
+	if err := c.auth.Validar(); err != nil {
+		erros.Add(AUTH, err.Error())
+	}
+
+	if err := c.ldap.Validar(); err != nil {
+		erros.Add(LDAP, err.Error())
+	}
+
+	if err := c.ValidarEmProducao(); err != nil {
+		erros.Add(PRODUCAO, err.Error())
+	}
+
+	if erros.HaErros() {
+		return erros
+	}
+
+	return nil
+}
+
+// ValidarEmProduçao valida as restrições adicionais para ambiente de produção.
+//
+// Em caso de erros de validação, retorna um erro do tipo ErrosConfig.
+func (c *Config) ValidarEmProducao() error {
+	if !c.EmProducao() {
+		return nil
+	}
+
+	erros := NovoErrosConfig()
+
+	origensRestritas := map[string]bool{
+		asterisco:       true,
+		stringVazia:     true,
+		localhost8080:   true,
+		ipLocalhost8080: true,
+	}
+
+	origin := c.AppCORSOrigin()
+
+	if origensRestritas[origin] {
+		erros.Add("CORS_ORIGIN", "não pode ser "+asterisco+", vazio, "+localhost8080+" ou "+ipLocalhost8080+" em produção")
+	}
+
+	if c.DBHost() == localhost || c.DBHost() == ipLocalhost {
+		erros.Add("DB_HOST", "não pode usar "+localhost+" ou "+ipLocalhost+" em produção")
+	}
+
+	if erros.HaErros() {
+		return erros
+	}
+
+	return nil
+}
+
+// =============================================================================
+// Métodos de acesso às configurações
+// =============================================================================
+
+//------------------- APP CONFIG --------------------------------------
+
+func (c Config) AppName() string         { return c.app.Name() }
+func (c Config) AppVersion() string      { return c.app.Version() }
+func (c Config) AppEnvironment() string  { return c.app.Environment() }
+func (c Config) AppLogLevel() string     { return c.app.LogLevel() }
+func (c Config) AppPort() string         { return c.app.Port() }
+func (c Config) AppCORSOrigin() string   { return c.app.CORSOrigin() }
+func (c Config) EmProducao() bool        { return c.app.Environment() == production }
+func (c Config) EmDesenvolvimento() bool { return c.app.Environment() == development }
+
+//------------------- SERVER CONFIG -----------------------------------
+
+func (c Config) ServerReadTimeout() time.Duration     { return c.server.ReadTimeout() }
+func (c Config) ServerWriteTimeout() time.Duration    { return c.server.WriteTimeout() }
+func (c Config) ServerIdleTimeout() time.Duration     { return c.server.IdleTimeout() }
+func (c Config) ServerShutdownTimeout() time.Duration { return c.server.ShutdownTimeout() }
+func (c Config) ServerSignalChannelBufferSize() int   { return c.server.SignalChannelBufferSize() }
+func (c Config) ServerErrorChannelBufferSize() int    { return c.server.ErrorChannelBufferSize() }
+
+//------------------- DATABASE CONFIG ---------------------------------
+
+func (c Config) DBHost() string                    { return c.database.Host() }
+func (c Config) DBPort() string                    { return c.database.Port() }
+func (c Config) DBUser() string                    { return c.database.User() }
+func (c Config) DBPass() string                    { return c.database.Pass() }
+func (c Config) DBName() string                    { return c.database.Name() }
+func (c Config) DBMaxRetryAttempts() int           { return c.database.MaxRetryAttempts() }
+func (c Config) DBMaxOpenConns() int               { return c.database.MaxOpenConns() }
+func (c Config) DBMaxIdleConns() int               { return c.database.MaxIdleConns() }
+func (c Config) DBConnMaxLifetime() time.Duration  { return c.database.ConnMaxLifetime() }
+func (c Config) DBConnMaxIdleTime() time.Duration  { return c.database.ConnMaxIdleTime() }
+func (c Config) DBMigrationTimeout() time.Duration { return c.database.MigrationTimeout() }
+
+//------------------- AUTH CONFIG -------------------------------------
+
+func (c Config) TokenSecret() string        { return c.auth.TokenSecret() }
+func (c Config) RefreshTokenSecret() string { return c.auth.RefreshTokenSecret() }
+func (c Config) TokenTTL() string           { return c.auth.TokenTTL() }
+func (c Config) RefreshTokenTTL() string    { return c.auth.RefreshTokenTTL() }
+
+//------------------- LDAP CONFIG -------------------------------------
+
+func (c Config) LDAPServer() string    { return c.ldap.Server() }
+func (c Config) LDAPDomain() string    { return c.ldap.Domain() }
+func (c Config) LDAPBase() string      { return c.ldap.Base() }
+func (c Config) LDAPUser() string      { return c.ldap.User() }
+func (c Config) LDAPPass() string      { return c.ldap.Pass() }
+func (c Config) LDAPLoginAttr() string { return c.ldap.LoginAttr() }
+
+// =============================================================================
+// Funções auxiliares
+// =============================================================================
+
+// getEnv retorna o valor da variável de ambiente
+// ou o valor padrão se não estiver definida
+func getEnv(chave, fallback string) string {
+	if valor := os.Getenv(chave); valor != "" {
 		return valor
 	}
-	return def
+	return fallback
+}
+
+// getEnvInt retorna o valor inteiro da variável de ambiente
+// ou o valor padrão se não estiver definida ou inválida
+func getEnvInt(chave string, fallback int) int {
+	valor := os.Getenv(chave)
+	if valor == "" {
+		return fallback
+	}
+
+	valorConv, err := strconv.Atoi(valor)
+	if err != nil {
+		return fallback
+	}
+
+	return valorConv
+}
+
+// getEnvDuration retorna o valor time.Duration da variável de ambiente
+// ou o valor padrão se não estiver definida ou inválida
+func getEnvDuration(chave, fallback string) time.Duration {
+	valor := getEnv(chave, fallback)
+
+	duracao, err := time.ParseDuration(valor)
+	if err != nil {
+		slog.Warn(
+			"valor inválido para duração, usando fallback",
+			"campo", chave,
+			"valor", valor,
+			"erro", err,
+		)
+
+		duracao, _ = time.ParseDuration(fallback)
+	}
+
+	return duracao
 }

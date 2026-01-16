@@ -15,9 +15,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/categorias/ativar/{id}": {
-            "patch": {
-                "description": "Ativa uma categoria pelo ID.",
+        "/acompanhamentos": {
+            "post": {
+                "description": "Cria um acompanhamento com os dados fornecidos no corpo da requisição",
                 "consumes": [
                     "application/json"
                 ],
@@ -25,7 +25,1100 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Categorias"
+                    "Acompanhamento"
+                ],
+                "summary": "Cria um novo acompanhamento",
+                "parameters": [
+                    {
+                        "description": "Dados para criação de acompanhamento",
+                        "name": "acompanhamento",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CriarAcompanhamentoReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Acompanhamento criado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AcompanhamentoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao criar acompanhamento",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/acompanhamentos/atualizar/{id}": {
+            "patch": {
+                "description": "Atualiza informações de um acompanhamento pelo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Acompanhamento"
+                ],
+                "summary": "Atualiza acompanhamento",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do acompanhamento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados para atualização do acompanhamento",
+                        "name": "acompanhamento",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AtualizarAcompanhamentoReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Acompanhamento atualizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AcompanhamentoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "404": {
+                        "description": "Acompanhamento não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao atualizar acompanhamento",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/acompanhamentos/buscar-por-chamado/{id}": {
+            "get": {
+                "description": "Retorna uma lista de acompanhamentos associados a um chamado pelo ID do chamado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Acompanhamento"
+                ],
+                "summary": "Busca acompanhamentos por ID do chamado",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do chamado",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Acompanhamentos encontrados com sucesso",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.AcompanhamentoResp"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "404": {
+                        "description": "Acompanhamento não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/acompanhamentos/buscar-por-id/{id}": {
+            "get": {
+                "description": "Retorna os dados completos de um acompanhamento pelo seu ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Acompanhamento"
+                ],
+                "summary": "Busca acompanhamento por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do acompanhamento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Acompanhamento encontrado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AcompanhamentoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "404": {
+                        "description": "Acompanhamento não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/acompanhamentos/deletar/{id}": {
+            "delete": {
+                "description": "Deleta um acompanhamento pelo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Acompanhamento"
+                ],
+                "summary": "Deleta acompanhamento",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do acompanhamento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Acompanhamento deletado com sucesso"
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "404": {
+                        "description": "Acompanhamento não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao deletar acompanhamento",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/acompanhamentos/listar-paginado": {
+            "get": {
+                "description": "Retorna uma lista paginada de acompanhamentos com base nos filtros fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Acompanhamento"
+                ],
+                "summary": "Lista acompanhamentos com paginação",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número da página",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Número de itens por página",
+                        "name": "limite",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtra por ID do chamado",
+                        "name": "chamadoId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtra por ID do usuário",
+                        "name": "usuarioId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de acompanhamentos retornada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AcompanhamentoPaginado"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/atendimentos": {
+            "post": {
+                "description": "Cria um novo atendimento com os dados fornecidos no corpo da requisição",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Atendimento"
+                ],
+                "summary": "Cria um novo atendimento",
+                "parameters": [
+                    {
+                        "description": "Dados do atendimento",
+                        "name": "atendimento",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CriarAtendimentoReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Atendimento criado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AtendimentoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao criar atendimento",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/atendimentos/atualizar/{id}": {
+            "patch": {
+                "description": "Atualiza as informações de um atendimento existente pelo seu ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Atendimento"
+                ],
+                "summary": "Atualiza um atendimento existente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do atendimento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados para atualização do atendimento",
+                        "name": "atendimento",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AtualizarAtendimentoReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Atendimento atualizado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AtendimentoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "404": {
+                        "description": "Atendimento não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao atualizar atendimento",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/atendimentos/buscar-por-id/{id}": {
+            "get": {
+                "description": "Busca um atendimento existente pelo seu ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Atendimento"
+                ],
+                "summary": "Busca um atendimento pelo ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do atendimento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Atendimento encontrado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AtendimentoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "404": {
+                        "description": "Atendimento não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao buscar atendimento",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/atendimentos/buscar-por-ids/chamados/{chamadoId}/tecnicos/{tecnicoId}": {
+            "get": {
+                "description": "Busca um atendimento existente pelo ID do chamado e do técnico atribuído",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Atendimento"
+                ],
+                "summary": "Busca um atendimento pelo ID do chamado e do técnico atribuído",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do chamado",
+                        "name": "chamadoId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID do técnico atribuído",
+                        "name": "atribuidoId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Atendimento encontrado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AtendimentoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "404": {
+                        "description": "Atendimento não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao buscar atendimento",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/atendimentos/listar-paginado": {
+            "get": {
+                "description": "Lista atendimentos existentes com suporte a paginação e filtros opcionais",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Atendimento"
+                ],
+                "summary": "Lista atendimentos com paginação e filtros",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número da página",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Número de itens por página",
+                        "name": "limite",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtra por ID do chamado",
+                        "name": "chamadoId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtra por ID do usuário atribuído",
+                        "name": "atribuidoId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de atendimentos retornada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AtendimentoPaginado"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao listar atendimentos",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/categoria-permissoes": {
+            "post": {
+                "description": "Adiciona uma nova categoria e permissão ao sistema",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CategoriaPermissao"
+                ],
+                "summary": "Cria uma nova categoria e permissão",
+                "parameters": [
+                    {
+                        "description": "Dados da nova categoria e permissão",
+                        "name": "categoria_permissao",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CriarCategoriaPermissaoReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "CategoriaPermissao criada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CategoriaPermissaoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "409": {
+                        "description": "CategoriaPermissao já existe",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao criar usuário",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/categorias": {
+            "post": {
+                "description": "Cria uma nova categoria com os dados fornecidos no corpo da requisição",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categoria"
+                ],
+                "summary": "Criar nova categoria",
+                "parameters": [
+                    {
+                        "description": "Dados para criação de categoria",
+                        "name": "categoria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CriarCategoriaReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Categoria criada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CategoriaResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "409": {
+                        "description": "Categoria já existe",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/categorias-permissoes/atualizar/{categoriaId}/usuarios/{usuarioId}": {
+            "patch": {
+                "description": "Modifica os detalhes de uma categoria e permissão específica",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CategoriaPermissao"
+                ],
+                "summary": "Atualiza uma categoria e permissão existente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da categoria",
+                        "name": "categoriaId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID do usuário",
+                        "name": "usuarioId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados para atualizar a categoria e permissão",
+                        "name": "categoriaPermissao",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AtualizarCategoriaPermissaoReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CategoriaPermissao atualizada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CategoriaPermissaoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "404": {
+                        "description": "CategoriaPermissao não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "409": {
+                        "description": "CategoriaPermissao já existe",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao atualizar categoriaPermissao",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/categorias-permissoes/deletar/{categoriaId}/usuarios/{usuarioId}": {
+            "delete": {
+                "description": "Remove uma categoria e permissão específica do sistema",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CategoriaPermissao"
+                ],
+                "summary": "Deleta uma categoria e permissão",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da categoria",
+                        "name": "categoriaId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID do usuário",
+                        "name": "usuarioId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "CategoriaPermissao deletada com sucesso"
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "404": {
+                        "description": "CategoriaPermissao não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao deletar categoriaPermissao",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/categorias-permissoes/listar-paginado": {
+            "get": {
+                "description": "Recupera uma lista paginada de categorias e permissões com base nos filtros fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CategoriaPermissao"
+                ],
+                "summary": "Lista categorias e permissões com paginação",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número da página",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Número de itens por página",
+                        "name": "limite",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtra por ID da categoria",
+                        "name": "categoriaId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtra por ID do usuário",
+                        "name": "usuarioId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtra por permissão",
+                        "name": "permissao",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de categorias e permissões retornada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CategoriaPermissaoPaginado"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao listar categorias e permissões",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/categorias-permissoes/{categoriaId}/usuarios/{usuarioId}": {
+            "get": {
+                "description": "Recupera os detalhes de uma categoria e permissão específica usando seu ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CategoriaPermissao"
+                ],
+                "summary": "Busca uma categoria e permissão por ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da categoria",
+                        "name": "categoriaId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID do usuário",
+                        "name": "usuarioId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CategoriaPermissao encontrada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CategoriaPermissaoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "404": {
+                        "description": "CategoriaPermissao não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao buscar categoriaPermissao",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/categorias/ativar/{id}": {
+            "patch": {
+                "description": "Ativa uma categoria pelo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categoria"
                 ],
                 "summary": "Ativar categoria",
                 "parameters": [
@@ -39,37 +1132,41 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Categoria ativada com sucesso",
                         "schema": {
-                            "$ref": "#/definitions/model.Categoria"
+                            "$ref": "#/definitions/dto.CategoriaResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Categoria não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/categorias/atualizar/{id}": {
-            "put": {
-                "description": "Atualiza uma categoria existente pelo ID com os dados fornecidos no corpo da requisição.",
+            "patch": {
+                "description": "Atualiza informações de uma categoria pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -77,7 +1174,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Categorias"
+                    "Categoria"
                 ],
                 "summary": "Atualizar categoria",
                 "parameters": [
@@ -89,48 +1186,57 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Categoria",
+                        "description": "Dados para atualização da categoria",
                         "name": "categoria",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Categoria"
+                            "$ref": "#/definitions/dto.AtualizarCategoriaReq"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Categoria atualizada com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dto.CategoriaResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Categoria não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "409": {
-                        "description": "Conflict",
-                        "schema": {}
+                        "description": "Categoria já existe",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
@@ -145,7 +1251,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Categorias"
+                    "Categoria"
                 ],
                 "summary": "Buscar categoria por ID",
                 "parameters": [
@@ -159,30 +1265,34 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Categoria encontrada com sucesso",
                         "schema": {
-                            "$ref": "#/definitions/model.Categoria"
+                            "$ref": "#/definitions/dto.CategoriaResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Categoria não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
@@ -197,7 +1307,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Categorias"
+                    "Categoria"
                 ],
                 "summary": "Buscar categoria por nome",
                 "parameters": [
@@ -211,155 +1321,41 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Categoria encontrada com sucesso",
                         "schema": {
-                            "$ref": "#/definitions/model.Categoria"
+                            "$ref": "#/definitions/dto.CategoriaResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Categoria não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/categorias/buscar-tudo": {
-            "get": {
-                "description": "Retorna lista paginada de categorias",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categorias"
-                ],
-                "summary": "Listar todas as categorias",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Página",
-                        "name": "pagina",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limite",
-                        "name": "limite",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Busca",
-                        "name": "busca",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Status",
-                        "name": "status",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
+                        "description": "Tempo de requisição excedido",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Categoria"
-                            }
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
-                    "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/categorias/criar": {
-            "post": {
-                "description": "Cria uma nova categoria com dados fornecidos no corpo da requisição.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categorias"
-                ],
-                "summary": "Criar uma nova categoria",
-                "parameters": [
-                    {
-                        "description": "Categoria",
-                        "name": "categoria",
-                        "in": "body",
-                        "required": true,
+                        "description": "Erro interno do servidor",
                         "schema": {
-                            "$ref": "#/definitions/model.Categoria"
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/model.Categoria"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
                     }
                 }
             }
         },
         "/categorias/desativar/{id}": {
-            "delete": {
-                "description": "Desativa (soft delete) uma categoria pelo ID.",
+            "patch": {
+                "description": "Desativa uma categoria pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -367,7 +1363,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Categorias"
+                    "Categoria"
                 ],
                 "summary": "Desativar categoria",
                 "parameters": [
@@ -381,37 +1377,41 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Categoria desativada com sucesso",
                         "schema": {
-                            "$ref": "#/definitions/model.Categoria"
+                            "$ref": "#/definitions/dto.CategoriaResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Categoria não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
-        "/categorias/listar-completa": {
+        "/categorias/listar": {
             "get": {
-                "description": "Retorna lista completa de categorias sem paginação",
+                "description": "Retorna lista de todas as categorias",
                 "consumes": [
                     "application/json"
                 ],
@@ -419,41 +1419,168 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Categorias"
+                    "Categoria"
                 ],
-                "summary": "Listar todas as categorias (completa)",
+                "summary": "Listar todas as categorias",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Lista de categorias retornada com sucesso",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Categoria"
+                                "$ref": "#/definitions/dto.CategoriaResp"
                             }
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/categorias/listar-paginado": {
+            "get": {
+                "description": "Retorna uma lista paginada de categorias com base nos filtros fornecidos nos parâmetros da URL",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categoria"
+                ],
+                "summary": "Listar categorias com paginação e filtros",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Termo de busca no nome da categoria",
+                        "name": "busca",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filtrar por status (ativo/inativo)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Número da página (padrão: 1)",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Número de itens por página (padrão: 10)",
+                        "name": "limite",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de categorias retornada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CategoriaPaginado"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/chamados": {
+            "post": {
+                "description": "Cria um novo chamado com os dados fornecidos no corpo da requisição",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chamado"
+                ],
+                "summary": "Cria um novo chamado",
+                "parameters": [
+                    {
+                        "description": "Dados para criação de chamado",
+                        "name": "chamado",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CriarChamadoReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Chamado criado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChamadoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/chamados/arquivar/{id}": {
-            "patch": {
-                "description": "Arquiva um chamado existente pelo ID.",
+            "delete": {
+                "description": "Arquiva um chamado existente pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -461,7 +1588,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chamados"
+                    "Chamado"
                 ],
                 "summary": "Arquiva um chamado existente",
                 "parameters": [
@@ -475,38 +1602,41 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Chamado arquivado com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/dto.ChamadoResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Chamado não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
-        "/chamados/atribuir-tecnico/{id}": {
+        "/chamados/atualizar-solucao/{id}": {
             "patch": {
-                "description": "Atribui um técnico a um chamado existente pelo ID.",
+                "description": "Atualiza a solução de um chamado existente pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -514,9 +1644,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chamados"
+                    "Chamado"
                 ],
-                "summary": "Atribui um técnico a um chamado existente",
+                "summary": "Atualiza a solução de um chamado existente",
                 "parameters": [
                     {
                         "type": "string",
@@ -526,49 +1656,58 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "ID do técnico",
-                        "name": "tecnico",
+                        "description": "Nova solução do chamado",
+                        "name": "chamado",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/dto.AtualizarSolucaoReq"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Chamado atualizado com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/dto.ChamadoResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Chamado não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/chamados/atualizar-status/{id}": {
             "patch": {
-                "description": "Atualiza o status de um chamado existente pelo ID.",
+                "description": "Atualiza o status de um chamado existente pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -576,7 +1715,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chamados"
+                    "Chamado"
                 ],
                 "summary": "Atualiza o status de um chamado existente",
                 "parameters": [
@@ -588,49 +1727,58 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Status e solução do chamado",
+                        "description": "Novo status do chamado",
                         "name": "chamado",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/dto.AtualizarStatusReq"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Chamado atualizado com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/dto.ChamadoResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Chamado não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/chamados/atualizar/{id}": {
-            "put": {
-                "description": "Atualiza os dados de um chamado existente pelo ID.",
+            "patch": {
+                "description": "Atualiza as informações de um chamado existente pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -638,7 +1786,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chamados"
+                    "Chamado"
                 ],
                 "summary": "Atualiza um chamado existente",
                 "parameters": [
@@ -650,48 +1798,58 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Dados do chamado",
+                        "description": "Dados para atualização do chamado",
                         "name": "chamado",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Chamado"
+                            "$ref": "#/definitions/dto.AtualizarChamadoReq"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Chamado atualizado com sucesso",
                         "schema": {
-                            "$ref": "#/definitions/model.Chamado"
+                            "$ref": "#/definitions/dto.ChamadoResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Chamado não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
-        "/chamados/buscar-por-id/{id}": {
+        "/chamados/buscar/{id}": {
             "get": {
-                "description": "Retorna chamado pelo ID.",
+                "description": "Retorna os detalhes de um chamado específico pelo seu ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -699,9 +1857,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chamados"
+                    "Chamado"
                 ],
-                "summary": "Busca um chamado por ID",
+                "summary": "Busca um chamado pelo ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -713,37 +1871,41 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Chamado encontrado com sucesso",
                         "schema": {
-                            "$ref": "#/definitions/model.Chamado"
+                            "$ref": "#/definitions/dto.ChamadoResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Chamado não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
-        "/chamados/buscar-tudo": {
-            "get": {
-                "description": "Retorna lista paginada de chamados.",
+        "/chamados/desarquivar/{id}": {
+            "patch": {
+                "description": "Desarquiva um chamado existente pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -751,25 +1913,127 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chamados"
+                    "Chamado"
+                ],
+                "summary": "Desarquiva um chamado existente",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do chamado",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chamado desarquivado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChamadoResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "404": {
+                        "description": "Chamado não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/chamados/listar": {
+            "get": {
+                "description": "Retorna lista de todos os chamados",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chamado"
+                ],
+                "summary": "Lista todos os chamados",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.ChamadoResp"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/chamados/listar-paginado": {
+            "get": {
+                "description": "Retorna uma lista paginada de chamados com base nos filtros fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chamado"
                 ],
                 "summary": "Lista chamados com paginação e filtros",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Pagina",
+                        "default": 1,
+                        "description": "Número da página",
                         "name": "pagina",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Limite",
+                        "default": 10,
+                        "description": "Número de itens por página",
                         "name": "limite",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Busca",
+                        "description": "Termo de busca",
                         "name": "busca",
                         "in": "query"
                     },
@@ -796,237 +2060,32 @@ const docTemplate = `{
                         "description": "ID do criador",
                         "name": "criadorId",
                         "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "ID do atribuído",
-                        "name": "atribuidoId",
-                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Lista paginada de chamados",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Chamado"
-                            }
+                            "$ref": "#/definitions/dto.ChamadoPaginado"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
-                    "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/chamados/criar": {
-            "post": {
-                "description": "Cria um novo chamado com os dados fornecidos no corpo da requisição.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "chamados"
-                ],
-                "summary": "Cria um novo chamado",
-                "parameters": [
-                    {
-                        "description": "Dados do chamado",
-                        "name": "chamado",
-                        "in": "body",
-                        "required": true,
+                        "description": "Contexto cancelado",
                         "schema": {
-                            "$ref": "#/definitions/model.Chamado"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/model.Chamado"
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/chamados/desarquivar/{id}": {
-            "patch": {
-                "description": "Desarquiva um chamado existente pelo ID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "chamados"
-                ],
-                "summary": "Desarquiva um chamado existente",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID do chamado",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
+                        "description": "Tempo de requisição excedido",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
-                    "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/chamados/lista-completa": {
-            "get": {
-                "description": "Retorna todos os chamados sem paginação, útil para relatórios ou exportação de dados.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "chamados"
-                ],
-                "summary": "Retorna todos os chamados sem paginação",
-                "responses": {
-                    "200": {
-                        "description": "OK",
+                        "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Chamado"
-                            }
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
-                    "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/chamados/remover-tecnico/{id}": {
-            "delete": {
-                "description": "Remove o técnico atribuído de um chamado existente pelo ID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "chamados"
-                ],
-                "summary": "Remove o técnico atribuído de um chamado existente",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "ID do chamado",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
-                    "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
                     }
                 }
             }
@@ -1041,54 +2100,45 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth"
                 ],
-                "summary": "Login",
+                "summary": "Login de usuário",
                 "parameters": [
                     {
-                        "description": "Login e senha do usuário",
-                        "name": "loginRequest",
+                        "description": "Credenciais de login",
+                        "name": "login",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.LoginDto"
+                            "$ref": "#/definitions/auth.LoginReq"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Tokens JWT retornados com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/auth.TokenResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Payload inválido ou JSON malformado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/auth.ErroResposta"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Credenciais inválidas",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/auth.ErroResposta"
                         }
                     }
                 }
             }
         },
-        "/logs": {
+        "/logs/buscar-por-id/{id}": {
             "get": {
-                "description": "Retorna lista paginada de logs.",
+                "description": "Retorna os dados completos de um log pelo seu ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1096,105 +2146,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Logs"
+                    "Log"
                 ],
-                "summary": "Lista todos os logs com paginação e filtros",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Página",
-                        "name": "pagina",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limite",
-                        "name": "limite",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Busca",
-                        "name": "busca",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "ID do usuário",
-                        "name": "usuario_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Ação",
-                        "name": "acao",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Entidade",
-                        "name": "entidade",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Data de início (formato: YYYY-MM-DD)",
-                        "name": "data_inicio",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Data de fim (formato: YYYY-MM-DD)",
-                        "name": "data_fim",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Log"
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
-                    "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/logs/{id}": {
-            "get": {
-                "description": "Retorna um log específico pelo seu ID.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Logs"
-                ],
-                "summary": "Busca um log pelo ID",
+                "summary": "Busca log por ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "ID do Log",
+                        "description": "ID do log",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1204,65 +2162,162 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Log"
+                            "$ref": "#/definitions/dto.LogResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Log não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/logs/listar-paginado": {
+            "get": {
+                "description": "Retorna uma lista paginada de logs com base nos filtros fornecidos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Log"
+                ],
+                "summary": "Lista logs com paginação e filtros",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número da página",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Número de itens por página",
+                        "name": "limite",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Termo de busca",
+                        "name": "busca",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID do usuário",
+                        "name": "usuarioId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ação realizada",
+                        "name": "acao",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Entidade afetada",
+                        "name": "entidade",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Data de início no formato YYYY-MM-DD",
+                        "name": "dataInicio",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Data de fim no formato YYYY-MM-DD",
+                        "name": "dataFim",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de logs",
+                        "schema": {
+                            "$ref": "#/definitions/dto.LogPaginado"
+                        }
+                    },
+                    "400": {
+                        "description": "Parâmetros de consulta inválidos",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/me": {
             "get": {
-                "description": "Retorna os detalhes do usuário autenticado.",
+                "description": "Retorna os dados do usuário autenticado com base no token JWT.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth"
                 ],
-                "summary": "Me",
+                "summary": "Dados do usuário autenticado",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Dados do usuário retornados com sucesso",
                         "schema": {
-                            "$ref": "#/definitions/model.Usuario"
+                            "$ref": "#/definitions/auth.UsuarioResp"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Token inválido ou ausente",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/auth.ErroResposta"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Usuário não encontrado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/auth.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao buscar dados do usuário",
+                        "schema": {
+                            "$ref": "#/definitions/auth.ErroResposta"
                         }
                     }
                 }
@@ -1270,7 +2325,7 @@ const docTemplate = `{
         },
         "/refresh": {
             "post": {
-                "description": "Atualiza os tokens JWT usando um token de refresh.",
+                "description": "Atualiza os tokens JWT usando um refresh token válido.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1278,46 +2333,101 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "Auth"
                 ],
-                "summary": "Refresh",
+                "summary": "Refresh de tokens",
                 "parameters": [
                     {
-                        "description": "Token de refresh",
-                        "name": "refreshRequest",
+                        "description": "Refresh token",
+                        "name": "refresh",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RefreshRequest"
+                            "$ref": "#/definitions/auth.RefreshReq"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Tokens JWT atualizados com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/auth.TokenResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Payload inválido ou JSON malformado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/auth.ErroResposta"
                         }
                     },
                     "401": {
-                        "description": "Unauthorized",
+                        "description": "Refresh token inválido ou expirado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/auth.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/subcategorias": {
+            "post": {
+                "description": "Cria uma nova subcategoria com os dados fornecidos no corpo da requisição",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Subcategoria"
+                ],
+                "summary": "Cria uma nova subcategoria",
+                "parameters": [
+                    {
+                        "description": "Subcategoria",
+                        "name": "subcategoria",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CriarSubcategoriaReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Subcategoria criada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SubcategoriaResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflito ao criar subcategoria",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao criar subcategoria",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
                     }
                 }
@@ -1325,7 +2435,7 @@ const docTemplate = `{
         },
         "/subcategorias/ativar/{id}": {
             "patch": {
-                "description": "Ativa uma subcategoria pelo ID.",
+                "description": "Ativa uma subcategoria pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1333,7 +2443,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Subcategorias"
+                    "Subcategoria"
                 ],
                 "summary": "Ativar subcategoria",
                 "parameters": [
@@ -1349,35 +2459,39 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Subcategoria"
+                            "$ref": "#/definitions/dto.SubcategoriaResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": " subcategoria não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/subcategorias/atualizar/{id}": {
-            "put": {
-                "description": "Atualiza os dados de uma subcategoria existente com os dados fornecidos no corpo da requisição.",
+            "patch": {
+                "description": "Atualiza informações de uma subcategoria pelo seu ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1385,9 +2499,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Subcategorias"
+                    "Subcategoria"
                 ],
-                "summary": "Atualizar subcategoria",
+                "summary": "Atualiza uma subcategoria",
                 "parameters": [
                     {
                         "type": "string",
@@ -1397,52 +2511,64 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Subcategoria",
+                        "description": "Dados para atualização da subcategoria",
                         "name": "subcategoria",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Subcategoria"
+                            "$ref": "#/definitions/dto.AtualizarSubcategoriaReq"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Subcategoria atualizada com sucesso",
                         "schema": {
-                            "$ref": "#/definitions/model.Subcategoria"
+                            "$ref": "#/definitions/dto.SubcategoriaResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Subcategoria não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "409": {
-                        "description": "Conflict",
-                        "schema": {}
+                        "description": "Conflito ao atualizar subcategoria",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/subcategorias/buscar-por-id/{id}": {
             "get": {
-                "description": "Retorna os detalhes de uma subcategoria pelo seu ID.",
+                "description": "Retorna os dados de uma subcategoria pelo seu ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1450,7 +2576,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Subcategorias"
+                    "Subcategoria"
                 ],
                 "summary": "Busca uma subcategoria pelo ID",
                 "parameters": [
@@ -1466,35 +2592,39 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Subcategoria"
+                            "$ref": "#/definitions/dto.SubcategoriaResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Subcategoria não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/subcategorias/buscar-por-nome/{nome}": {
             "get": {
-                "description": "Retorna os detalhes de uma subcategoria pelo seu nome.",
+                "description": "Retorna os dados de uma subcategoria pelo seu nome",
                 "consumes": [
                     "application/json"
                 ],
@@ -1502,7 +2632,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Subcategorias"
+                    "Subcategoria"
                 ],
                 "summary": "Busca uma subcategoria pelo nome",
                 "parameters": [
@@ -1518,161 +2648,39 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Subcategoria"
+                            "$ref": "#/definitions/dto.SubcategoriaResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
-                    "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/subcategorias/buscar-tudo": {
-            "get": {
-                "description": "Retorna lista paginada de subcategorias",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Subcategorias"
-                ],
-                "summary": "Lista todas as subcategorias",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Página",
-                        "name": "pagina",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limite",
-                        "name": "limite",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Busca",
-                        "name": "busca",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Status",
-                        "name": "status",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
+                        "description": "Subcategoria não encontrada",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Subcategoria"
-                            }
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/subcategorias/criar": {
-            "post": {
-                "description": "Cria uma nova subcategoria com os dados fornecidos no corpo da requisição.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Subcategorias"
-                ],
-                "summary": "Cria uma nova subcategoria",
-                "parameters": [
-                    {
-                        "description": "Dados da subcategoria",
-                        "name": "subcategoria",
-                        "in": "body",
-                        "required": true,
+                        "description": "Tempo de requisição excedido",
                         "schema": {
-                            "$ref": "#/definitions/model.Subcategoria"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/model.Subcategoria"
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
-                    "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {}
-                    },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/subcategorias/desativar/{id}": {
-            "delete": {
-                "description": "Desativa (soft delete) uma subcategoria pelo ID.",
+            "patch": {
+                "description": "Desativa uma subcategoria pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1680,7 +2688,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Subcategorias"
+                    "Subcategoria"
                 ],
                 "summary": "Desativar subcategoria",
                 "parameters": [
@@ -1696,35 +2704,39 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/model.Subcategoria"
+                            "$ref": "#/definitions/dto.SubcategoriaResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": " subcategoria não encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
-        "/subcategorias/listar-completa": {
+        "/subcategorias/listar": {
             "get": {
-                "description": "Retorna uma lista completa de todas as subcategorias, sem paginação.",
+                "description": "Retorna todas as subcategorias sem paginação",
                 "consumes": [
                     "application/json"
                 ],
@@ -1732,37 +2744,43 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Subcategorias"
+                    "Subcategoria"
                 ],
-                "summary": "Lista todas as subcategorias sem paginação",
+                "summary": "Lista todas as subcategorias",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Subcategoria"
+                                "$ref": "#/definitions/dto.SubcategoriaResp"
                             }
                         }
                     },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
-        "/usuarios/ativar/{id}": {
-            "patch": {
-                "description": "Ativa (reativa) usuário pelo ID (apenas ADM)",
+        "/subcategorias/listar-paginado": {
+            "get": {
+                "description": "Retorna uma lista paginada de subcategorias com base nos parâmetros de filtro fornecidos",
                 "consumes": [
                     "application/json"
                 ],
@@ -1770,7 +2788,138 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "usuarios"
+                    "Subcategoria"
+                ],
+                "summary": "Lista subcategorias com paginação",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Número da página (padrão: 1)",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Número de itens por página (padrão: 10)",
+                        "name": "limite",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Termo de busca no nome da subcategoria",
+                        "name": "busca",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filtrar por status ativo/inativo",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de subcategorias",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SubcategoriaPaginado"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/usuarios": {
+            "post": {
+                "description": "Cria um usuário com os dados fornecidos no corpo da requisição",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Usuario"
+                ],
+                "summary": "Cria um novo usuário",
+                "parameters": [
+                    {
+                        "description": "Dados para criação de usuário",
+                        "name": "usuario",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CriarUsuarioReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Usuário criado com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UsuarioResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "409": {
+                        "description": "Usuário já existe",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno ao criar usuário",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/usuarios/ativar/{id}": {
+            "patch": {
+                "description": "Ativa usuário pelo ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Usuario"
                 ],
                 "summary": "Ativa usuário",
                 "parameters": [
@@ -1786,28 +2935,39 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/dto.UsuarioResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "Usuário não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/usuarios/atualizar-permissao/{id}": {
             "patch": {
-                "description": "Atualiza permissão do usuário pelo ID (apenas ADM)",
+                "description": "Atualiza a permissão de um usuário pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1815,7 +2975,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "usuarios"
+                    "Usuario"
                 ],
                 "summary": "Atualiza permissão do usuário",
                 "parameters": [
@@ -1827,49 +2987,58 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Permissão do usuário",
+                        "description": "Dados para atualização da permissão do usuário",
                         "name": "permissao",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/dto.AtualizarPermissaoUsuarioReq"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Permissão do usuário atualizada com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/dto.UsuarioResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Usuário não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/usuarios/atualizar/{id}": {
-            "put": {
-                "description": "Atualiza dados do usuário (ADM/TEC/USR conforme regra)",
+            "patch": {
+                "description": "Atualiza informações de um usuário pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1877,7 +3046,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "usuarios"
+                    "Usuario"
                 ],
                 "summary": "Atualiza usuário",
                 "parameters": [
@@ -1889,48 +3058,64 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Dados do usuário",
+                        "description": "Dados para atualização do usuário",
                         "name": "usuario",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Usuario"
+                            "$ref": "#/definitions/dto.AtualizarUsuarioReq"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Usuário atualizado com sucesso",
                         "schema": {
-                            "$ref": "#/definitions/model.Usuario"
+                            "$ref": "#/definitions/dto.UsuarioResp"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "Payload inválido ou JSON malformado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Usuário não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflito ao atualizar usuário",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "422": {
+                        "description": "Erro de validação nos dados enviados",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno ao atualizar usuário",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/usuarios/autorizar/{id}": {
             "patch": {
-                "description": "Autoriza (reativa) usuário pelo ID (apenas ADM)",
+                "description": "Autoriza (reativa) usuário pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -1938,7 +3123,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "usuarios"
+                    "Usuario"
                 ],
                 "summary": "Autoriza usuário",
                 "parameters": [
@@ -1954,32 +3139,39 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/dto.UsuarioResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Usuário não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/usuarios/buscar-novo/{login}": {
             "get": {
-                "description": "Busca usuário no LDAP e retorna dados (apenas ADM)",
+                "description": "Busca um novo usuário pelo login no LDAP",
                 "consumes": [
                     "application/json"
                 ],
@@ -1987,9 +3179,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "usuarios"
+                    "Usuario"
                 ],
-                "summary": "Busca usuário novo no LDAP",
+                "summary": "Busca novo usuário no LDAP",
                 "parameters": [
                     {
                         "type": "string",
@@ -2003,24 +3195,45 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/dto.UsuarioLdapResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "Usuário não encontrado no LDAP",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflito ao atualizar usuário",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/usuarios/buscar-por-id/{id}": {
             "get": {
-                "description": "Retorna usuário pelo ID (apenas ADM)",
+                "description": "Retorna os dados completos de um usuário pelo seu ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -2028,7 +3241,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "usuarios"
+                    "Usuario"
                 ],
                 "summary": "Busca usuário por ID",
                 "parameters": [
@@ -2042,33 +3255,41 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Usuário encontrado com sucesso",
                         "schema": {
-                            "$ref": "#/definitions/model.Usuario"
+                            "$ref": "#/definitions/dto.UsuarioResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Usuário não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/usuarios/buscar-tecnicos": {
             "get": {
-                "description": "Retorna lista de técnicos (apenas ADM)",
+                "description": "Retorna uma lista de todos os usuários com permissão de técnico",
                 "consumes": [
                     "application/json"
                 ],
@@ -2076,159 +3297,43 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "usuarios"
+                    "Usuario"
                 ],
-                "summary": "Lista técnicos",
+                "summary": "Lista todos os técnicos",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Usuario"
+                                "$ref": "#/definitions/dto.TecnicoResp"
                             }
                         }
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
-                    "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/usuarios/buscar-tudo": {
-            "get": {
-                "description": "Retorna lista paginada de usuários (apenas ADM)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "usuarios"
-                ],
-                "summary": "Lista usuários com paginação e filtros",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Página",
-                        "name": "pagina",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limite",
-                        "name": "limite",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Busca",
-                        "name": "busca",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Status",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Permissão",
-                        "name": "permissao",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/model.Usuario"
-                            }
-                        }
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
-                    },
-                    "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
-                    }
-                }
-            }
-        },
-        "/usuarios/criar": {
-            "post": {
-                "description": "Cria um usuário com os dados fornecidos no corpo da requisição.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "usuarios"
-                ],
-                "summary": "Cria um novo usuário",
-                "parameters": [
-                    {
-                        "description": "Dados do usuário",
-                        "name": "usuario",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/model.Usuario"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {}
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
         "/usuarios/desativar/{id}": {
-            "delete": {
-                "description": "Desativa (soft delete) usuário pelo ID (apenas ADM)",
+            "patch": {
+                "description": "Desativa usuário pelo ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -2236,7 +3341,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "usuarios"
+                    "Usuario"
                 ],
                 "summary": "Desativa usuário",
                 "parameters": [
@@ -2250,34 +3355,41 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Usuário desativado com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/dto.UsuarioResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                        "description": "Usuário não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
-        "/usuarios/lista-completa": {
+        "/usuarios/listar": {
             "get": {
-                "description": "Retorna todos os usuários (apenas ADM)",
+                "description": "Retorna uma lista de todos os usuários do sistema",
                 "consumes": [
                     "application/json"
                 ],
@@ -2285,37 +3397,43 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "usuarios"
+                    "Usuario"
                 ],
-                "summary": "Lista completa de usuários",
+                "summary": "Lista todos os usuários",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Lista de usuários retornada com sucesso",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/model.Usuario"
+                                "$ref": "#/definitions/dto.UsuarioResp"
                             }
                         }
                     },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "408": {
-                        "description": "Request Timeout",
-                        "schema": {}
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {}
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
                     }
                 }
             }
         },
-        "/usuarios/valida-usuario": {
+        "/usuarios/listar-paginado": {
             "get": {
-                "description": "Verifica se o usuário está autenticado",
+                "description": "Retorna uma lista paginada de usuários com base nos filtros fornecidos",
                 "consumes": [
                     "application/json"
                 ],
@@ -2323,31 +3441,124 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "usuarios"
+                    "Usuario"
+                ],
+                "summary": "Lista usuários com paginação e filtros",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número da página",
+                        "name": "pagina",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Número de itens por página",
+                        "name": "limite",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Termo de busca no nome ou email do usuário",
+                        "name": "busca",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filtra por status do usuário (ativo/inativo)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtra por permissão do usuário",
+                        "name": "permissao",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de usuários retornada com sucesso",
+                        "schema": {
+                            "$ref": "#/definitions/dto.UsuarioPaginado"
+                        }
+                    },
+                    "400": {
+                        "description": "Contexto cancelado",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "408": {
+                        "description": "Tempo de requisição excedido",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ErroResposta"
+                        }
+                    }
+                }
+            }
+        },
+        "/usuarios/validar-usuario": {
+            "get": {
+                "description": "Valida se o usuário autenticado está ativo no sistema",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Usuario"
                 ],
                 "summary": "Valida usuário autenticado",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Usuário válido",
                         "schema": {
                             "type": "object",
-                            "additionalProperties": true
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
                         }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {}
-                    },
-                    "405": {
-                        "description": "Method Not Allowed",
-                        "schema": {}
                     }
                 }
             }
         }
     },
     "definitions": {
-        "handler.LoginDto": {
+        "auth.ErroResposta": {
+            "type": "object",
+            "properties": {
+                "detalhes": {
+                    "description": "Descrição detalhada do erro"
+                },
+                "instancia": {
+                    "description": "URI que identifica a instância do erro",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Código de status HTTP",
+                    "type": "integer"
+                },
+                "tipo": {
+                    "description": "URI que identifica o tipo de erro",
+                    "type": "string"
+                },
+                "titulo": {
+                    "description": "Título curto do erro",
+                    "type": "string"
+                }
+            }
+        },
+        "auth.LoginReq": {
             "type": "object",
             "properties": {
                 "login": {
@@ -2358,40 +3569,351 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.RefreshRequest": {
+        "auth.RefreshReq": {
             "type": "object",
             "properties": {
-                "refresh_token": {
+                "refreshToken": {
                     "type": "string"
                 }
             }
         },
-        "model.Acao": {
-            "type": "string",
-            "enum": [
-                "CRIACAO",
-                "ATUALIZACAO",
-                "DESATIVACAO",
-                "ATIVACAO",
-                "ARQUIVAMENTO",
-                "DESARQUIVAMENTO"
-            ],
-            "x-enum-varnames": [
-                "AcaoCriacao",
-                "AcaoAtualizacao",
-                "AcaoDesativacao",
-                "AcaoAtivacao",
-                "AcaoArquivamento",
-                "AcaoDesarquivamento"
-            ]
-        },
-        "model.Categoria": {
+        "auth.TokenResp": {
             "type": "object",
             "properties": {
-                "atualizado_em": {
+                "accessToken": {
                     "type": "string"
                 },
-                "criado_em": {
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.UsuarioResp": {
+            "type": "object",
+            "properties": {
+                "atualizadoEm": {
+                    "type": "string"
+                },
+                "avatar": {
+                    "type": "string"
+                },
+                "criadoEm": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "nome": {
+                    "type": "string"
+                },
+                "permissao": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                },
+                "ultimoLogin": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AcompanhamentoPaginado": {
+            "description": "Estrutura paginada contendo uma lista de acompanhamentos.",
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.AcompanhamentoResp"
+                    }
+                },
+                "limite": {
+                    "type": "integer"
+                },
+                "pagina": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "totalPaginas": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.AcompanhamentoResp": {
+            "type": "object",
+            "properties": {
+                "atualizadoEm": {
+                    "type": "string"
+                },
+                "chamadoId": {
+                    "type": "string"
+                },
+                "conteudo": {
+                    "type": "string"
+                },
+                "criadoEm": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "remetente": {
+                    "type": "string"
+                },
+                "usuarioId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AtendimentoPaginado": {
+            "description": "Estrutura paginada contendo uma lista de atendimentos.",
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.AtendimentoResp"
+                    }
+                },
+                "limite": {
+                    "type": "integer"
+                },
+                "pagina": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "totalPaginas": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.AtendimentoResp": {
+            "type": "object",
+            "properties": {
+                "atribuidoId": {
+                    "type": "string"
+                },
+                "atualizadoEm": {
+                    "type": "string"
+                },
+                "chamadoId": {
+                    "type": "string"
+                },
+                "criadoEm": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AtualizarAcompanhamentoReq": {
+            "type": "object",
+            "properties": {
+                "conteudo": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AtualizarAtendimentoReq": {
+            "type": "object",
+            "properties": {
+                "atribuidoId": {
+                    "type": "string"
+                },
+                "chamadoId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AtualizarCategoriaPermissaoReq": {
+            "type": "object",
+            "properties": {
+                "permissao": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AtualizarCategoriaReq": {
+            "type": "object",
+            "properties": {
+                "nome": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.AtualizarChamadoReq": {
+            "type": "object",
+            "properties": {
+                "arquivado": {
+                    "type": "boolean"
+                },
+                "categoriaId": {
+                    "type": "string"
+                },
+                "descricao": {
+                    "type": "string"
+                },
+                "subcategoriaId": {
+                    "type": "string"
+                },
+                "titulo": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AtualizarPermissaoUsuarioReq": {
+            "type": "object",
+            "properties": {
+                "permissao": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AtualizarSolucaoReq": {
+            "type": "object",
+            "properties": {
+                "solucao": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AtualizarStatusReq": {
+            "type": "object",
+            "properties": {
+                "solucao": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AtualizarSubcategoriaReq": {
+            "type": "object",
+            "properties": {
+                "categoriaid": {
+                    "type": "string"
+                },
+                "nome": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.AtualizarUsuarioReq": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "nome": {
+                    "type": "string"
+                },
+                "permissao": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.CategoriaPaginado": {
+            "description": "Estrutura paginada contendo uma lista de categorias.",
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CategoriaResp"
+                    }
+                },
+                "limite": {
+                    "type": "integer"
+                },
+                "pagina": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "totalPaginas": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.CategoriaPermissaoPaginado": {
+            "description": "Estrutura paginada contendo uma lista de categorias e permissões.",
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CategoriaPermissaoResp"
+                    }
+                },
+                "limite": {
+                    "type": "integer"
+                },
+                "pagina": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "totalPaginas": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.CategoriaPermissaoResp": {
+            "type": "object",
+            "properties": {
+                "atualizadoEm": {
+                    "type": "string"
+                },
+                "categoriaId": {
+                    "type": "string"
+                },
+                "criadoEm": {
+                    "type": "string"
+                },
+                "permissao": {
+                    "type": "string"
+                },
+                "usuarioId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CategoriaResp": {
+            "type": "object",
+            "properties": {
+                "atualizadoEm": {
+                    "type": "string"
+                },
+                "criadoEm": {
                     "type": "string"
                 },
                 "id": {
@@ -2405,11 +3927,35 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Chamado": {
+        "dto.ChamadoPaginado": {
+            "description": "Estrutura paginada contendo uma lista de chamados.",
             "type": "object",
             "properties": {
-                "atribuidoId": {
-                    "type": "string"
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ChamadoResp"
+                    }
+                },
+                "limite": {
+                    "type": "integer"
+                },
+                "pagina": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "totalPaginas": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ChamadoResp": {
+            "type": "object",
+            "properties": {
+                "arquivado": {
+                    "type": "boolean"
                 },
                 "atualizadoEm": {
                     "type": "string"
@@ -2439,7 +3985,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/model.StatusChamado"
+                    "type": "string"
                 },
                 "subcategoriaId": {
                     "type": "string"
@@ -2449,13 +3995,132 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Log": {
+        "dto.CriarAcompanhamentoReq": {
+            "type": "object",
+            "properties": {
+                "chamadoId": {
+                    "type": "string"
+                },
+                "conteudo": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CriarAtendimentoReq": {
+            "type": "object",
+            "properties": {
+                "atribuidoId": {
+                    "type": "string"
+                },
+                "chamadoId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CriarCategoriaPermissaoReq": {
+            "type": "object",
+            "properties": {
+                "categoriaId": {
+                    "type": "string"
+                },
+                "permissao": {
+                    "type": "string"
+                },
+                "usuarioId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CriarCategoriaReq": {
+            "type": "object",
+            "properties": {
+                "nome": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CriarChamadoReq": {
+            "type": "object",
+            "properties": {
+                "categoriaId": {
+                    "type": "string"
+                },
+                "criadorId": {
+                    "type": "string"
+                },
+                "descricao": {
+                    "type": "string"
+                },
+                "subcategoriaId": {
+                    "type": "string"
+                },
+                "titulo": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CriarSubcategoriaReq": {
+            "type": "object",
+            "properties": {
+                "categoriaid": {
+                    "type": "string"
+                },
+                "nome": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CriarUsuarioReq": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "nome": {
+                    "type": "string"
+                },
+                "permissao": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.LogPaginado": {
+            "description": "Estrutura paginada contendo uma lista de logs.",
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.LogResp"
+                    }
+                },
+                "limite": {
+                    "type": "integer"
+                },
+                "pagina": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "totalPaginas": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.LogResp": {
             "type": "object",
             "properties": {
                 "acao": {
-                    "$ref": "#/definitions/model.Acao"
+                    "type": "string"
                 },
-                "criado_em": {
+                "criadoEm": {
                     "type": "string"
                 },
                 "detalhes": {
@@ -2467,87 +4132,45 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "usuario_id": {
+                "usuarioid": {
                     "type": "string"
                 }
             }
         },
-        "model.Permissao": {
-            "type": "string",
-            "enum": [
-                "ADM",
-                "TEC",
-                "SUP",
-                "INF",
-                "VOIP",
-                "IMP",
-                "CAD",
-                "USR",
-                "DEV"
-            ],
-            "x-enum-comments": {
-                "PermADM": "Administrador",
-                "PermCAD": "Cadastro de usuários",
-                "PermDEV": "Desenvolvedor",
-                "PermIMP": "Técnico de Impressoras",
-                "PermINF": "Técnico de Infraestrutura",
-                "PermSUP": "Técnico de Suporte (Help Desk)",
-                "PermTEC": "Técnico",
-                "PermUSR": "Usuário comum (pode apenas abrir chamados)",
-                "PermVOIP": "Técnico de Telefonia"
-            },
-            "x-enum-descriptions": [
-                "Administrador",
-                "Técnico",
-                "Técnico de Suporte (Help Desk)",
-                "Técnico de Infraestrutura",
-                "Técnico de Telefonia",
-                "Técnico de Impressoras",
-                "Cadastro de usuários",
-                "Usuário comum (pode apenas abrir chamados)",
-                "Desenvolvedor"
-            ],
-            "x-enum-varnames": [
-                "PermADM",
-                "PermTEC",
-                "PermSUP",
-                "PermINF",
-                "PermVOIP",
-                "PermIMP",
-                "PermCAD",
-                "PermUSR",
-                "PermDEV"
-            ]
-        },
-        "model.StatusChamado": {
-            "type": "string",
-            "enum": [
-                "ABERTO",
-                "ATRIBUIDO",
-                "RESOLVIDO",
-                "REJEITADO",
-                "FECHADO",
-                "ARQUIVADO"
-            ],
-            "x-enum-varnames": [
-                "StatusAberto",
-                "StatusAtribuido",
-                "StatusResolvido",
-                "StatusRejeitado",
-                "StatusFechado",
-                "StatusArquivado"
-            ]
-        },
-        "model.Subcategoria": {
+        "dto.SubcategoriaPaginado": {
+            "description": "Estrutura paginada contendo uma lista de subcategorias.",
             "type": "object",
             "properties": {
-                "atualizado_em": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SubcategoriaResp"
+                    }
+                },
+                "limite": {
+                    "type": "integer"
+                },
+                "pagina": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "totalPaginas": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.SubcategoriaResp": {
+            "type": "object",
+            "properties": {
+                "atualizadoEm": {
                     "type": "string"
                 },
-                "categoria_id": {
+                "categoriaid": {
                     "type": "string"
                 },
-                "criado_em": {
+                "criadoEm": {
                     "type": "string"
                 },
                 "id": {
@@ -2561,7 +4184,56 @@ const docTemplate = `{
                 }
             }
         },
-        "model.Usuario": {
+        "dto.TecnicoResp": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "nome": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UsuarioLdapResp": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "login": {
+                    "type": "string"
+                },
+                "nome": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UsuarioPaginado": {
+            "description": "Estrutura paginada contendo uma lista de usuários.",
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.UsuarioResp"
+                    }
+                },
+                "limite": {
+                    "type": "integer"
+                },
+                "pagina": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "totalPaginas": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.UsuarioResp": {
             "type": "object",
             "properties": {
                 "atualizadoEm": {
@@ -2586,12 +4258,36 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "permissao": {
-                    "$ref": "#/definitions/model.Permissao"
+                    "type": "string"
                 },
                 "status": {
                     "type": "boolean"
                 },
                 "ultimoLogin": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.ErroResposta": {
+            "type": "object",
+            "properties": {
+                "detalhes": {
+                    "description": "Descrição detalhada do erro"
+                },
+                "instancia": {
+                    "description": "URI que identifica a instância do erro",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Código de status HTTP",
+                    "type": "integer"
+                },
+                "tipo": {
+                    "description": "URI que identifica o tipo de erro",
+                    "type": "string"
+                },
+                "titulo": {
+                    "description": "Título curto do erro",
                     "type": "string"
                 }
             }
