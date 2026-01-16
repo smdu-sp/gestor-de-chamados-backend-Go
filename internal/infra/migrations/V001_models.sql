@@ -1,0 +1,157 @@
+-- =====================================================================================================================
+-- Tabela de Usuários
+-- =====================================================================================================================
+CREATE TABLE IF NOT EXISTS usuarios (
+  id            CHAR(36)      CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  nome          VARCHAR(255)  NOT NULL,
+  login         VARCHAR(255)  NOT NULL UNIQUE,
+  email         VARCHAR(255)  NOT NULL UNIQUE,
+  permissao     ENUM('ADM','TEC','USR','DEV') NOT NULL DEFAULT 'USR',
+  status        BOOLEAN       NOT NULL DEFAULT TRUE,
+  avatar        TEXT          NULL,
+  ultimo_login  DATETIME      NULL     DEFAULT NULL,
+  criado_em     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (id),
+  INDEX idx_usuarios_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- =====================================================================================================================
+-- Tabela de Categorias
+-- =====================================================================================================================
+CREATE TABLE IF NOT EXISTS categorias (
+  id            CHAR(36)      CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  nome          VARCHAR(255)  NOT NULL UNIQUE,
+  status        BOOLEAN       NOT NULL DEFAULT TRUE,
+  criado_em     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- =====================================================================================================================
+-- Tabela de Subcategorias
+-- =====================================================================================================================
+CREATE TABLE IF NOT EXISTS subcategorias (
+  id            CHAR(36)      CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  nome          VARCHAR(255)  NOT NULL UNIQUE,
+  status        BOOLEAN       NOT NULL DEFAULT TRUE,
+  categoria_id  CHAR(36)      CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  criado_em     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (id),
+  FOREIGN KEY (categoria_id)  REFERENCES categorias(id) ON DELETE CASCADE ON UPDATE CASCADE,
+
+  INDEX idx_subcategorias_categoria_id (categoria_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- =====================================================================================================================
+-- Tabela de Chamados
+-- =====================================================================================================================
+CREATE TABLE IF NOT EXISTS chamados (
+  id               CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  titulo           VARCHAR(255)                  NOT NULL,
+  descricao        TEXT                          NOT NULL,
+  status           ENUM('ABERTO','ATRIBUIDO','RESOLVIDO','REJEITADO','FECHADO') NOT NULL DEFAULT 'ABERTO',
+  arquivado        BOOLEAN                       NOT NULL DEFAULT FALSE,
+  criado_em        DATETIME                      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em    DATETIME                      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  solucionado_em   DATETIME NULL,
+  solucao          TEXT NULL,
+  fechado_em       DATETIME NULL,
+  categoria_id     CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  subcategoria_id  CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  criador_id       CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  
+  PRIMARY KEY (id),
+  FOREIGN KEY (categoria_id)    REFERENCES categorias(id)    ON DELETE RESTRICT ON UPDATE CASCADE,
+  FOREIGN KEY (subcategoria_id) REFERENCES subcategorias(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+  FOREIGN KEY (criador_id)      REFERENCES usuarios(id)      ON DELETE RESTRICT ON UPDATE CASCADE,
+
+  INDEX idx_chamados_categoria_id (categoria_id),
+  INDEX idx_chamados_subcategoria_id (subcategoria_id),
+  INDEX idx_chamados_criador_id (criador_id),
+  INDEX idx_chamados_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- =====================================================================================================================
+-- Tabela de Atendimentos (técnicos atribuídos aos chamados)
+-- =====================================================================================================================
+CREATE TABLE IF NOT EXISTS atendimentos (
+  id            CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  atribuido_id  CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  chamado_id    CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  FOREIGN KEY (atribuido_id)  REFERENCES usuarios(id) ON UPDATE CASCADE,
+  FOREIGN KEY (chamado_id)    REFERENCES chamados(id) ON DELETE CASCADE ON UPDATE CASCADE,
+
+  INDEX idx_atendimentos_atribuido_id (atribuido_id),
+  INDEX idx_atendimentos_chamado_id (chamado_id),
+  INDEX idx_atendimentos_chamado_id_criado_em (chamado_id, criado_em DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- =====================================================================================================================
+-- Tabela de Acompanhamentos (mensagens trocadas nos chamados)
+-- =====================================================================================================================
+CREATE TABLE IF NOT EXISTS acompanhamentos (
+  id            CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  conteudo      TEXT     NOT NULL,
+  chamado_id    CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  usuario_id    CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  remetente     ENUM('TEC', 'USR')  NOT NULL DEFAULT 'USR',
+
+  PRIMARY KEY (id),
+  FOREIGN KEY (chamado_id)  REFERENCES chamados(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (usuario_id)  REFERENCES usuarios(id) ON UPDATE CASCADE,
+
+  INDEX idx_acompanhamentos_chamado_id (chamado_id),
+  INDEX idx_acompanhamentos_usuario_id (usuario_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- =====================================================================================================================
+-- Tabela de Permissões por Categoria
+-- =====================================================================================================================
+CREATE TABLE IF NOT EXISTS categoria_permissoes (
+  categoria_id  CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  permissao     ENUM('ADM','TEC','USR','DEV') NOT NULL,
+  usuario_id    CHAR(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  criado_em     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (categoria_id, permissao, usuario_id),
+  FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE CASCADE ON UPDATE CASCADE,
+
+  INDEX idx_categoria_permissoes_categoria_id (categoria_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- =====================================================================================================================
+-- Tabela de Logs de Ações
+-- =====================================================================================================================
+CREATE TABLE IF NOT EXISTS logs (
+  id            CHAR(36)      CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  usuario_id    CHAR(36)      CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  acao          ENUM('CRIAR', 'ATUALIZAR', 'ATIVAR', 'DESATIVAR', 'ARQUIVAR', 'DESARQUIVAR', 'DELETAR') NOT NULL,
+  entidade      VARCHAR(255)  NOT NULL,
+  detalhes      TEXT          NULL,
+  criado_em     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  FOREIGN KEY (usuario_id)    REFERENCES usuarios(id) ON UPDATE CASCADE,
+
+  INDEX idx_logs_usuario_id (usuario_id),
+  INDEX idx_logs_acao (acao)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
