@@ -890,11 +890,3 @@ func TestUsuarioService_VerificarPermissao(t *testing.T) {
 	}
 }
 
-// =====================================================================================================================
-// FUNÇÕES AUXILIARES
-// =====================================================================================================================
-
-// ptr é um helper que retorna um ponteiro para o valor fornecido.
-func ptr[T any](v T) *T {
-	return &v
-}

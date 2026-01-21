@@ -211,18 +211,3 @@ func TestLogService_Listar_Sucesso(t *testing.T) {
 	}
 }
 
-
-// =====================================================================================================================
-// FUNÇÕES AUXILIARES
-// =====================================================================================================================
-
-// testLogWriter é um writer personalizado para capturar logs durante os testes.
-type testLogWriter struct {
-	writeFn func(msg string)
-}
-
-// Write implementa a interface io.Writer.
-func (w *testLogWriter) Write(p []byte) (n int, err error) {
-	w.writeFn(string(p))
-	return len(p), nil
-}

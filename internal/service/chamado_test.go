@@ -672,11 +672,3 @@ func TestChamadoService_Listar(t *testing.T) {
 	}
 }
 
-// =====================================================================================================================
-// FUNÇÕES AUXILIARES
-// =====================================================================================================================
-
-// ptrString é uma função auxiliar para obter um ponteiro para uma string.
-func ptrString(s string) *string {
-	return &s
-}
