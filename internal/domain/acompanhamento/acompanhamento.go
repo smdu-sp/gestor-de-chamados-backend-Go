@@ -17,6 +17,8 @@ const tamanhoMaximoConteudo = 1000
 var remetentesValidos = map[usr.Permissao]struct{}{
 	usr.PermTEC: {},
 	usr.PermUSR: {},
+	usr.PermADM: {},
+	usr.PermDEV: {},
 }
 
 // Acompanhamento representa um comentário ou atualização feita em um chamado.

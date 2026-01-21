@@ -17,7 +17,7 @@ type Atendimento struct {
 	atualizadoEm time.Time
 }
 
-// NewAtendimento cria uma nova instância de Atendimento com os dados fornecidos.
+// NovoAtendimento cria uma nova instância de Atendimento com os dados fornecidos.
 func Novo(id, atribuidoID, chamadoID string) (*Atendimento, error) {
 	now := time.Now()
 	atendimento := Atendimento{
