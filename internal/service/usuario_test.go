@@ -9,32 +9,15 @@ import (
 	usr "github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain/usuario"
 )
 
-// =====================================================================================================================
-//  MOCKS E FAKES
-// =====================================================================================================================
-
-// --- Fake GeradorID --------------------------------------------------------------------------------------------------
-
-// fakeGeradorID é uma implementação falsa de GeradorID para testes.
-type fakeGeradorID struct {
-	id  string
-	err error
-}
-
-// NovoID retorna um ID falso ou um erro, dependendo da configuração do fakeGeradorID.
-func (f *fakeGeradorID) NovoID() (string, error) {
-	return f.id, f.err
-}
-
 // --- Fake Repository -------------------------------------------------------------------------------------------------
 
 // fakeUsuarioRepository é uma implementação falsa de usr.Repository para testes.
 type fakeUsuarioRepository struct {
-	criarFn       func(ctx context.Context, u usr.Usuario) (*usr.Usuario, error)
-	atualizarFn   func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error)
-	buscarPorIDFn func(ctx context.Context, id string) (*usr.Usuario, error)
+	criarFn          func(ctx context.Context, u usr.Usuario) (*usr.Usuario, error)
+	atualizarFn      func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error)
+	buscarPorIDFn    func(ctx context.Context, id string) (*usr.Usuario, error)
 	buscarPorLoginFn func(ctx context.Context, login string) (*usr.Usuario, error)
-	listarFn      func(ctx context.Context, filtro usr.Filtro) ([]usr.Usuario, int, error)
+	listarFn         func(ctx context.Context, filtro usr.Filtro) ([]usr.Usuario, int, error)
 }
 
 // Criar chama a função criarFn configurada no fakeUsuarioRepository.
@@ -246,17 +229,7 @@ func TestUsuarioService_Atualizar(t *testing.T) {
 func TestUsuarioService_BuscarPorID(t *testing.T) {
 	ctx := context.Background()
 
-	usuarioOK := func() *usr.Usuario {
-		u, _ := usr.Novo(
-			"user-123",
-			"Rogério",
-			"rogerio",
-			usr.NovoEmail("rogerio@email.com"),
-			usr.PermADM,
-			nil,
-		)
-		return u
-	}
+	usuarioOK := &usr.Usuario{}
 
 	tests := []struct {
 		name    string
@@ -271,10 +244,10 @@ func TestUsuarioService_BuscarPorID(t *testing.T) {
 					if id != "user-123" {
 						t.Fatalf("esperava id 'user-123', recebeu '%s'", id)
 					}
-					return usuarioOK(), nil
+					return usuarioOK, nil
 				},
 			},
-			want:    usuarioOK(),
+			want:    usuarioOK,
 			wantErr: false,
 		},
 		{
@@ -282,6 +255,15 @@ func TestUsuarioService_BuscarPorID(t *testing.T) {
 			repo: &fakeUsuarioRepository{
 				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
 					return nil, errors.New("erro no banco")
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "usuario não encontrado",
+			repo: &fakeUsuarioRepository{
+				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
+					return nil, errors.New("usuario não encontrado")
 				},
 			},
 			wantErr: true,
@@ -319,17 +301,7 @@ func TestUsuarioService_BuscarPorID(t *testing.T) {
 func TestUsuarioService_BuscarPorLogin(t *testing.T) {
 	ctx := context.Background()
 
-	usuarioOK := func() *usr.Usuario {
-		u, _ := usr.Novo(
-			"user-123",
-			"Rogério",
-			"rogerio",
-			usr.NovoEmail("rogerio@email.com"),
-			usr.PermADM,
-			nil,
-		)
-		return u
-	}
+	usuarioOK := &usr.Usuario{}
 
 	tests := []struct {
 		name    string
@@ -344,10 +316,10 @@ func TestUsuarioService_BuscarPorLogin(t *testing.T) {
 					if login != "rogerio" {
 						t.Fatalf("esperava login 'rogerio', recebeu '%s'", login)
 					}
-					return usuarioOK(), nil
+					return usuarioOK, nil
 				},
 			},
-			want:    usuarioOK(),
+			want:    usuarioOK,
 			wantErr: false,
 		},
 		{
@@ -667,18 +639,14 @@ func TestUsuarioService_Desativar(t *testing.T) {
 func TestUsuarioService_Ativar(t *testing.T) {
 	ctx := context.Background()
 
-	usuarioDesativado := func() *usr.Usuario {
-		u, _ := usr.Novo(
-			"user-123",
-			"Rogério",
-			"rogerio",
-			usr.NovoEmail("rogerio@email.com"),
-			usr.PermADM,
-			nil,
-		)
-		u.Desativar()
-		return u
-	}
+	usuarioDesativado, _ := usr.Novo(
+		"user-123",
+		"Rogério",
+		"rogerio",
+		usr.NovoEmail("rogerio@email.com"),
+		usr.PermADM,
+		nil,
+	)
 
 	tests := []struct {
 		name    string
@@ -689,7 +657,7 @@ func TestUsuarioService_Ativar(t *testing.T) {
 			name: "ativar usuario com sucesso",
 			repo: &fakeUsuarioRepository{
 				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioDesativado(), nil
+					return usuarioDesativado, nil
 				},
 				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
 					return &u, nil
@@ -710,7 +678,7 @@ func TestUsuarioService_Ativar(t *testing.T) {
 			name: "erro ao salvar no repositorio",
 			repo: &fakeUsuarioRepository{
 				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioDesativado(), nil
+					return usuarioDesativado, nil
 				},
 				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
 					return nil, errors.New("erro no banco")
@@ -751,33 +719,26 @@ func TestUsuarioService_Ativar(t *testing.T) {
 func TestUsuarioService_Listar(t *testing.T) {
 	ctx := context.Background()
 
-	usuarios := []usr.Usuario{
-		func() usr.Usuario {
-			u, _ := usr.Novo(
-				"user-1",
-				"Rogério",
-				"rogerio",
-				usr.NovoEmail("rogerio@email.com"),
-				usr.PermADM,
-				nil,
-			)
-			return *u
-		}(),
-	}
-
-	filtro := usr.Filtro{}
-	filtro.Normalizar()
+	u, _ := usr.Novo(
+		"user-1",
+		"Rogério",
+		"rogerio",
+		usr.NovoEmail("rogerio@email.com"),
+		usr.PermADM,
+		nil,
+	)
+	usuarios := []usr.Usuario{*u}
 
 	tests := []struct {
-		name       string
-		repo       usr.Repository
-		filtro     usr.Filtro
-		wantTotal  int
-		wantErr    bool
+		name      string
+		repo      usr.Repository
+		filtro    usr.Filtro
+		wantTotal int
+		wantErr   bool
 	}{
 		{
-			name: "listar usuarios com sucesso e normalizar filtro",
-			filtro: filtro,
+			name:   "listar usuarios com sucesso e normalizar filtro",
+			filtro: usr.Filtro{},
 			repo: &fakeUsuarioRepository{
 				listarFn: func(ctx context.Context, f usr.Filtro) ([]usr.Usuario, int, error) {
 					// Assert indireto: o filtro chegou normalizado no repo
@@ -794,8 +755,8 @@ func TestUsuarioService_Listar(t *testing.T) {
 			wantErr:   false,
 		},
 		{
-			name: "erro ao listar usuarios",
-			filtro: filtro,
+			name:   "erro ao listar usuarios",
+			filtro: usr.Filtro{},
 			repo: &fakeUsuarioRepository{
 				listarFn: func(ctx context.Context, f usr.Filtro) ([]usr.Usuario, int, error) {
 					return nil, 0, errors.New("erro no banco")
