@@ -83,10 +83,10 @@ func NovoUsuarioAutenticado(claims *Claims) *UsuarioAutenticado {
 
 // --- Métodos de acesso aos campos de UsuarioAutenticado ---
 
-func (u *UsuarioAutenticado) ID() string { return u.id }
-func (u *UsuarioAutenticado) Login() string { return u.login }
-func (u *UsuarioAutenticado) Nome() string { return u.nome }
-func (u *UsuarioAutenticado) Email() string { return u.email }
+func (u *UsuarioAutenticado) ID() string               { return u.id }
+func (u *UsuarioAutenticado) Login() string            { return u.login }
+func (u *UsuarioAutenticado) Nome() string             { return u.nome }
+func (u *UsuarioAutenticado) Email() string            { return u.email }
 func (u *UsuarioAutenticado) Permissao() usr.Permissao { return u.permissao }
 
 func (u *UsuarioAutenticado) EhTEC() bool {
@@ -113,4 +113,9 @@ func UsuarioAutenticadoDoContexto(ctx context.Context) (*UsuarioAutenticado, err
 // UsuarioAutenticadoDoRequest extrai o usuário autenticado do contexto da requisição HTTP.
 func UsuarioAutenticadoDoRequest(r *http.Request) (*UsuarioAutenticado, error) {
 	return UsuarioAutenticadoDoContexto(r.Context())
+}
+
+// ContextoComClaims adiciona as claims ao contexto. Útil para testes.
+func ContextoComClaims(ctx context.Context, claims *Claims) context.Context {
+	return context.WithValue(ctx, chaveUsuario, claims)
 }
