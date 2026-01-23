@@ -671,4 +671,3 @@ func TestChamadoService_Listar(t *testing.T) {
 		})
 	}
 }
-
