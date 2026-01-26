@@ -51,7 +51,7 @@ func CarregarDoBD(l LogDB) *Log {
 // Validar valida os campos do log.
 //
 // Em caso de erros de validação, retorna uma instância de domain.ErrosValidacao.
-func (l *Log) Validar() error {
+func (l Log) Validar() error {
 	erros := domain.NovoErrosValidacao()
 
 	if l.id == "" {
@@ -91,7 +91,7 @@ func (l Log) Detalhes() string    { return l.detalhes }
 func (l Log) CriadoEm() time.Time { return l.criadoEm }
 
 // String retorna uma representação em string do log para fins de logging.
-func (l *Log) String() string {
+func (l Log) String() string {
 	return fmt.Sprintf(
 		"[ID=%s | UsuarioID=%s | Acao=%s | Entidade=%s | Detalhes=%s | CriadoEm=%s]",
 		l.id,

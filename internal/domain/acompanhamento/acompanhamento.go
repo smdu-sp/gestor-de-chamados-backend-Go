@@ -68,7 +68,7 @@ func CarregarDoDB(a AcompanhamentoDB) *Acompanhamento {
 // Validar valida os campos do acompanhamento.
 //
 // Em caso de erros de validação, retorna um erro do tipo domain.ErrosValidacao.
-func (a *Acompanhamento) Validar() error {
+func (a Acompanhamento) Validar() error {
 	erros := domain.NovoErrosValidacao()
 
 	if a.id == "" {
@@ -107,13 +107,19 @@ func ValidarRemetente(remetente usr.Permissao) error {
 	return nil
 }
 
-// AtualizarDados recebe os novos dados do acompanhamento e atualiza os campos correspondentes.
+// ComDadosAtualizados recebe os parâmetros para atualizar o acompanhamento 
+// e retorna uma nova instância com os dados atualizados.
 //
 // Em caso de erros de validação, retorna um erro do tipo domain.ErrosValidacao.
-func (a *Acompanhamento) AtualizarDados(params AtualizarParams) error {
+func (a Acompanhamento) ComDadosAtualizados(params AtualizarParams) (Acompanhamento, error) {
 	a.conteudo = params.Conteudo
 	a.atualizadoEm = time.Now()
-	return a.Validar()
+
+	if err := a.Validar(); err != nil {
+		return Acompanhamento{}, err
+	}
+
+	return a, nil
 }
 
 // Metodos de acesso aos campos do acompanhamento.
@@ -127,7 +133,7 @@ func (a Acompanhamento) CriadoEm() time.Time      { return a.criadoEm }
 func (a *Acompanhamento) AtualizadoEm() time.Time { return a.atualizadoEm }
 
 // String retorna uma representação em string do acompanhamento.
-func (a *Acompanhamento) String() string {
+func (a Acompanhamento) String() string {
 	return fmt.Sprintf(
 		"[ID=%s | ChamadoID=%s | UsuarioID=%s | Remetente=%s | CriadoEm=%s | AtualizadoEm=%s]",
 		a.id,

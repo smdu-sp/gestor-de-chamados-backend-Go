@@ -260,8 +260,8 @@ func TestAtivarDesativarSubcategoria(t *testing.T) {
 	}
 }
 
-// TestAtualizarDadosSubcategoria testa o método AtualizarDados da subcategoria.
-func TestAtualizarDadosSubcategoria(t *testing.T) {
+// TestComDadosAtualizadosSubcategoria testa o método ComDadosAtualizados da subcategoria.
+func TestComDadosAtualizadosSubcategoria(t *testing.T) {
 	subcategoria, _ := Novo("sub-123", "Antivírus", "cat-456")
 
 	time.Sleep(1 * time.Second) // garante que o tempo de atualizadoEm será diferente
@@ -272,24 +272,24 @@ func TestAtualizarDadosSubcategoria(t *testing.T) {
 		Status:      ptrBool(false),
 	}
 
-	err := subcategoria.AtualizarDados(params)
+	subcategoriaAtualizada, err := subcategoria.ComDadosAtualizados(params)
 	if err != nil {
 		t.Fatalf("erro inesperado ao atualizar dados: %v", err)
 	}
 
-	if subcategoria.Nome() != *params.Nome {
-		t.Errorf("esperava Nome atualizado para %s, recebeu %s", *params.Nome, subcategoria.Nome())
+	if subcategoriaAtualizada.Nome() != *params.Nome {
+		t.Errorf("esperava Nome atualizado para %s, recebeu %s", *params.Nome, subcategoriaAtualizada.Nome())
 	}
 
-	if subcategoria.CategoriaID() != *params.CategoriaID {
-		t.Errorf("esperava CategoriaID atualizado para %s, recebeu %s", *params.CategoriaID, subcategoria.CategoriaID())
+	if subcategoriaAtualizada.CategoriaID() != *params.CategoriaID {
+		t.Errorf("esperava CategoriaID atualizado para %s, recebeu %s", *params.CategoriaID, subcategoriaAtualizada.CategoriaID())
 	}
 
-	if subcategoria.Status() != *params.Status {
-		t.Errorf("esperava Status atualizado para %v, recebeu %v", *params.Status, subcategoria.Status())
+	if subcategoriaAtualizada.Status() != *params.Status {
+		t.Errorf("esperava Status atualizado para %v, recebeu %v", *params.Status, subcategoriaAtualizada.Status())
 	}
 
-	if !subcategoria.AtualizadoEm().After(subcategoria.CriadoEm()) {
+	if !subcategoriaAtualizada.AtualizadoEm().After(subcategoriaAtualizada.CriadoEm()) {
 		t.Errorf("esperava AtualizadoEm após CriadoEm")
 	}
 }

@@ -111,24 +111,24 @@ func TestCategoriaPermissao_Validar(t *testing.T) {
 	}
 }
 
-// TestCategoriaPermissao_AtualizarDados testa a atualização dos dados da CategoriaPermissao.
-func TestCategoriaPermissao_AtualizarDados(t *testing.T) {
+// TestCategoriaPermissao_ComDadosAtualizados testa a atualização dos dados da CategoriaPermissao.
+func TestCategoriaPermissao_ComDadosAtualizados(t *testing.T) {
 	cpm, _ := Novo("cat-123", "user-456", usr.PermTEC)
 
 	time.Sleep(1 * time.Second) // garante que o tempo de atualizadoEm será diferente
 
-	err := cpm.AtualizarDados(AtualizarParams{
+	categoriaPermissaoAtualizada, err := cpm.ComDadosAtualizados(AtualizarParams{
 		Permissao: usr.PermADM,
 	})
 	if err != nil {
 		t.Fatalf("Esperava nenhuma erro, mas recebeu: %v", err)
 	}
 
-	if cpm.permissao != usr.PermADM {
-		t.Errorf("Esperava Permissao %s, mas recebeu %s", usr.PermADM, cpm.permissao)
+	if categoriaPermissaoAtualizada.permissao != usr.PermADM {
+		t.Errorf("Esperava Permissao %s, mas recebeu %s", usr.PermADM, categoriaPermissaoAtualizada.permissao)
 	}
 
-	if !cpm.atualizadoEm.After(cpm.CriadoEm()) {
+	if !categoriaPermissaoAtualizada.atualizadoEm.After(cpm.CriadoEm()) {
 		t.Errorf("Esperava AtualizadoEm atualizado, mas não foi")
 	}
 }

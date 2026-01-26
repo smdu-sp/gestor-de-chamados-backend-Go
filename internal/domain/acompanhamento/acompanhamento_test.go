@@ -181,7 +181,7 @@ func TestAcompanhamentoValidarRemetente(t *testing.T) {
 
 // TestAcompanhamento_AtualizarDados testa a função AtualizarDados do acompanhamento.
 func TestAcompanhamento_AtualizarDados(t *testing.T) {
-	acomp, _ := Novo("acomp-123", "chamado-456", "user-789", "Conteúdo inicial do acompanhamento.", usr.PermTEC)
+	acompanhamento, _ := Novo("acomp-123", "chamado-456", "user-789", "Conteúdo inicial do acompanhamento.", usr.PermTEC)
 
 	time.Sleep(1 * time.Second) // garante que o tempo de atualizadoEm será diferente
 
@@ -189,16 +189,16 @@ func TestAcompanhamento_AtualizarDados(t *testing.T) {
 		Conteudo: "Conteúdo atualizado do acompanhamento.",
 	}
 	
-	err := acomp.AtualizarDados(params)
+	acompAtualizado, err := acompanhamento.ComDadosAtualizados(params)
 	if err != nil {
 		t.Fatalf("erro inesperado ao atualizar dados: %v", err)
 	}
 
-	if acomp.conteudo != params.Conteudo {
-		t.Errorf("esperado conteudo: %s, obtido: %s", params.Conteudo, acomp.conteudo)
+	if acompAtualizado.conteudo != params.Conteudo {
+		t.Errorf("esperado conteudo: %s, obtido: %s", params.Conteudo, acompAtualizado.conteudo)
 	}
 
-	if acomp.atualizadoEm.Equal(acomp.criadoEm) {
+	if acompAtualizado.atualizadoEm.Equal(acompanhamento.criadoEm) {
 		t.Errorf("esperado atualizadoEm diferente de criadoEm")
 	}
 }

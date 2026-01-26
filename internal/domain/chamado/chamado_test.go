@@ -220,17 +220,17 @@ func TestChamado_AtualizarSolucao(t *testing.T) {
 	chamado, _ := Novo("chamado-123", "cat-123", "subcat-123", "user-123", "Problema com o sistema", "O sistema está apresentando erros ao tentar salvar.")
 
 	solucao := "Reinicie o sistema."
-	err := chamado.AtualizarSolucao(solucao)
+	chamadoAtualizado, err := chamado.AtualizarSolucao(solucao)
 	if err != nil {
 		t.Fatalf("erro inesperado ao atualizar solução: %v", err)
 	}
 
-	if chamado.Solucao() == nil || *chamado.Solucao() != solucao {
-		t.Fatalf("esperava Solucao %s, mas recebeu %v", solucao, chamado.Solucao())
+	if chamadoAtualizado.Solucao() == nil || *chamadoAtualizado.Solucao() != solucao {
+		t.Fatalf("esperava Solucao %s, mas recebeu %v", solucao, chamadoAtualizado.Solucao())
 	}
 
-	if chamado.SolucionadoEm() == nil || !chamado.SolucionadoEm().Equal(now) {
-		t.Fatalf("esperava SolucionadoEm %v, mas recebeu %v", now, chamado.SolucionadoEm())
+	if chamadoAtualizado.SolucionadoEm() == nil || !chamadoAtualizado.SolucionadoEm().Equal(now) {
+		t.Fatalf("esperava SolucionadoEm %v, mas recebeu %v", now, chamadoAtualizado.SolucionadoEm())
 	}
 }
 
@@ -238,27 +238,27 @@ func TestChamado_AtualizarSolucao(t *testing.T) {
 func TestChamado_AtualizarStatus(t *testing.T) {
 	chamado, _ := Novo("chamado-123", "cat-123", "subcat-123", "user-123", "Problema com o sistema", "O sistema está apresentando erros ao tentar salvar.")
 
-	err := chamado.AtualizarStatus(StatusAberto, nil)
+	chamadoAtualizado, err := chamado.AtualizarStatus(StatusAberto, nil)
 	if err != nil {
 		t.Fatalf("erro inesperado ao atualizar status: %v", err)
 	}
 
-	if chamado.Status() != StatusAberto {
-		t.Fatalf("esperava Status %s, mas recebeu %s", StatusAberto, chamado.Status())
+	if chamadoAtualizado.Status() != StatusAberto {
+		t.Fatalf("esperava Status %s, mas recebeu %s", StatusAberto, chamadoAtualizado.Status())
 	}
 
-	err = chamado.AtualizarStatus(StatusFechado, nil)
+	chamadoAtualizado, err = chamado.AtualizarStatus(StatusFechado, nil)
 	if err != nil {
 		t.Fatalf("erro inesperado ao atualizar status: %v", err)
 	}
 
-	if chamado.Status() != StatusFechado {
-		t.Fatalf("esperava Status %s, mas recebeu %s", StatusFechado, chamado.Status())
+	if chamadoAtualizado.Status() != StatusFechado {
+		t.Fatalf("esperava Status %s, mas recebeu %s", StatusFechado, chamadoAtualizado.Status())
 	}
 }
 
-// TestChamado_AtualizarDados testa o método AtualizarDados do Chamado.
-func TestChamado_AtualizarDados(t *testing.T) {
+// TestChamado_ComDadosAtualizados testa o método ComDadosAtualizados do Chamado.
+func TestChamado_ComDadosAtualizados(t *testing.T) {
 	chamado, _ := Novo("chamado-123", "cat-123", "subcat-123", "user-123", "Problema com o sistema", "O sistema está apresentando erros ao tentar salvar.")
 
 	time.Sleep(1 * time.Second) // garante que o tempo de atualizadoEm será diferente
@@ -270,28 +270,28 @@ func TestChamado_AtualizarDados(t *testing.T) {
 		CategoriaID: ptrString("cat-456"),
 		SubcategoriaID: ptrString("subcat-456"),
 	}
-	err := chamado.AtualizarDados(params)
+	chamadoAtualizado, err := chamado.ComDadosAtualizados(params)
 	if err != nil {
 		t.Fatalf("erro inesperado ao atualizar dados: %v", err)
 	}
 
-	if chamado.Titulo() != *params.Titulo {
-		t.Fatalf("esperava Titulo %s, mas recebeu %s", *params.Titulo, chamado.Titulo())
+	if chamadoAtualizado.Titulo() != *params.Titulo {
+		t.Fatalf("esperava Titulo %s, mas recebeu %s", *params.Titulo, chamadoAtualizado.Titulo())
 	}
 
-	if chamado.Descricao() != *params.Descricao {
-		t.Fatalf("esperava Descricao %s, mas recebeu %s", *params.Descricao, chamado.Descricao())
+	if chamadoAtualizado.Descricao() != *params.Descricao {
+		t.Fatalf("esperava Descricao %s, mas recebeu %s", *params.Descricao, chamadoAtualizado.Descricao())
 	}
 
-	if chamado.CategoriaID() != *params.CategoriaID {
-		t.Fatalf("esperava CategoriaID %s, mas recebeu %s", *params.CategoriaID, chamado.CategoriaID())
+	if chamadoAtualizado.CategoriaID() != *params.CategoriaID {
+		t.Fatalf("esperava CategoriaID %s, mas recebeu %s", *params.CategoriaID, chamadoAtualizado.CategoriaID())
 	}
 
-	if chamado.SubcategoriaID() != *params.SubcategoriaID {
-		t.Fatalf("esperava SubcategoriaID %s, mas recebeu %s", *params.SubcategoriaID, chamado.SubcategoriaID())
+	if chamadoAtualizado.SubcategoriaID() != *params.SubcategoriaID {
+		t.Fatalf("esperava SubcategoriaID %s, mas recebeu %s", *params.SubcategoriaID, chamadoAtualizado.SubcategoriaID())
 	}
 
-	if !chamado.AtualizadoEm().After(*chamado.CriadoEm()) {
+	if !chamadoAtualizado.AtualizadoEm().After(*chamadoAtualizado.CriadoEm()) {
 		t.Fatalf("esperava AtualizadoEm após CriadoEm")
 	}
 }

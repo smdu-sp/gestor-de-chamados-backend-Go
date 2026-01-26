@@ -55,7 +55,7 @@ func CarregarDoBD(s SubcategoriaDB) *Subcategoria {
 // Validar valida os campos da subcategoria.
 //
 // Em caso de erros de validação, retorna uma instância de domain.ErrosValidacao.
-func (s *Subcategoria) Validar() error {
+func (s Subcategoria) Validar() error {
 	erros := domain.NovoErrosValidacao()
 
 	if s.id == "" {
@@ -79,21 +79,24 @@ func (s *Subcategoria) Validar() error {
 }
 
 // Desativar desativa a subcategoria.
-func (s *Subcategoria) Desativar() {
+func (s Subcategoria) Desativar() Subcategoria {
 	s.status = false
 	s.atualizadoEm = time.Now()
+	return s
 }
 
 // Ativar ativa a subcategoria.
-func (s *Subcategoria) Ativar() {
+func (s Subcategoria) Ativar() Subcategoria {
 	s.status = true
 	s.atualizadoEm = time.Now()
+	return s
 }
 
-// AtualizarDados recebe os novos dados para a subcategoria e atualiza seus campos.
+// ComDadosAtualizados recebe os novos dados para a subcategoria 
+// e retorna uma nova instância com os dados atualizados.
 //
 // Em caso de erros de validação, retorna uma instância de domain.ErrosValidacao.
-func (s *Subcategoria) AtualizarDados(params AtualizarParams) error {
+func (s Subcategoria) ComDadosAtualizados(params AtualizarParams) (Subcategoria, error) {
 	if params.Nome != nil {
 		s.nome = *params.Nome
 	}
@@ -108,7 +111,11 @@ func (s *Subcategoria) AtualizarDados(params AtualizarParams) error {
 
 	s.atualizadoEm = time.Now()
 
-	return s.Validar()
+	if err := s.Validar(); err != nil {
+		return Subcategoria{}, err
+	}
+
+	return s, nil
 }
 
 // --- Métodos de acesso aos campos da subcategoria ---
@@ -121,7 +128,7 @@ func (s Subcategoria) CriadoEm() time.Time     { return s.criadoEm }
 func (s Subcategoria) AtualizadoEm() time.Time { return s.atualizadoEm }
 
 // String retorna uma representação em string da subcategoria para fins de logging.
-func (s *Subcategoria) String() string {
+func (s Subcategoria) String() string {
 	return fmt.Sprintf(
 		"[ID=%s | Nome=%s | Status=%t | CategoriaID=%s | CriadoEm=%s | AtualizadoEm=%s]",
 		s.id,

@@ -52,7 +52,7 @@ func CarregarDoBD(c CategoriaDB) *Categoria {
 // Validar valida os campos da categoria.
 //
 // Em caso de erros de validação, retorna uma instância de domain.ErrosValidacao
-func (c *Categoria) Validar() error {
+func (c Categoria) Validar() error {
 	erros := domain.NovoErrosValidacao()
 
 	if c.id == "" {
@@ -71,21 +71,24 @@ func (c *Categoria) Validar() error {
 }
 
 // Ativar ativa a categoria.
-func (c *Categoria) Ativar() {
+func (c Categoria) Ativar() Categoria {
 	c.status = true
 	c.atualizadoEm = time.Now()
+	return c
 }
 
 // Desativar desativa a categoria.
-func (c *Categoria) Desativar() {
+func (c Categoria) Desativar() Categoria {
 	c.status = false
 	c.atualizadoEm = time.Now()
+	return c
 }
 
-// AtualizarDados recebe os parâmetros para atualizar os dados da categoria.
+// ComDadosAtualizados recebe os parâmetros para atualizar os dados da categoria 
+// e retorna uma nova instância de Categoria com os dados atualizados.
 //
 // Em caso de erros de validação, retorna uma instância de domain.ErrosValidacao.
-func (c *Categoria) AtualizarDados(params AtualizarParams) error {
+func (c Categoria) ComDadosAtualizados(params AtualizarParams) (Categoria, error) {
 	if params.Nome != nil {
 		c.nome = *params.Nome
 	}
@@ -95,7 +98,12 @@ func (c *Categoria) AtualizarDados(params AtualizarParams) error {
 	}
 
 	c.atualizadoEm = time.Now()
-	return c.Validar()
+
+	if err := c.Validar(); err != nil {
+		return Categoria{}, err
+	}
+
+	return c, nil
 }
 
 // Métodos de acesso aos campos da Categoria.
@@ -107,7 +115,7 @@ func (c Categoria) CriadoEm() time.Time     { return c.criadoEm }
 func (c Categoria) AtualizadoEm() time.Time { return c.atualizadoEm }
 
 // String retorna uma representação em string da Categoria.
-func (c *Categoria) String() string {
+func (c Categoria) String() string {
 	return fmt.Sprintf(
 		"[ID=%s | Nome=%s | Status=%t | CriadoEm=%s | AtualizadoEm=%s]",
 		c.id,

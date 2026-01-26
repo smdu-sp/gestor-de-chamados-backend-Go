@@ -67,7 +67,7 @@ func CarregarDoBD(u UsuarioDB) *Usuario {
 // Validar valida os campos do usuário.
 //
 // Em caso de erros de validação, retorna uma instância de domain.ErrosValidacao.
-func (u *Usuario) Validar() error {
+func (u Usuario) Validar() error {
 	erros := domain.NovoErrosValidacao()
 
 	if u.id == "" {
@@ -98,10 +98,11 @@ func (u *Usuario) Validar() error {
 	return nil
 }
 
-// AtualizarDados recebe os parâmetros para atualizar os dados do usuário.
+// ComDadosAtualizados recebe os parâmetros para atualizar os dados do usuário e 
+// retorna uma nova instância de Usuario com os dados atualizados.
 //
 // Em caso de erros de validação, retorna uma instância de domain.ErrosValidacao.
-func (u *Usuario) AtualizarDados(params AtualizarParams) error {
+func (u Usuario) ComDadosAtualizados(params AtualizarParams) (Usuario, error) {
 	if params.Nome != nil {
 		u.nome = *params.Nome
 	}
@@ -128,35 +129,46 @@ func (u *Usuario) AtualizarDados(params AtualizarParams) error {
 
 	u.atualizadoEm = time.Now()
 
-	return u.Validar()
+	if err := u.Validar(); err != nil {
+		return Usuario{}, err
+	}
+
+	return u, nil
 }
 
 // Ativar ativa o usuário.
-func (u *Usuario) Ativar() {
+func (u Usuario) Ativar() Usuario {
 	u.status = true
 	u.atualizadoEm = time.Now()
+	return u
 }
 
 // Desativar desativa o usuário.
-func (u *Usuario) Desativar() {
+func (u Usuario) Desativar() Usuario {
 	u.status = false
 	u.atualizadoEm = time.Now()
+	return u
 }
 
 // AtualizarPermissao recebe uma nova permissão e a atribui ao usuário.
 //
 // Em caso de erros de validação, retorna uma instância de domain.ErrosValidacao.
-func (u *Usuario) AtualizarPermissao(novaPermissao Permissao) error {
+func (u Usuario) AtualizarPermissao(novaPermissao Permissao) (Usuario, error) {
 	u.permissao = novaPermissao
 	u.atualizadoEm = time.Now()
 
-	return u.Validar()
+	if err := u.Validar(); err != nil {
+		return Usuario{}, err
+	}
+
+	return u, nil
 }
 
 // AtualizarUltimoLogin atualiza o timestamp do último login do usuário.
-func (u *Usuario) AtualizarUltimoLogin() {
+func (u Usuario) AtualizarUltimoLogin() Usuario {
 	now := time.Now()
 	u.ultimoLogin = now
+	return u
 }
 
 // --- Métodos de acesso aos campos do usuário ---
@@ -173,7 +185,7 @@ func (u Usuario) CriadoEm() time.Time     { return u.criadoEm }
 func (u Usuario) AtualizadoEm() time.Time { return u.atualizadoEm }
 
 // String retorna uma representação em string do usuário para fins de logging.
-func (u *Usuario) String() string {
+func (u Usuario) String() string {
 	return fmt.Sprintf(
 		"[ID=%s | Nome=%s | Login=%s | Email=%s | Permissao=%s"+
 			"| Status=%t | UltimoLogin=%s | CriadoEm=%s | AtualizadoEm=%s]",

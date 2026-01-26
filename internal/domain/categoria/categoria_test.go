@@ -142,19 +142,19 @@ func TestCategoria_AtivarDesativar(t *testing.T) {
 		status: false,
 	}
 
-	categoria.Ativar()
-	if !categoria.status {
+	categoriaAtivada := categoria.Ativar()
+	if !categoriaAtivada.status {
 		t.Errorf("Ativar() falhou: status esperado true, got false")
 	}
 
-	categoria.Desativar()
-	if categoria.status {
+	categoriaDesativada := categoria.Desativar()
+	if categoriaDesativada.status {
 		t.Errorf("Desativar() falhou: status esperado false, got true")
 	}
 }
 
-// TestCategoria_AtualizarDados testa o método AtualizarDados da categoria.
-func TestCategoria_AtualizarDados(t *testing.T) {
+// TestCategoria_ComDadosAtualizados testa o método ComDadosAtualizados da categoria.
+func TestCategoria_ComDadosAtualizados(t *testing.T) {
 	categoria := Categoria{
 		id:     "cat-123",
 		nome:   "Suporte Técnico",
@@ -168,16 +168,16 @@ func TestCategoria_AtualizarDados(t *testing.T) {
 		Status: nil,
 	}
 
-	err := categoria.AtualizarDados(params)
+	categoriaAtualizada, err := categoria.ComDadosAtualizados(params)
 	if err != nil {
 		t.Fatalf("AtualizarDados() retornou erro inesperado: %v", err)
 	}
 
-	if categoria.nome != "Suporte Avançado" {
-		t.Errorf("AtualizarDados() falhou: nome esperado 'Suporte Avançado', got %v", categoria.nome)
+	if categoriaAtualizada.nome != "Suporte Avançado" {
+		t.Errorf("AtualizarDados() falhou: nome esperado 'Suporte Avançado', got %v", categoriaAtualizada.nome)
 	}
 
-	if categoria.atualizadoEm.Equal(categoria.CriadoEm()) {
+	if categoriaAtualizada.atualizadoEm.Equal(categoria.CriadoEm()) {
 		t.Errorf("AtualizarDados() falhou: atualizadoEm não foi atualizado")
 	}
 }

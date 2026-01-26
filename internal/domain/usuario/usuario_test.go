@@ -200,8 +200,8 @@ func TestUsuario_Validar(t *testing.T) {
 	}
 }
 
-// TestAtualizarDados testa o método AtualizarDados do Usuario.
-func TestAtualizarDados(t *testing.T) {
+// TestComDadosAtualizados testa o método ComDadosAtualizados do Usuario.
+func TestComDadosAtualizados(t *testing.T) {
 	usuario, _ := Novo(
 		"user-123",
 		"Rogério Silva",
@@ -218,24 +218,24 @@ func TestAtualizarDados(t *testing.T) {
 		Login: ptrString("rogerios"),
 		Email: ptrEmail(NovoEmail("rogerio.s@email.com")),
 	}
-	err := usuario.AtualizarDados(params)
+	usuarioAtualizado, err := usuario.ComDadosAtualizados(params)
 	if err != nil {
 		t.Fatalf("erro inesperado ao atualizar dados: %v", err)
 	}
 
-	if usuario.Nome() != "Rogério S." {
-		t.Errorf("esperava Nome atualizado para 'Rogério S.', mas recebeu %s", usuario.Nome())
+	if usuarioAtualizado.Nome() != "Rogério S." {
+		t.Errorf("esperava Nome atualizado para 'Rogério S.', mas recebeu %s", usuarioAtualizado.Nome())
 	}
 
-	if usuario.Login() != "rogerios" {
-		t.Errorf("esperava Login atualizado para 'rogerios', mas recebeu %s", usuario.Login())
+	if usuarioAtualizado.Login() != "rogerios" {
+		t.Errorf("esperava Login atualizado para 'rogerios', mas recebeu %s", usuarioAtualizado.Login())
 	}
 
-	if usuario.Email() != "rogerio.s@email.com" {
-		t.Errorf("esperava Email atualizado para 'rogerio.s@email.com', mas recebeu %s", usuario.Email())
+	if usuarioAtualizado.Email() != "rogerio.s@email.com" {
+		t.Errorf("esperava Email atualizado para 'rogerio.s@email.com', mas recebeu %s", usuarioAtualizado.Email())
 	}
 
-	if !usuario.AtualizadoEm().After(usuario.CriadoEm()) {
+	if !usuarioAtualizado.AtualizadoEm().After(usuarioAtualizado.CriadoEm()) {
 		t.Errorf("esperava AtualizadoEm após CriadoEm")
 	}
 }
@@ -251,14 +251,14 @@ func TestAtivarDesativar(t *testing.T) {
 		nil,
 	)
 
-	usuario.Desativar()
-	if usuario.Status() != false {
-		t.Errorf("esperava Status false após desativar, mas recebeu %v", usuario.Status())
+	usuarioDesativado := usuario.Desativar()
+	if usuarioDesativado.Status() != false {
+		t.Errorf("esperava Status false após desativar, mas recebeu %v", usuarioDesativado.Status())
 	}
 
-	usuario.Ativar()
-	if usuario.Status() != true {
-		t.Errorf("esperava Status true após ativar, mas recebeu %v", usuario.Status())
+	usuarioAtivado := usuarioDesativado.Ativar()
+	if usuarioAtivado.Status() != true {
+		t.Errorf("esperava Status true após ativar, mas recebeu %v", usuarioAtivado.Status())
 	}
 }
 
@@ -272,12 +272,12 @@ func TestAtualizarPermissao(t *testing.T) {
 		PermTEC,
 		nil,
 	)
-	err := usuario.AtualizarPermissao(PermADM)
+	usuarioAtualizado, err := usuario.AtualizarPermissao(PermADM)
 	if err != nil {
 		t.Fatalf("erro inesperado ao atualizar permissao: %v", err)
 	}
-	if usuario.Permissao() != PermADM {
-		t.Errorf("esperava Permissao ADM após atualizar, mas recebeu %s", usuario.Permissao().String())
+	if usuarioAtualizado.Permissao() != PermADM {
+		t.Errorf("esperava Permissao ADM após atualizar, mas recebeu %s", usuarioAtualizado.Permissao().String())
 	}
 }
 
@@ -292,7 +292,7 @@ func TestAtualizarPermissao_Invalida(t *testing.T) {
 		nil,
 	)
 
-	err := usuario.AtualizarPermissao("PermissaoInvalida")
+	_, err := usuario.AtualizarPermissao("PermissaoInvalida")
 	if err == nil {
 		t.Fatalf("esperava erro ao atualizar permissao inválida, mas recebeu nil")
 	}

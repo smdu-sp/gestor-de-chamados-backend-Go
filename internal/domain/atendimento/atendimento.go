@@ -49,7 +49,7 @@ func CarregarDoBD(a AtendimentoDB) *Atendimento {
 // Validar valida os campos do atendimento.
 //
 // Em caso de erros de validação, retorna um erro do tipo domain.ErrosValidacao.
-func (a *Atendimento) Validar() error {
+func (a Atendimento) Validar() error {
 	erros := domain.NovoErrosValidacao()
 	
 	if a.id == "" {
@@ -71,10 +71,11 @@ func (a *Atendimento) Validar() error {
 	return nil
 }
 
-// AtualizarDados recebe os novos dados para atualizar o atendimento.
+// ComDadosAtualizados recebe os novos dados para atualizar o atendimento 
+// e retorna uma nova instância com os dados atualizados.
 //
 // Em caso de erros de validação, retorna um erro do tipo domain.ErrosValidacao.
-func (a *Atendimento) AtualizarDados(params AtualizarParams) error {
+func (a Atendimento) ComDadosAtualizados(params AtualizarParams) (Atendimento, error) {
 	if params.AtribuidoID != "" {
 		a.atribuidoID = params.AtribuidoID
 	}
@@ -82,7 +83,12 @@ func (a *Atendimento) AtualizarDados(params AtualizarParams) error {
 		a.chamadoID = params.ChamadoID
 	}
 	a.atualizadoEm = time.Now()
-	return a.Validar()
+
+	if err := a.Validar(); err != nil {
+		return Atendimento{}, err
+	}
+
+	return a, nil
 }
 
 // Metodos de acesso aos campos do atendimento.
@@ -94,7 +100,7 @@ func (a Atendimento) CriadoEm() time.Time     { return a.criadoEm }
 func (a Atendimento) AtualizadoEm() time.Time { return a.atualizadoEm }
 
 // String retorna uma representação em string do atendimento.
-func (a *Atendimento) String() string {
+func (a Atendimento) String() string {
 	return fmt.Sprintf(
 		"[ID=%s | AtribuidoID=%s | ChamadoID=%s | CriadoEm=%s | AtualizadoEm=%s]",
 		a.id,

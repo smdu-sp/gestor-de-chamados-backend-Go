@@ -75,7 +75,7 @@ func CarregarDoDB(c ChamadoDB) *Chamado {
 // Validar valida os campos do chamado.
 //
 // Em caso de erros de validação, retorna um erro do tipo domain.ErrosValidacao.
-func (c *Chamado) Validar() error {
+func (c Chamado) Validar() error {
 	erros := domain.NovoErrosValidacao()
 
 	if c.id == "" {
@@ -118,20 +118,24 @@ func (c *Chamado) Validar() error {
 // AtualizarSolucao recebe uma solução e atualiza o chamado como resolvido.
 //
 // Em caso de erro de validação, retorna uma instância de domain.ErrosValidacao.
-func (c *Chamado) AtualizarSolucao(solucao string) error {
+func (c Chamado) AtualizarSolucao(solucao string) (Chamado, error) {
 	now := time.Now()
 	c.solucao = &solucao
 	c.solucionadoEm = &now
 	c.status = StatusResolvido
 	c.atualizadoEm = now
 
-	return c.Validar()
+	if err := c.Validar(); err != nil {
+		return Chamado{}, err
+	}
+
+	return c, nil
 }
 
 // AtualizarStatus recebe um status e atualiza o chamado.
 //
 // Em caso de erro de validação, retorna uma instância de domain.ErrosValidacao.
-func (c *Chamado) AtualizarStatus(status StatusChamado, solucao *string) error {
+func (c Chamado) AtualizarStatus(status StatusChamado, solucao *string) (Chamado, error) {
 	now := time.Now()
 	c.status = status
 	c.atualizadoEm = now
@@ -145,13 +149,18 @@ func (c *Chamado) AtualizarStatus(status StatusChamado, solucao *string) error {
 		c.fechadoEm = &now
 	}
 
-	return c.Validar()
+	if err := c.Validar(); err != nil {
+		return Chamado{}, err
+	}
+
+	return c, nil
 }
 
-// AtualizarDados recebe os parâmetros para atualizar os dados do chamado.
+// ComDadosAtualizados recebe os parâmetros para atualização do chamado 
+// e retorna uma nova instância com os dados atualizados.
 //
 // Em caso de erro de validação, retorna uma instância de domain.ErrosValidacao.
-func (c *Chamado) AtualizarDados(params AtualizarParams) error {
+func (c Chamado) ComDadosAtualizados(params AtualizarParams) (Chamado, error) {
 	if params.Titulo != nil {
 		c.titulo = *params.Titulo
 	}
@@ -174,7 +183,11 @@ func (c *Chamado) AtualizarDados(params AtualizarParams) error {
 
 	c.atualizadoEm = time.Now()
 
-	return c.Validar()
+	if err := c.Validar(); err != nil {
+		return Chamado{}, err
+	}
+
+	return c, nil
 }
 
 // NaoPodeSerModificado verifica se o chamado está em um status que não permite modificações.
@@ -183,21 +196,24 @@ func (c Chamado) NaoPodeSerModificado() bool {
 }
 
 // StatusAtribuido marca o chamado como atribuído a um técnico.
-func (c *Chamado) StatusAtribuido() {
+func (c Chamado) StatusAtribuido() Chamado {
 	c.status = StatusAtribuido
 	c.atualizadoEm = time.Now()
+	return c
 }
 
 // Arquivar marca o chamado como arquivado.
-func (c *Chamado) Arquivar() {
+func (c Chamado) Arquivar() Chamado {
 	c.arquivado = true
 	c.atualizadoEm = time.Now()
+	return c
 }
 
 // Desarquivar marca o chamado como não arquivado.
-func (c *Chamado) Desarquivar() {
+func (c Chamado) Desarquivar() Chamado {
 	c.arquivado = false
 	c.atualizadoEm = time.Now()
+	return c
 }
 
 //--- Métodos de acesso aos campos do Chamado ---
@@ -217,7 +233,7 @@ func (c Chamado) CriadoEm() *time.Time      { return &c.criadoEm }
 func (c Chamado) AtualizadoEm() *time.Time  { return &c.atualizadoEm }
 
 // String retorna uma representação em string do Chamado para fins de logging.
-func (c *Chamado) String() string {
+func (c Chamado) String() string {
 	return fmt.Sprintf(
 		"[ID: %s | CategoriaID: %s | SubcategoriaID: %s | CriadorID: %s | Titulo: %s"+
 			"| Descricao: %s | Status: %s | Arquivado: %t | Solucao: %v | SolucionadoEm: %v"+

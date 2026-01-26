@@ -50,7 +50,7 @@ func CarregarDoDB(c CategoriaPermissaoDB) *CategoriaPermissao {
 // Validar valida os campos da permissão de categoria.
 //
 // Em caso de erros de validação, retorna uma instância de domain.ErrosValidacao.
-func (c *CategoriaPermissao) Validar() error {
+func (c CategoriaPermissao) Validar() error {
 	erros := domain.NovoErrosValidacao()
 
 	if c.categoriaID == "" {
@@ -70,14 +70,19 @@ func (c *CategoriaPermissao) Validar() error {
 	return nil
 }
 
-// AtualizarDados recebe os novos dados para atualizar a permissão de categoria.
+// ComDadosAtualizados recebe os parâmetros para atualizar a permissão de categoria 
+// e retorna uma nova instância de CategoriaPermissao com os dados atualizados.
 //
 // Em caso de erros de validação, retorna uma instância de domain.ErrosValidacao.
-func (c *CategoriaPermissao) AtualizarDados(params AtualizarParams) error {
+func (c CategoriaPermissao) ComDadosAtualizados(params AtualizarParams) (CategoriaPermissao, error) {
 	c.permissao = params.Permissao
 	c.atualizadoEm = time.Now()
 
-	return c.Validar()
+	if err := c.Validar(); err != nil {
+		return CategoriaPermissao{}, err
+	}
+
+	return c, nil
 }
 
 // Metódos de acesso aos campos da CategoriaPermissao.
@@ -89,7 +94,7 @@ func (c CategoriaPermissao) CriadoEm() time.Time     { return c.criadoEm }
 func (c CategoriaPermissao) AtualizadoEm() time.Time { return c.atualizadoEm }
 
 // String retorna uma representação em string da permissão de categoria.
-func (c *CategoriaPermissao) String() string {
+func (c CategoriaPermissao) String() string {
 	return fmt.Sprintf(
 		"[CategoriaID: %s, UsuarioID: %s, Permissao: %s, CriadoEm: %s, AtualizadoEm: %s]",
 		c.categoriaID,

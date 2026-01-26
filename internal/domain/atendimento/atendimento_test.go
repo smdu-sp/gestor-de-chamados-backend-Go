@@ -153,8 +153,8 @@ func TestAtendimento_Validar(t *testing.T) {
 	}
 }
 
-// TestAtendimento_AtualizarDados testa o método AtualizarDados do Atendimento.
-func TestAtendimento_AtualizarDados(t *testing.T) {
+// TestAtendimento_ComDadosAtualizados testa o método ComDadosAtualizados do Atendimento.
+func TestAtendimento_ComDadosAtualizados(t *testing.T) {
 	atendimento, _ := Novo("atendimento-123", "tecnico-456", "chamado-789")
 
 	time.Sleep(1 * time.Second) // garantir que o timestamp de atualizadoEm será diferente
@@ -164,20 +164,20 @@ func TestAtendimento_AtualizarDados(t *testing.T) {
 		ChamadoID:   "chamado-888",
 	}
 
-	err := atendimento.AtualizarDados(params)
+	atendimentoAtualizado, err := atendimento.ComDadosAtualizados(params)
 	if err != nil {
 		t.Fatalf("erro ao atualizar dados: %v", err)
 	}
 
-	if atendimento.atribuidoID != params.AtribuidoID {
-		t.Errorf("esperava AtribuidoID %s, mas recebeu %s", params.AtribuidoID, atendimento.atribuidoID)
+	if atendimentoAtualizado.atribuidoID != params.AtribuidoID {
+		t.Errorf("esperava AtribuidoID %s, mas recebeu %s", params.AtribuidoID, atendimentoAtualizado.atribuidoID)
 	}
 
-	if atendimento.chamadoID != params.ChamadoID {
-		t.Errorf("esperava ChamadoID %s, mas recebeu %s", params.ChamadoID, atendimento.chamadoID)
+	if atendimentoAtualizado.chamadoID != params.ChamadoID {
+		t.Errorf("esperava ChamadoID %s, mas recebeu %s", params.ChamadoID, atendimentoAtualizado.chamadoID)
 	}
 
-	if !atendimento.atualizadoEm.After(atendimento.criadoEm) {
+	if !atendimentoAtualizado.atualizadoEm.After(atendimentoAtualizado.criadoEm) {
 		t.Errorf("esperava AtualizadoEm após CriadoEm, mas não foi o caso")
 	}
 }
