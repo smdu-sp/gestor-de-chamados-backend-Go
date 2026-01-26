@@ -59,23 +59,24 @@ func (c *CategoriaPermissaoService) BuscarPorID(ctx context.Context, ctgID, usrI
 // Erros sentinela possíveis: ErrCategoriaPermissaoNaoEncontrada.
 func (c *CategoriaPermissaoService) Atualizar(ctx context.Context, ctgID, usrID string, atualizar cpm.AtualizarParams) (*cpm.CategoriaPermissao, error) {
 	// 1 - Buscar a categoria de permissão existente
-	cpm, err := c.repo.BuscarPorID(ctx, ctgID, usrID)
+	categoriaPermissaoAtual, err := c.repo.BuscarPorID(ctx, ctgID, usrID)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar categoriaPermissão: %w", err)
 	}
 
 	// 2 - Atualizar os dados da categoria de permissão
-	if err := cpm.AtualizarDados(atualizar); err != nil {
+	categoriaPermissaoAtualizada, err := categoriaPermissaoAtual.ComDadosAtualizados(atualizar)
+	if err != nil {
 		return nil, err
 	}
 
 	// 3 - Salvar as alterações no repositório
-	cpmAtualizada, err := c.repo.Atualizar(ctx, ctgID, usrID, *cpm)
+	categoriaPermissaoSalva, err := c.repo.Atualizar(ctx, ctgID, usrID, categoriaPermissaoAtualizada)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar categoriaPermissão: %w", err)
 	}
 
-	return cpmAtualizada, nil
+	return categoriaPermissaoSalva, nil
 }
 
 // Deletar recebe o ID composto de categoria e usuário, e remove a categoria de permissão correspondente do repositório.

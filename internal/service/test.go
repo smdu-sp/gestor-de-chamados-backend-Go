@@ -1,5 +1,7 @@
 package service
 
+import "testing"
+
 // =====================================================================================================================
 //  MOCKS E FAKES
 // =====================================================================================================================
@@ -20,6 +22,20 @@ func (f *fakeGeradorID) NovoID() (string, error) {
 // =====================================================================================================================
 // FUNÇÕES AUXILIARES
 // =====================================================================================================================
+
+
+// assertError é um helper que verifica se o erro está conforme esperado.
+func assertError(t *testing.T, got error, wantErr bool) {
+	t.Helper()
+	
+	if wantErr && got == nil {
+		t.Fatal("esperava erro, mas recebeu nil")
+	}
+	
+	if !wantErr && got != nil {
+		t.Fatalf("erro inesperado: %v", got)
+	}
+}
 
 // ptr é um helper que retorna um ponteiro para o valor fornecido.
 func ptr[T any](v T) *T {

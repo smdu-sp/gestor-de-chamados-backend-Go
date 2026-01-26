@@ -144,28 +144,29 @@ func (a *AcompanhamentoService) Atualizar(ctx context.Context, id string, atuali
 	}
 
 	// 2 - Buscar o acompanhamento existente
-	acompanhamento, err := a.repo.BuscarPorID(ctx, id)
+	acompanhamentoAtual, err := a.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar acompanhamento: %w", err)
 	}
 
 	// 3 - Verificar se o usuário autenticado é o autor do acompanhamento
-	if usrAutenticado.ID() != acompanhamento.UsuarioID() {
+	if usrAutenticado.ID() != acompanhamentoAtual.UsuarioID() {
 		return nil, ErrUsuarioNaoEhAutorDoAcompanhamento
 	}
 
 	// 4 - Atualizar os dados do acompanhamento
-	if err := acompanhamento.AtualizarDados(atualizar); err != nil {
+	acompanhamentoAtualizado, err := acompanhamentoAtual.ComDadosAtualizados(atualizar)
+	if err != nil {
 		return nil, err
 	}
 
 	// 5 - Persistir as alterações no repositório
-	acompanhamentoAtualizado, err := a.repo.Atualizar(ctx, id, *acompanhamento)
+	acompanhamentoSalvo, err := a.repo.Atualizar(ctx, id, acompanhamentoAtualizado)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar acompanhamento: %w", err)
 	}
 
-	return acompanhamentoAtualizado, nil
+	return acompanhamentoSalvo, nil
 }
 
 // Deletar remove um acompanhamento pelo ID.

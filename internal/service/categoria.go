@@ -75,22 +75,23 @@ func (c *CategoriaService) Criar(ctx context.Context, criar ctg.CriarParams) (*c
 // Erros sentinela possíveis: ErrCategoriaNaoEncontrada, ErrCategoriaJaExiste, ErrosValidacao.
 func (c *CategoriaService) Atualizar(ctx context.Context, id string, atualizar ctg.AtualizarParams) (*ctg.Categoria, error) {
 	// 1 - Buscar a categoria existente
-	ctg, err := c.repo.BuscarPorID(ctx, id)
+	categoriaAtual, err := c.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar categoria: %w", err)
 	}
 
 	// 2 - Atualizar os dados da categoria
-	if err := ctg.AtualizarDados(atualizar); err != nil {
+	categoriaAtualizada, err := categoriaAtual.ComDadosAtualizados(atualizar)
+	if err != nil {
 		return nil, err
 	}
 
 	// 3 - Salvar as alterações no repositório
-	ctgAtualizada, err := c.repo.Atualizar(ctx, id, *ctg)
+	categoriaSalva, err := c.repo.Atualizar(ctx, id, categoriaAtualizada)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar categoria: %w", err)
 	}
-	return ctgAtualizada, nil
+	return categoriaSalva, nil
 }
 
 // Desativar desativa (soft delete) uma categoria.
@@ -98,21 +99,21 @@ func (c *CategoriaService) Atualizar(ctx context.Context, id string, atualizar c
 // Erros sentinela possíveis: ErrCategoriaNaoEncontrada.
 func (c *CategoriaService) Desativar(ctx context.Context, id string) (*ctg.Categoria, error) {
 	// 1 - Buscar a categoria existente
-	ctg, err := c.repo.BuscarPorID(ctx, id)
+	categoriaAtual, err := c.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("desativar categoria: %w", err)
 	}
 
 	// 2 - Desativar a categoria
-	ctg.Desativar()
+	categoriaAtualizada := categoriaAtual.Desativar()
 
 	// 3 - Salvar as alterações no repositório
-	ctgDesativada, err := c.repo.Atualizar(ctx, id, *ctg)
+	categoriaDesativada, err := c.repo.Atualizar(ctx, id, categoriaAtualizada)
 	if err != nil {
 		return nil, fmt.Errorf("desativar categoria: %w", err)
 	}
 
-	return ctgDesativada, nil
+	return categoriaDesativada, nil
 }
 
 // Ativar recebe o ID de uma categoria e a ativa.
@@ -120,21 +121,21 @@ func (c *CategoriaService) Desativar(ctx context.Context, id string) (*ctg.Categ
 // Erros sentinela possíveis: ErrCategoriaNaoEncontrada.
 func (c *CategoriaService) Ativar(ctx context.Context, id string) (*ctg.Categoria, error) {
 	// 1 - Buscar a categoria existente
-	ctg, err := c.repo.BuscarPorID(ctx, id)
+	categoriaAtual, err := c.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("ativar categoria: %w", err)
 	}
 
 	// 2 - Ativar a categoria
-	ctg.Ativar()
+	categoriaAtualizada := categoriaAtual.Ativar()
 
 	// 3 - Salvar as alterações no repositório
-	ctgAtivada, err := c.repo.Atualizar(ctx, id, *ctg)
+	categoriaAtivada, err := c.repo.Atualizar(ctx, id, categoriaAtualizada)
 	if err != nil {
 		return nil, fmt.Errorf("ativar categoria: %w", err)
 	}
 	
-	return ctgAtivada, nil
+	return categoriaAtivada, nil
 }
 
 // Listar recebe um filtro e retorna a lista de categorias correspondentes,

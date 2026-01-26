@@ -103,22 +103,24 @@ func (u *UsuarioService) AtualizarUltimoLogin(ctx context.Context, id string) (*
 // ErrUsuarioJaExisteComEmail, ErrosValidacao.
 func (u *UsuarioService) Atualizar(ctx context.Context, id string, atualizar usr.AtualizarParams) (*usr.Usuario, error) {
 	// 1 - Buscar o usuário pelo ID
-	usr, err := u.repo.BuscarPorID(ctx, id)
+	usuarioAtual, err := u.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar usuário: %w", err)
 	}
 
 	// 2 - Atualizar os dados do usuário
-	if err := usr.AtualizarDados(atualizar); err != nil {
+	usuarioAtualizado, err := usuarioAtual.ComDadosAtualizados(atualizar)
+	if err != nil {
 		return nil, err
 	}
 
 	// 3 - Salvar a atualização no repositório
-	usrAtualizado, err := u.repo.Atualizar(ctx, id, *usr)
+	usuarioSalvo, err := u.repo.Atualizar(ctx, id, usuarioAtualizado)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar usuário: %w", err)
 	}
-	return usrAtualizado, nil
+
+	return usuarioSalvo, nil
 }
 
 // AtualizarPermissao recebe um ID e parâmetros para atualizar a permissão do usuário correspondente.
@@ -126,23 +128,24 @@ func (u *UsuarioService) Atualizar(ctx context.Context, id string, atualizar usr
 // Erros sentinela possíveis: ErrUsuarioNaoEncontrado, ErrosValidacao.
 func (u *UsuarioService) AtualizarPermissao(ctx context.Context, id string, a usr.AtualizarPermissaoParams) (*usr.Usuario, error) {
 	// 1 - Buscar o usuário pelo ID
-	usr, err := u.repo.BuscarPorID(ctx, id)
+	usuarioAtual, err := u.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar permissão: %w", err)
 	}
 
 	// 2 - Atualizar a permissão do usuário
-	if err = usr.AtualizarPermissao(a.Permissao); err != nil {
+	usuarioAtualizado, err := usuarioAtual.AtualizarPermissao(a.Permissao)
+	if err != nil {
 		return nil, err
 	}
 
 	// 3 - Salvar a atualização no repositório
-	usrAtualizado, err := u.repo.Atualizar(ctx, id, *usr)
+	usuarioSalvo, err := u.repo.Atualizar(ctx, id, usuarioAtualizado)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar permissão: %w", err)
 	}
 
-	return usrAtualizado, nil
+	return usuarioSalvo, nil
 }
 
 // Desativar recebe um ID e desativa o usuário correspondente.
@@ -150,21 +153,21 @@ func (u *UsuarioService) AtualizarPermissao(ctx context.Context, id string, a us
 // Erros sentinela possíveis: ErrUsuarioNaoEncontrado.
 func (u *UsuarioService) Desativar(ctx context.Context, id string) (*usr.Usuario, error) {
 	// 1 - Buscar o usuário pelo ID
-	usr, err := u.repo.BuscarPorID(ctx, id)
+	usuarioAtual, err := u.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("desativar usuário: %w", err)
 	}
 
 	// 2 - Desativar o usuário
-	usr.Desativar()
+	usuarioDesativado := usuarioAtual.Desativar()
 
 	// 3 - Salvar a atualização no repositório
-	usrDesativado, err := u.repo.Atualizar(ctx, id, *usr)
+	usuarioSalvo, err := u.repo.Atualizar(ctx, id, usuarioDesativado)
 	if err != nil {
 		return nil, fmt.Errorf("desativar usuário: %w", err)
 	}
 
-	return usrDesativado, nil
+	return usuarioSalvo, nil
 }
 
 // Ativar recebe um ID e ativa o usuário correspondente.
@@ -172,20 +175,20 @@ func (u *UsuarioService) Desativar(ctx context.Context, id string) (*usr.Usuario
 // Erros sentinela possíveis: ErrUsuarioNaoEncontrado.
 func (u *UsuarioService) Ativar(ctx context.Context, id string) (*usr.Usuario, error) {
 	// 1 - Buscar o usuário pelo ID
-	usr, err := u.repo.BuscarPorID(ctx, id)
+	usuarioAtual, err := u.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("ativar usuário: %w", err)
 	}
 
 	// 2 - Ativar o usuário
-	usr.Ativar()
+	usuarioAtivado := usuarioAtual.Ativar()
 
 	// 3 - Salvar a atualização no repositório
-	usrAtivado, err := u.repo.Atualizar(ctx, id, *usr)
+	usuarioSalvo, err := u.repo.Atualizar(ctx, id, usuarioAtivado)
 	if err != nil {
 		return nil, fmt.Errorf("ativar usuário: %w", err)
 	}
-	return usrAtivado, nil
+	return usuarioSalvo, nil
 }
 
 // Listar recebe um filtro e retorna uma lista de usuários que correspondem aos critérios do filtro,

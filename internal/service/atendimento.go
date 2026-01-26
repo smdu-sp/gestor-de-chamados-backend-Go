@@ -88,19 +88,19 @@ func (a *AtendimentoService) Criar(ctx context.Context, criar atd.CriarParams) (
 	}
 
 	// 2 - Buscar e validar chamado
-	chamado, err := a.validarChamado(ctx, criar.ChamadoID)
+	chamadoAtual, err := a.validarChamado(ctx, criar.ChamadoID)
 	if err != nil {
 		return nil, fmt.Errorf("criar atendimento: %w", err)
 	}
 
 	// 3 - Buscar e validar técnico atribuído
-	tecnico, err := a.validarTecnico(ctx, criar.AtribuidoID, chamado.CategoriaID())
+	tecnico, err := a.validarTecnico(ctx, criar.AtribuidoID, chamadoAtual.CategoriaID())
 	if err != nil {
 		return nil, fmt.Errorf("criar atendimento: %w", err)
 	}
 
 	// 4 - Validar permissões baseadas no tipo de usuário
-	if err := a.validarPermissoesAtribuicao(ctx, usrAutenticado, tecnico, chamado); err != nil {
+	if err := a.validarPermissoesAtribuicao(ctx, usrAutenticado, tecnico, chamadoAtual); err != nil {
 		return nil, fmt.Errorf("criar atendimento: %w", err)
 	}
 
@@ -128,10 +128,10 @@ func (a *AtendimentoService) Criar(ctx context.Context, criar atd.CriarParams) (
 	}
 
 	// 9 - atualizar status do chamado para "atribuido"
-	chamado.StatusAtribuido()
+	chamadoStatusAtribuido := chamadoAtual.StatusAtribuido()
 
 	// 10 - Persistir alteração do chamado
-	if _, err := a.chamadoRepo.Atualizar(ctx, chamado.ID(), *chamado); err != nil {
+	if _, err := a.chamadoRepo.Atualizar(ctx, chamadoAtual.ID(), chamadoStatusAtribuido); err != nil {
 		return nil, fmt.Errorf("criar atendimento: %w", err)
 	}
 
@@ -167,23 +167,24 @@ func (a *AtendimentoService) Atualizar(ctx context.Context, id string, atualizar
 	}
 
 	// 5 - Buscar atendimento existente
-	atdExistente, err := a.repo.BuscarPorID(ctx, id)
+	atendimentoAtual, err := a.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar atendimento: %w", err)
 	}
 
 	// 6 - Atualizar dados do atendimento
-	if err := atdExistente.AtualizarDados(atualizar); err != nil {
+	atendimentoAtualizado, err := atendimentoAtual.ComDadosAtualizados(atualizar)
+	if err != nil {
 		return nil, err
 	}
 
 	// 7 - Persistir alterações
-	atdAtualizado, err := a.repo.Atualizar(ctx, id, *atdExistente)
+	atendimentoSalvo, err := a.repo.Atualizar(ctx, id, atendimentoAtualizado)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar atendimento: %w", err)
 	}
 
-	return atdAtualizado, nil
+	return atendimentoSalvo, nil
 }
 
 // Listar recebe um filtro e retorna uma lista de atendimentos que correspondem aos critérios do filtro,

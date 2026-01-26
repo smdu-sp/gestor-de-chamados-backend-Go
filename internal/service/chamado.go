@@ -120,13 +120,13 @@ func (c *ChamadoService) Atualizar(ctx context.Context, id string, atualizar chm
 	}
 
 	// 2 - Buscar o chamado existente
-	chamado, err := c.repo.BuscarPorID(ctx, id)
+	chamadoAtual, err := c.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar chamado: %w", err)
 	}
 
 	// 3 - Validar se o usuário é o criador do chamado
-	if err := validarCriador(chamado, usrAutenticado); err != nil {
+	if err := validarCriador(chamadoAtual, usrAutenticado); err != nil {
 		return nil, fmt.Errorf("atualizar chamado: %w", err)
 	}
 
@@ -139,17 +139,18 @@ func (c *ChamadoService) Atualizar(ctx context.Context, id string, atualizar chm
 	}
 
 	// 5 - Atualizar os dados do chamado
-	if err := chamado.AtualizarDados(atualizar); err != nil {
+	chamadoAtualizado, err := chamadoAtual.ComDadosAtualizados(atualizar)
+	if err != nil {
 		return nil, err
 	}
 
 	// 6 - Persistir o chamado atualizado
-	chamadoAtualizado, err := c.repo.Atualizar(ctx, id, *chamado)
+	chamadoSalvo, err := c.repo.Atualizar(ctx, id, chamadoAtualizado)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar chamado: %w", err)
 	}
 
-	return chamadoAtualizado, nil
+	return chamadoSalvo, nil
 }
 
 // Arquivar recebe um ID e arquiva o chamado correspondente.
@@ -163,26 +164,26 @@ func (c *ChamadoService) Arquivar(ctx context.Context, id string) (*chm.Chamado,
 	}
 
 	// 2 - buscar o chamado existente
-	chamado, err := c.repo.BuscarPorID(ctx, id)
+	chamadoAtual, err := c.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("arquivar chamado: %w", err)
 	}
 
 	// 3 - validar se o usuário é o criador do chamado
-	if err := validarCriador(chamado, usrAutenticado); err != nil {
+	if err := validarCriador(chamadoAtual, usrAutenticado); err != nil {
 		return nil, fmt.Errorf("arquivar chamado: %w", err)
 	}
 
 	// 4 - marcar o chamado como arquivado
-	chamado.Arquivar()
+	chamadoArquivado := chamadoAtual.Arquivar()
 
 	// 5 - persistir o chamado atualizado
-	chamadoAtualizado, err := c.repo.Atualizar(ctx, id, *chamado)
+	chamadoSalvo, err := c.repo.Atualizar(ctx, id, chamadoArquivado)
 	if err != nil {
 		return nil, fmt.Errorf("arquivar chamado: %w", err)
 	}
 
-	return chamadoAtualizado, nil
+	return chamadoSalvo, nil
 }
 
 // Desarquivar recebe um ID e desarquiva o chamado correspondente.
@@ -196,26 +197,26 @@ func (c *ChamadoService) Desarquivar(ctx context.Context, id string) (*chm.Chama
 	}
 
 	// 2 - buscar o chamado existente
-	chamado, err := c.repo.BuscarPorID(ctx, id)
+	chamadoAtual, err := c.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("desarquivar chamado: %w", err)
 	}
 
 	// 3 - validar se o usuário é o criador do chamado
-	if err := validarCriador(chamado, usrAutenticado); err != nil {
+	if err := validarCriador(chamadoAtual, usrAutenticado); err != nil {
 		return nil, fmt.Errorf("desarquivar chamado: %w", err)
 	}
 
 	// 4 - marcar o chamado como desarquivado
-	chamado.Desarquivar()
+	chamadoDesarquivado := chamadoAtual.Desarquivar()
 
 	// 5 - persistir o chamado atualizado
-	chamadoAtualizado, err := c.repo.Atualizar(ctx, id, *chamado)
+	chamadoSalvo, err := c.repo.Atualizar(ctx, id, chamadoDesarquivado)
 	if err != nil {
 		return nil, fmt.Errorf("desarquivar chamado: %w", err)
 	}
 
-	return chamadoAtualizado, nil
+	return chamadoSalvo, nil
 }
 
 // AtualizarStatus recebe um ID e parâmetros de atualização de status, e aplica as mudanças no chamado correspondente.
@@ -229,28 +230,29 @@ func (c *ChamadoService) AtualizarStatus(ctx context.Context, id string, params 
 	}
 
 	// 2 - buscar o chamado existente
-	chamado, err := c.repo.BuscarPorID(ctx, id)
+	chamadoAtual, err := c.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar status do chamado: %w", err)
 	}
 
 	// 3 - validar autorização do usuário técnico ou administrador
-	if err := c.validarAutorizacaoTecnica(ctx, chamado, usrAutenticado); err != nil {
+	if err := c.validarAutorizacaoTecnica(ctx, chamadoAtual, usrAutenticado); err != nil {
 		return nil, fmt.Errorf("atualizar status do chamado: %w", err)
 	}
 
 	// 4 - atualizar o status do chamado
-	if err := chamado.AtualizarStatus(params.Status, params.Solucao); err != nil {
+	chamadoAtualizado, err := chamadoAtual.AtualizarStatus(params.Status, params.Solucao)
+	if err != nil {
 		return nil, err
 	}
 
 	// 5 - persistir o chamado atualizado
-	chamadoAtualizado, err := c.repo.Atualizar(ctx, id, *chamado)
+	chamadoSalvo, err := c.repo.Atualizar(ctx, id, chamadoAtualizado)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar status do chamado: %w", err)
 	}
 
-	return chamadoAtualizado, nil
+	return chamadoSalvo, nil
 }
 
 // AtualizarSolucao recebe um ID e parâmetros de atualização de solução, 
@@ -276,17 +278,18 @@ func (c *ChamadoService) AtualizarSolucao(ctx context.Context, id string, a chm.
 	}
 
 	// 4 - atualizar a solução do chamado
-	if err := chamado.AtualizarSolucao(a.Solucao); err != nil {
+	chamadoAtualizado, err := chamado.AtualizarSolucao(a.Solucao)
+	if err != nil {
 		return nil, err
 	}
 
 	// 5 - persistir o chamado atualizado
-	chamadoAtualizado, err := c.repo.Atualizar(ctx, id, *chamado)
+	chamadoSalvo, err := c.repo.Atualizar(ctx, id, chamadoAtualizado)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar solução do chamado: %w", err)
 	}
 
-	return chamadoAtualizado, nil
+	return chamadoSalvo, nil
 }
 
 // Listar recebe um filtro e retorna a lista de chamados correspondentes, 

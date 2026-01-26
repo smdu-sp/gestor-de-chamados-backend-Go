@@ -76,66 +76,67 @@ func (s *SubcategoriaService) Criar(ctx context.Context, criar sub.CriarParams) 
 //
 // Erros possíveis: ErrSubcategoriaNaoEncontrada, ErrSubcategoriaJaExisteComNome, ErrosValidacao.
 func (s *SubcategoriaService) Atualizar(ctx context.Context, id string, atualizar sub.AtualizarParams) (*sub.Subcategoria, error) {
-	subc, err := s.repo.BuscarPorID(ctx, id)
+	subcategoriaAtual, err := s.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar subcategoria por ID: %w", err)
 	}
 
-	if err := subc.AtualizarDados(atualizar); err != nil {
+	subcategoriaAtualizada, err := subcategoriaAtual.ComDadosAtualizados(atualizar)
+	if err != nil {
 		return nil, err
 	}
 
-	subcAtualizada, err := s.repo.Atualizar(ctx, id, *subc)
+	subcategoriaSalva, err := s.repo.Atualizar(ctx, id, subcategoriaAtualizada)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar subcategoria: %w", err)
 	}
-	return subcAtualizada, nil
+	return subcategoriaSalva, nil
 }
 
 // Desativar desativa uma subcategoria existente.
 //
 // Erros possíveis: ErrSubcategoriaNaoEncontrada.
 func (s *SubcategoriaService) Desativar(ctx context.Context, id string) (*sub.Subcategoria, error) {
-	subc, err := s.repo.BuscarPorID(ctx, id)
+	subcategoriaAtual, err := s.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("desativar subcategoria: %w", err)
 	}
 
-	subc.Desativar()
+	subcategoriaDesativada := subcategoriaAtual.Desativar()
 
-	subcDesativada, err := s.repo.Atualizar(ctx, id, *subc)
+	subcategoriaSalva, err := s.repo.Atualizar(ctx, id, subcategoriaDesativada)
 	if err != nil {
 		return nil, fmt.Errorf("desativar subcategoria: %w", err)
 	}
-	return subcDesativada, nil
+	return subcategoriaSalva, nil
 }
 
 // Ativar recebe um ID e ativa a subcategoria correspondente.
 //
 // Erros possíveis: ErrSubcategoriaNaoEncontrada.
 func (s *SubcategoriaService) Ativar(ctx context.Context, id string) (*sub.Subcategoria, error) {
-	subc, err := s.repo.BuscarPorID(ctx, id)
+	subcategoriaAtual, err := s.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("ativar subcategoria: %w", err)
 	}
 
-	subc.Ativar()
+	subcategoriaAtivada := subcategoriaAtual.Ativar()
 
-	subcAtivada, err := s.repo.Atualizar(ctx, id, *subc)
+	subcategoriaSalva, err := s.repo.Atualizar(ctx, id, subcategoriaAtivada)
 	if err != nil {
 		return nil, fmt.Errorf("ativar subcategoria: %w", err)
 	}
-	return subcAtivada, nil
+	return subcategoriaSalva, nil
 }
 
 // Listar recebe um filtro e retorna uma lista de subcategorias que correspondem aos critérios do filtro,
 // juntamente com o total de registros encontrados.
 func (s *SubcategoriaService) Listar(ctx context.Context, f sub.Filtro) ([]sub.Subcategoria, int, sub.Filtro, error) {
 	f.Normalizar()
-	subcSlice, total, err := s.repo.Listar(ctx, f)
+	subcategorias, total, err := s.repo.Listar(ctx, f)
 	if err != nil {
 		return nil, 0, f, fmt.Errorf("listar subcategorias: %w", err)
 	}
 
-	return subcSlice, total, f, nil
+	return subcategorias, total, f, nil
 }
