@@ -1,9 +1,20 @@
 package service
 
-import "testing"
+import (
+	"errors"
+	"testing"
+	dmn "github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain"
+)
+
+// --- Variáveis de erro para testes de serviço ---------------------------------------------------------------------------------------
+
+var (
+	errFakeGeradorID = errors.New("fake: erro gerador id")
+	errFakeRepo      = errors.New("fake: erro repositório")
+)
 
 // =====================================================================================================================
-//  MOCKS E FAKES
+//  FAKES
 // =====================================================================================================================
 
 // --- Fake GeradorID --------------------------------------------------------------------------------------------------
@@ -23,28 +34,52 @@ func (f *fakeGeradorID) NovoID() (string, error) {
 // FUNÇÕES AUXILIARES
 // =====================================================================================================================
 
-
 // assertError é um helper que verifica se o erro está conforme esperado.
-func assertError(t *testing.T, got error, wantErr bool) {
+func assertError(t *testing.T, erroRecebido error, wantErr bool) {
 	t.Helper()
 	
-	if wantErr && got == nil {
+	if wantErr && erroRecebido == nil {
 		t.Fatal("esperava erro, mas recebeu nil")
 	}
 	
-	if !wantErr && got != nil {
-		t.Fatalf("erro inesperado: %v", got)
+	if !wantErr && erroRecebido != nil {
+		t.Fatalf("erro inesperado: %v", erroRecebido)
+	}
+}
+
+// verificarErro é um helper que verifica se o erro recebido corresponde ao erro esperado.
+func verificarErro(t *testing.T, erroRecebido error, erroEsperado error) {
+	t.Helper()
+
+	if erroEsperado == nil {
+		if erroRecebido != nil {
+			t.Fatalf("erro inesperado: %v", erroRecebido)
+		}
+		return
+	}
+
+	if erroRecebido == nil {
+		t.Fatalf("esperava erro %v, recebeu nil", erroEsperado)
+	}
+
+	// Se for erro de validação → compara tipo
+	var erroValidacao *dmn.ErrosValidacao
+	if errors.As(erroEsperado, &erroValidacao) {
+		if !errors.As(erroRecebido, &erroValidacao) {
+			t.Fatalf("esperava erro de validação, recebeu %v", erroRecebido)
+		}
+		return
+	}
+
+	// Senão, erro sentinela
+	if !errors.Is(erroRecebido, erroEsperado) {
+		t.Fatalf("erro esperado %v, mas recebeu %v", erroEsperado, erroRecebido)
 	}
 }
 
 // ptr é um helper que retorna um ponteiro para o valor fornecido.
 func ptr[T any](v T) *T {
 	return &v
-}
-
-// ptrString é uma função auxiliar para obter um ponteiro para uma string.
-func ptrString(s string) *string {
-	return &s
 }
 
 // testLogWriter é um writer personalizado para capturar logs durante os testes.

@@ -2,891 +2,1673 @@ package service
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"sort"
 	"testing"
 
 	dmn "github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain"
 	usr "github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain/usuario"
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/infra/mysql"
 )
 
-// --- Fake Repository -------------------------------------------------------------------------------------------------
+// --- Fake Repository ---------------------------------------------------
 
 // fakeUsuarioRepository é uma implementação falsa de usr.Repository para testes.
+// Usa estado em vez de funções injetadas, tornando os testes mais legíveis.
 type fakeUsuarioRepository struct {
-	criarFn          func(ctx context.Context, u usr.Usuario) (*usr.Usuario, error)
-	atualizarFn      func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error)
-	buscarPorIDFn    func(ctx context.Context, id string) (*usr.Usuario, error)
-	buscarPorLoginFn func(ctx context.Context, login string) (*usr.Usuario, error)
-	listarFn         func(ctx context.Context, filtro usr.Filtro) ([]usr.Usuario, int, error)
+	usuarios        map[string]*usr.Usuario
+	erroAoCriar     error
+	erroAoAtualizar error
+	erroAoBuscar    error
+	erroAoListar    error
 }
 
-// Criar chama a função criarFn configurada no fakeUsuarioRepository.
+// novoFakeUsuarioRepository cria uma nova instância de fakeUsuarioRepository.
+func novoFakeUsuarioRepository() *fakeUsuarioRepository {
+	return &fakeUsuarioRepository{
+		usuarios: make(map[string]*usr.Usuario),
+	}
+}
+
+// Criar salva um novo usuário no repositório falso.
 func (f *fakeUsuarioRepository) Criar(ctx context.Context, u usr.Usuario) (*usr.Usuario, error) {
-	return f.criarFn(ctx, u)
+	if f.erroAoCriar != nil {
+		return nil, f.erroAoCriar
+	}
+	f.usuarios[u.ID()] = &u
+	return &u, nil
 }
 
-// Atualizar chama a função atualizarFn configurada no fakeUsuarioRepository.
+// Atualizar atualiza um usuário existente no repositório falso.
 func (f *fakeUsuarioRepository) Atualizar(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-	return f.atualizarFn(ctx, id, u)
+	if f.erroAoAtualizar != nil {
+		return nil, f.erroAoAtualizar
+	}
+	f.usuarios[id] = &u
+	return &u, nil
 }
 
-// BuscarPorID chama a função buscarPorIDFn configurada no fakeUsuarioRepository.
+// BuscarPorID busca um usuário por ID no repositório falso.
 func (f *fakeUsuarioRepository) BuscarPorID(ctx context.Context, id string) (*usr.Usuario, error) {
-	return f.buscarPorIDFn(ctx, id)
+	if f.erroAoBuscar != nil {
+		return nil, f.erroAoBuscar
+	}
+	u, existe := f.usuarios[id]
+	if !existe {
+		return nil, mysql.ErrUsuarioNaoEncontrado
+	}
+	return u, nil
 }
 
-// BuscarPorLogin chama a função buscarPorLoginFn configurada no fakeUsuarioRepository.
+// BuscarPorLogin busca um usuário por login no repositório falso.
 func (f *fakeUsuarioRepository) BuscarPorLogin(ctx context.Context, login string) (*usr.Usuario, error) {
-	return f.buscarPorLoginFn(ctx, login)
+	if f.erroAoBuscar != nil {
+		return nil, f.erroAoBuscar
+	}
+	for _, u := range f.usuarios {
+		if u.Login() == login {
+			return u, nil
+		}
+	}
+	return nil, mysql.ErrUsuarioNaoEncontrado
 }
 
-// Listar chama a função listarFn configurada no fakeUsuarioRepository.
+// Listar lista usuários com base no filtro no repositório falso.
 func (f *fakeUsuarioRepository) Listar(ctx context.Context, filtro usr.Filtro) ([]usr.Usuario, int, error) {
-	return f.listarFn(ctx, filtro)
+	if f.erroAoListar != nil {
+		return nil, 0, f.erroAoListar
+	}
+
+	// Converter o mapa para uma slice
+	usuarios := make([]usr.Usuario, 0, len(f.usuarios))
+	for _, u := range f.usuarios {
+		usuarios = append(usuarios, *u)
+	}
+
+	// Ordenação ORDER BY nome ASC
+	sort.Slice(usuarios, func(i, j int) bool {
+		return usuarios[i].Nome() < usuarios[j].Nome()
+	})
+
+	// Contar o total antes da paginação
+	total := len(usuarios)
+
+	// Paginação
+	if filtro.Limite() > 0 {
+		inicio := filtro.Offset()
+		fim := inicio + filtro.Limite()
+
+		if inicio >= total {
+			return []usr.Usuario{}, total, nil
+		}
+
+		if fim > total {
+			fim = total
+		}
+
+		usuarios = usuarios[inicio:fim]
+	}
+
+	return usuarios, total, nil
+}
+
+// =====================================================================================================================
+// MOCKS
+// =====================================================================================================================
+
+const (
+	usuarioTesteID    = "usuario-123"       // ID fixo para testes
+	usuarioTesteNome  = "Rogério"           // Nome fixo para testes
+	usuarioTesteLogin = "rogerio"           // Login fixo para testes
+	usuarioTesteEmail = "rogerio@email.com" // Email fixo para testes
+)
+
+// novoUsuarioTeste cria um usuário de teste com os dados fornecidos.
+func novoUsuarioTeste() *usr.Usuario {
+	u, _ := usr.Novo(
+		"usuario-123",
+		"Rogério",
+		"rogerio",
+		usr.NovoEmail("rogerio@email.com"),
+		usr.PermADM,
+		nil,
+	)
+	return u
+}
+
+// popularUsuarios adiciona múltiplos usuários ao repositório falso para testes.
+func popularUsuarios(repo *fakeUsuarioRepository2, quantidade int) {
+	for i := 1; i <= quantidade; i++ {
+		id := fmt.Sprintf("user-%02d", i)
+
+		u, _ := usr.Novo(
+			id,
+			fmt.Sprintf("Usuario %02d", i),
+			fmt.Sprintf("login%02d", i),
+			usr.NovoEmail(fmt.Sprintf("user%02d@email.com", i)),
+			usr.PermUSR,
+			nil,
+		)
+
+		repo.usuarios[id] = u
+	}
+}
+
+// novoCriarUsuarioParamsTeste cria parâmetros de criação de usuário para testes.
+func novoCriarUsuarioParamsTeste() usr.CriarParams {
+	return usr.CriarParams{
+		Nome:      "Rogério",
+		Login:     "rogerio",
+		Email:     usr.NovoEmail("rogerio@email.com"),
+		Permissao: usr.PermADM,
+		Avatar:    nil,
+	}
+}
+
+// novoCriarUsuarioParamsInvalidosTeste cria parâmetros inválidos de criação de usuário para testes.
+func novoCriarUsuarioParamsInvalidosTeste() usr.CriarParams {
+	return usr.CriarParams{
+		Nome:      "",
+		Login:     "",
+		Email:     usr.NovoEmail(""),
+		Permissao: "",
+	}
+}
+
+// novoAtualizarUsuarioParamsTeste cria parâmetros de atualização de usuário para testes.
+func novoAtualizarUsuarioParamsTeste() usr.AtualizarParams {
+	return usr.AtualizarParams{
+		Nome:      ptr("Rogério Atualizado"),
+		Login:     ptr("rogerioatualizado"),
+		Email:     ptr(usr.NovoEmail("rogerioatualizado@email.com")),
+		Permissao: ptr(usr.PermADM),
+		Status:    ptr(true),
+		Avatar:    nil,
+	}
+}
+
+// novoAtualizarUsuarioParamsInvalidosTeste cria parâmetros inválidos de atualização de usuário para testes.
+func novoAtualizarUsuarioParamsInvalidosTeste() usr.AtualizarParams {
+	return usr.AtualizarParams{
+		Nome:  ptr(""),
+		Login: ptr(""),
+		Email: ptr(usr.NovoEmail("")),
+	}
+}
+
+// novoAtualizarPermissaoUsuarioParamsTeste cria parâmetros de atualização de permissão de usuário para testes.
+func novoAtualizarPermissaoParamsTeste() usr.AtualizarPermissaoParams {
+	return usr.AtualizarPermissaoParams{
+		Permissao: usr.PermUSR,
+	}
+}
+
+// novoAtualizarPermissaoParamsInvalidosTeste cria parâmetros inválidos de atualização de permissão de usuário para testes.
+func novoAtualizarPermissaoParamsInvalidosTeste() usr.AtualizarPermissaoParams {
+	return usr.AtualizarPermissaoParams{
+		Permissao: "",
+	}
 }
 
 // =====================================================================================================================
 // TESTES
 // =====================================================================================================================
 
-// TestUsuarioService_Criar testa o método Criar do UsuarioService.
+// TestUsuarioService_Criar testa o método Criar do serviço de usuário.
 func TestUsuarioService_Criar(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	tests := []struct {
-		name      string
-		geradorID dmn.GeradorID
-		repo      usr.Repository
-		wantErr   bool
+		nome               string
+		geradorID          dmn.GeradorID
+		prepararRepo       func() usr.Repository
+		params             usr.CriarParams
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo usr.Repository, usuario *usr.Usuario)
 	}{
 		{
-			name: "criar usuario com sucesso",
+			nome: "criar usuario com sucesso",
 			geradorID: &fakeGeradorID{
-				id: "user-123",
+				id: usuarioTesteID,
 			},
-			repo: &fakeUsuarioRepository{
-				criarFn: func(ctx context.Context, u usr.Usuario) (*usr.Usuario, error) {
-					if u.ID() != "user-123" {
-						t.Fatalf("id inesperado: %s", u.ID())
-					}
-					if u.Login() != "rogerio" {
-						t.Fatalf("login inesperado: %s", u.Login())
-					}
-					return &u, nil
-				},
+			prepararRepo: func() usr.Repository {
+				return novoFakeUsuarioRepository()
 			},
-			wantErr: false,
+			params:       novoCriarUsuarioParamsTeste(),
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario.ID() != usuarioTesteID {
+					t.Errorf("esperava ID '%s', recebeu '%s'", usuarioTesteID, usuario.ID())
+				}
+				if usuario.Nome() != "Rogério" {
+					t.Errorf("esperava nome 'Rogério', recebeu '%s'", usuario.Nome())
+				}
+				if usuario.Login() != "rogerio" {
+					t.Errorf("esperava login 'rogerio', recebeu '%s'", usuario.Login())
+				}
+				if usuario.Email() != "rogerio@email.com" {
+					t.Errorf("esperava email 'rogerio@email.com', recebeu '%s'", usuario.Email())
+				}
+				if usuario.Permissao() != usr.PermADM {
+					t.Errorf("esperava permissão 'ADM', recebeu '%s'", usuario.Permissao())
+				}
+				if !usuario.Status() {
+					t.Error("esperava usuário ativo ao criar")
+				}
+				if usuario.UltimoLogin().IsZero() {
+					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
+				}
+				if usuario.CriadoEm().IsZero() {
+					t.Error("esperava campo CriadoEm preenchido, mas está zerado")
+				}
+				if usuario.AtualizadoEm().IsZero() {
+					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
+				}
+				if usuario.AtualizadoEm().Before(usuario.CriadoEm()) {
+					t.Errorf(
+						"AtualizadoEm não pode ser anterior a CriadoEm (CriadoEm=%v, AtualizadoEm=%v)",
+						usuario.CriadoEm(),
+						usuario.AtualizadoEm(),
+					)
+				}
+			},
 		},
 		{
-			name: "erro ao gerar id",
+			nome: "erro ao gerar id",
 			geradorID: &fakeGeradorID{
-				err: errors.New("erro ao gerar id"),
+				err: errFakeGeradorID,
 			},
-			repo: &fakeUsuarioRepository{
-				criarFn: func(ctx context.Context, u usr.Usuario) (*usr.Usuario, error) {
-					t.Fatalf("Criar não deveria ser chamado quando gerador de ID falha")
-					return nil, nil
-				},
+			prepararRepo: func() usr.Repository {
+				return novoFakeUsuarioRepository()
 			},
-			wantErr: true,
+			params:       novoCriarUsuarioParamsTeste(),
+			erroEsperado: errFakeGeradorID,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 0 {
+					t.Error("repositório não deveria ter usuários quando gerador de ID falha")
+				}
+				if usuario != nil {
+					t.Error("não deveria retornar usuário quando gerador de ID falha")
+				}
+			},
 		},
 		{
-			name: "erro ao salvar no repositorio",
+			nome: "erro ao salvar no repositorio",
 			geradorID: &fakeGeradorID{
-				id: "user-123",
+				id: usuarioTesteID,
 			},
-			repo: &fakeUsuarioRepository{
-				criarFn: func(ctx context.Context, u usr.Usuario) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				repo.erroAoCriar = errFakeRepo
+				return repo
 			},
-			wantErr: true,
+			params:       novoCriarUsuarioParamsTeste(),
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 0 {
+					t.Error("repositório não deveria ter usuários quando salvar falha")
+				}
+				if usuario != nil {
+					t.Error("não deveria retornar usuário quando salvar falha")
+				}
+			},
+		},
+		{
+			nome: "erro de validacao ao criar usuario",
+			geradorID: &fakeGeradorID{
+				id: usuarioTesteID,
+			},
+			prepararRepo: func() usr.Repository {
+				return novoFakeUsuarioRepository()
+			},
+			params:       novoCriarUsuarioParamsInvalidosTeste(),
+			erroEsperado: &dmn.ErrosValidacao{},
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 0 {
+					t.Error("repositório não deveria ter usuários quando validação falha")
+				}
+				if usuario != nil {
+					t.Error("não deveria retornar usuário quando validação falha")
+				}
+			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			service := NovoUsuarioService(tt.geradorID, tt.repo)
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
 
-			params := usr.CriarParams{
-				Nome:      "Rogério",
-				Login:     "rogerio",
-				Email:     usr.NovoEmail("rogerio@email.com"),
-				Permissao: usr.PermADM,
-			}
+			repo := tt.prepararRepo()
+			service := NovoUsuarioService(tt.geradorID, repo)
+			usuario, erroRecebido := service.Criar(ctx, tt.params)
 
-			// Act
-			_, err := service.Criar(ctx, params)
-
-			// Assert
-			if tt.wantErr && err == nil {
-				t.Fatalf("esperava erro, mas recebeu nil")
-			}
-
-			if !tt.wantErr && err != nil {
-				t.Fatalf("erro inesperado: %v", err)
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, usuario)
 			}
 		})
 	}
 }
 
-// TestUsuarioService_Atualizar testa o método Atualizar do UsuarioService.
+// TestUsuarioService_Atualizar2 testa o método Atualizar do serviço de usuário.
 func TestUsuarioService_Atualizar(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	tests := []struct {
-		name    string
-		repo    usr.Repository
-		params  usr.AtualizarParams
-		wantErr bool
+		nome               string
+		prepararRepo       func() usr.Repository
+		id                 string
+		params             usr.AtualizarParams
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo usr.Repository, usuario *usr.Usuario)
 	}{
 		{
-			name: "atualizar usuario com sucesso",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					u, _ := usr.Novo(
-						"user-123",
-						"Rogério",
-						"rogerio",
-						usr.NovoEmail("rogerio@email.com"),
-						usr.PermADM,
-						nil,
-					)
-					return u, nil
-				},
-				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-					// Assert dentro do fake (idiomático)
-					if u.Nome() != "Novo Nome" {
-						t.Fatalf("esperava nome 'Novo Nome', recebeu '%s'", u.Nome())
-					}
-					return &u, nil
-				},
+			nome: "atualizar usuario com sucesso",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
 			},
-			params: usr.AtualizarParams{
-				Nome: ptr("Novo Nome"),
+			id:           usuarioTesteID,
+			params:       novoAtualizarUsuarioParamsTeste(),
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				atual, existe := fakeRepo.usuarios[usuario.ID()]
+				if !existe {
+					t.Error("deveia existir usuário atualizado no repositório")
+					return
+				}
+				if atual.Nome() != "Rogério Atualizado" {
+					t.Errorf("Nome esperado 'Rogério Atualizado', recebido '%s'", atual.Nome())
+				}
+				if atual.Login() != "rogerioatualizado" {
+					t.Errorf("Login esperado 'rogerioatualizado', recebido '%s'", atual.Login())
+				}
+				if atual.Email() != "rogerioatualizado@email.com" {
+					t.Errorf("Email esperado 'rogerioatualizado@email.com', recebido '%s'", atual.Email())
+				}
+				if atual.Permissao() != usr.PermADM {
+					t.Errorf("Permissão esperada 'ADM', recebida '%s'", atual.Permissao())
+				}
+				if !atual.Status() {
+					t.Error("Status esperado 'true', recebido 'false'")
+				}
+				if atual.Avatar() != nil {
+					t.Errorf("Avatar esperado 'nil', recebido '%v'", atual.Avatar())
+				}
+				if atual.AtualizadoEm().IsZero() {
+					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
+				}
+				if atual.AtualizadoEm().Before(atual.CriadoEm()) {
+					t.Errorf("AtualizadoEm(%v) não pode ser anterior a CriadoEm(%v)", atual.AtualizadoEm(), atual.CriadoEm())
+				}
 			},
-			wantErr: false,
 		},
 		{
-			name: "erro ao buscar usuario",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
-				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-					t.Fatalf("Atualizar não deveria ser chamado")
-					return nil, nil
-				},
+			nome: "erro ao buscar usuario no repositório para atualizar",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = errFakeRepo
+				return repo
 			},
-			params:  usr.AtualizarParams{},
-			wantErr: true,
+			id:           usuarioTesteID,
+			params:       novoAtualizarUsuarioParamsTeste(),
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				original, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if original.Nome() != "Rogério" {
+					t.Errorf("Nome esperado 'Rogério', recebido '%s'", original.Nome())
+				}
+				if original.Login() != "rogerio" {
+					t.Errorf("Login esperado 'rogerio', recebido '%s'", original.Login())
+				}
+				if original.Email() != "rogerio@email.com" {
+					t.Errorf("Email esperado 'rogerio@email.com', recebido '%s'", original.Email())
+				}
+				if original.Permissao() != usr.PermADM {
+					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
+				}
+				if !original.Status() {
+					t.Error("Status esperado 'true', recebido 'false'")
+				}
+				if original.Avatar() != nil {
+					t.Errorf("Avatar esperado 'nil', recebido '%v'", original.Avatar())
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
+				}
+			},
 		},
 		{
-			name: "erro ao salvar atualizacao",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					u, _ := usr.Novo(
-						"user-123",
-						"Rogério",
-						"rogerio",
-						usr.NovoEmail("rogerio@email.com"),
-						usr.PermADM,
-						nil,
-					)
-					return u, nil
-				},
-				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-					return nil, errors.New("erro ao atualizar")
-				},
+			nome: "erro ao persistir usuario atualizado no repositório",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
 			},
-			params:  usr.AtualizarParams{},
-			wantErr: true,
+			id:           usuarioTesteID,
+			params:       novoAtualizarUsuarioParamsTeste(),
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				original, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if original.Nome() != "Rogério" {
+					t.Errorf("Nome esperado 'Rogério', recebido '%s'", original.Nome())
+				}
+				if original.Login() != "rogerio" {
+					t.Errorf("Login esperado 'rogerio', recebido '%s'", original.Login())
+				}
+				if original.Email() != "rogerio@email.com" {
+					t.Errorf("Email esperado 'rogerio@email.com', recebido '%s'", original.Email())
+				}
+				if original.Permissao() != usr.PermADM {
+					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
+				}
+				if original.Avatar() != nil {
+					t.Errorf("Avatar esperado 'nil', recebido '%v'", original.Avatar())
+				}
+				if original.AtualizadoEm().IsZero() {
+					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
+				}
+				if original.AtualizadoEm().Before(original.CriadoEm()) {
+					t.Errorf("AtualizadoEm(%v) não pode ser anterior a CriadoEm(%v)", original.AtualizadoEm(), original.CriadoEm())
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
+				}
+			},
+		},
+		{
+			nome: "usuario nao encontrado para atualizar",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
+				return repo
+			},
+			id:           "id-inexistente",
+			params:       novoAtualizarUsuarioParamsTeste(),
+			erroEsperado: mysql.ErrUsuarioNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+				}
+			},
+		},
+		{
+			nome: "erro de validacao ao atualizar usuario",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
+			},
+			id:           usuarioTesteID,
+			params:       novoAtualizarUsuarioParamsInvalidosTeste(),
+			erroEsperado: &dmn.ErrosValidacao{},
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				original, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if original.Nome() != "Rogério" {
+					t.Errorf("Nome esperado 'Rogério', recebido '%s'", original.Nome())
+				}
+				if original.Login() != "rogerio" {
+					t.Errorf("Login esperado 'rogerio', recebido '%s'", original.Login())
+				}
+				if original.Email() != "rogerio@email.com" {
+					t.Errorf("Email esperado 'rogerio@email.com', recebido '%s'", original.Email())
+				}
+				if original.Permissao() != usr.PermADM {
+					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
+				}
+				if original.Avatar() != nil {
+					t.Errorf("Avatar esperado 'nil', recebido '%v'", original.Avatar())
+				}
+				if original.AtualizadoEm().IsZero() {
+					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
+				}
+				if original.AtualizadoEm().Before(original.CriadoEm()) {
+					t.Errorf("AtualizadoEm(%v) não pode ser anterior a CriadoEm(%v)", original.AtualizadoEm(), original.CriadoEm())
+				}
+			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			service := NovoUsuarioService(nil, tt.repo)
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
 
-			// Act
-			_, err := service.Atualizar(ctx, "user-123", tt.params)
+			repo := tt.prepararRepo()
+			service := NovoUsuarioService(nil, repo)
+			usuario, erroRecebido := service.Atualizar(ctx, tt.id, tt.params)
 
-			// Assert
-			if tt.wantErr && err == nil {
-				t.Fatalf("esperava erro, mas recebeu nil")
-			}
-
-			if !tt.wantErr && err != nil {
-				t.Fatalf("erro inesperado: %v", err)
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, usuario)
 			}
 		})
 	}
 }
 
-// TestUsuarioService_BuscarPorID testa o método BuscarPorID do UsuarioService.
 func TestUsuarioService_BuscarPorID(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
-	usuarioOK := &usr.Usuario{}
-
 	tests := []struct {
-		name    string
-		repo    usr.Repository
-		want    *usr.Usuario
-		wantErr bool
+		nome               string
+		prepararRepo       func() usr.Repository
+		id                 string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo usr.Repository, usuario *usr.Usuario)
 	}{
 		{
-			name: "buscar usuario com sucesso",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					if id != "user-123" {
-						t.Fatalf("esperava id 'user-123', recebeu '%s'", id)
-					}
-					return usuarioOK, nil
-				},
+			nome: "buscar usuario por id com sucesso",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
 			},
-			want:    usuarioOK,
-			wantErr: false,
+			id:           usuarioTesteID,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario.ID() != usuarioTesteID {
+					t.Errorf("esperava ID '%s', recebeu '%s'", usuarioTesteID, usuario.ID())
+				}
+				if usuario.Nome() != "Rogério" {
+					t.Errorf("esperava nome 'Rogério', recebeu '%s'", usuario.Nome())
+				}
+				if usuario.Login() != "rogerio" {
+					t.Errorf("esperava login 'rogerio', recebeu '%s'", usuario.Login())
+				}
+				if usuario.Email() != "rogerio@email.com" {
+					t.Errorf("esperava email 'rogerio@email.com', recebeu '%s'", usuario.Email())
+				}
+				if usuario.Permissao() != usr.PermADM {
+					t.Errorf("esperava permissão 'ADM', recebeu '%s'", usuario.Permissao())
+				}
+				if !usuario.Status() {
+					t.Error("esperava usuário ativo ao criar")
+				}
+				if usuario.UltimoLogin().IsZero() {
+					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
+				}
+				if usuario.CriadoEm().IsZero() {
+					t.Error("esperava campo CriadoEm preenchido, mas está zerado")
+				}
+				if usuario.AtualizadoEm().IsZero() {
+					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
+				}
+				if usuario.AtualizadoEm().Before(usuario.CriadoEm()) {
+					t.Errorf(
+						"AtualizadoEm não pode ser anterior a CriadoEm (CriadoEm=%v, AtualizadoEm=%v)",
+						usuario.CriadoEm(),
+						usuario.AtualizadoEm(),
+					)
+				}
+			},
 		},
 		{
-			name: "erro ao buscar usuario",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			nome: "erro ao buscar usuario por id no repositório",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = errFakeRepo
+				return repo
 			},
-			wantErr: true,
+			id:           usuarioTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository2)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
+				}
+			},
 		},
 		{
-			name: "usuario não encontrado",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return nil, errors.New("usuario não encontrado")
-				},
+			nome: "usuario não encontrado por id",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
 			},
-			wantErr: true,
+			id:           "id-inexistente",
+			erroEsperado: mysql.ErrUsuarioNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository2)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+				}
+			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			service := NovoUsuarioService(nil, tt.repo)
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
 
-			// Act
-			got, err := service.BuscarPorID(ctx, "user-123")
+			repo := tt.prepararRepo()
+			service := NovoUsuarioService(nil, repo)
+			usuario, err := service.BuscarPorID(ctx, tt.id)
 
-			// Assert
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("esperava erro, mas recebeu nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("erro inesperado: %v", err)
-			}
-
-			if got.ID() != tt.want.ID() {
-				t.Fatalf("esperava id '%s', recebeu '%s'", tt.want.ID(), got.ID())
+			verificarErro(t, err, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, usuario)
 			}
 		})
 	}
 }
 
-// TestUsuarioService_BuscarPorLogin testa o método BuscarPorLogin do UsuarioService.
+// TestUsuarioService_BuscarPorLogin2 testa o método BuscarPorLogin do serviço de usuário.
 func TestUsuarioService_BuscarPorLogin(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
-	usuarioOK := &usr.Usuario{}
-
 	tests := []struct {
-		name    string
-		repo    usr.Repository
-		want    *usr.Usuario
-		wantErr bool
+		nome               string
+		prepararRepo       func() usr.Repository
+		login              string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo usr.Repository, usuario *usr.Usuario)
 	}{
 		{
-			name: "buscar usuario por login com sucesso",
-			repo: &fakeUsuarioRepository{
-				buscarPorLoginFn: func(ctx context.Context, login string) (*usr.Usuario, error) {
-					if login != "rogerio" {
-						t.Fatalf("esperava login 'rogerio', recebeu '%s'", login)
-					}
-					return usuarioOK, nil
-				},
+			nome: "buscar usuario por login com sucesso",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
 			},
-			want:    usuarioOK,
-			wantErr: false,
+			login:        usuarioTesteLogin,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario.ID() != usuarioTesteID {
+					t.Errorf("esperava ID '%s', recebeu '%s'", usuarioTesteID, usuario.ID())
+				}
+				if usuario.Nome() != "Rogério" {
+					t.Errorf("esperava nome 'Rogério', recebeu '%s'", usuario.Nome())
+				}
+				if usuario.Login() != usuarioTesteLogin {
+					t.Errorf("esperava login '%s', recebeu '%s'", usuarioTesteLogin, usuario.Login())
+				}
+				if usuario.Email() != "rogerio@email.com" {
+					t.Errorf("esperava email 'rogerio@email.com', recebeu '%s'", usuario.Email())
+				}
+				if usuario.Permissao() != usr.PermADM {
+					t.Errorf("esperava permissão 'ADM', recebeu '%s'", usuario.Permissao())
+				}
+				if !usuario.Status() {
+					t.Error("esperava usuário ativo ao criar")
+				}
+				if usuario.UltimoLogin().IsZero() {
+					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
+				}
+				if usuario.CriadoEm().IsZero() {
+					t.Error("esperava campo CriadoEm preenchido, mas está zerado")
+				}
+				if usuario.AtualizadoEm().IsZero() {
+					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
+				}
+				if usuario.AtualizadoEm().Before(usuario.CriadoEm()) {
+					t.Errorf(
+						"AtualizadoEm não pode ser anterior a CriadoEm (CriadoEm=%v, AtualizadoEm=%v)",
+						usuario.CriadoEm(),
+						usuario.AtualizadoEm(),
+					)
+				}
+			},
 		},
 		{
-			name: "erro ao buscar usuario por login",
-			repo: &fakeUsuarioRepository{
-				buscarPorLoginFn: func(ctx context.Context, login string) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			nome: "erro ao buscar usuario por login no repositório",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = errFakeRepo
+				return repo
 			},
-			wantErr: true,
+			login:        usuarioTesteLogin,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository2)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
+				}
+			},
+		},
+		{
+			nome: "usuario não encontrado por login",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
+			},
+			login:        "login-inexistente",
+			erroEsperado: mysql.ErrUsuarioNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository2)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+				}
+			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			service := NovoUsuarioService(nil, tt.repo)
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
 
-			// Act
-			got, err := service.BuscarPorLogin(ctx, "rogerio")
+			repo := tt.prepararRepo()
+			service := NovoUsuarioService(nil, repo)
+			usuario, err := service.BuscarPorLogin(ctx, tt.login)
 
-			// Assert
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("esperava erro, mas recebeu nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("erro inesperado: %v", err)
-			}
-
-			if got.Login() != tt.want.Login() {
-				t.Fatalf("esperava login '%s', recebeu '%s'", tt.want.Login(), got.Login())
+			verificarErro(t, err, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, usuario)
 			}
 		})
 	}
 }
 
-// TestUsuarioService_AtualizarPermissao testa o método AtualizarPermissao do UsuarioService.
+// TestUsuarioService_BuscarCategoriaPermissaoPorID2 testa o método BuscarCategoriaPermissaoPorID do serviço de usuário.
 func TestUsuarioService_AtualizarPermissao(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
-	usuarioBase := func() *usr.Usuario {
-		u, _ := usr.Novo(
-			"user-123",
-			"Rogério",
-			"rogerio",
-			usr.NovoEmail("rogerio@email.com"),
-			usr.PermADM,
-			nil,
-		)
-		return u
-	}
-
 	tests := []struct {
-		name    string
-		repo    usr.Repository
-		params  usr.AtualizarPermissaoParams
-		wantErr bool
+		nome               string
+		prepararRepo       func() usr.Repository
+		id                 string
+		params             usr.AtualizarPermissaoParams
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo usr.Repository, usuario *usr.Usuario)
 	}{
 		{
-			name: "atualizar permissao com sucesso",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioBase(), nil
-				},
-				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-					return &u, nil
-				},
+			nome: "atualizar permissao com sucesso",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
 			},
-			params: usr.AtualizarPermissaoParams{
-				Permissao: usr.PermUSR,
+			id:           usuarioTesteID,
+			params:       novoAtualizarPermissaoParamsTeste(),
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				atualizado, existe := fakeRepo.usuarios[usuario.ID()]
+				if !existe {
+					t.Error("deveia existir usuário atualizado no repositório")
+					return
+				}
+				if atualizado.Permissao() != usr.PermUSR {
+					t.Errorf("Permissão esperada 'USR', recebida '%s'", atualizado.Permissao())
+				}
+				if atualizado.AtualizadoEm().IsZero() {
+					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
+				}
+				if atualizado.AtualizadoEm().Before(atualizado.CriadoEm()) {
+					t.Errorf("AtualizadoEm(%v) não pode ser anterior a CriadoEm(%v)", atualizado.AtualizadoEm(), atualizado.CriadoEm())
+				}
 			},
-			wantErr: false,
 		},
 		{
-			name: "erro ao buscar usuario",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			nome: "erro ao buscar usuario no repositório para atualizar permissao",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = errFakeRepo
+				return repo
 			},
-			params: usr.AtualizarPermissaoParams{
-				Permissao: usr.PermUSR,
+			id:           usuarioTesteID,
+			params:       novoAtualizarPermissaoParamsTeste(),
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				original, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if original.Permissao() != usr.PermADM {
+					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
+				}
 			},
-			wantErr: true,
 		},
 		{
-			name: "erro de validacao ao atualizar permissao",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioBase(), nil
-				},
+			nome: "erro ao persistir usuario com permissao atualizada no repositório",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
 			},
-			params: usr.AtualizarPermissaoParams{
-				Permissao: "INVALIDA", // força erro de domínio
+			id:           usuarioTesteID,
+			params:       novoAtualizarPermissaoParamsTeste(),
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				original, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if original.Permissao() != usr.PermADM {
+					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
+				}
 			},
-			wantErr: true,
 		},
 		{
-			name: "erro ao salvar no repositorio",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioBase(), nil
-				},
-				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			nome: "usuario nao encontrado para atualizar permissao",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
+				return repo
 			},
-			params: usr.AtualizarPermissaoParams{
-				Permissao: usr.PermUSR,
+			id:           "id-inexistente",
+			params:       novoAtualizarPermissaoParamsTeste(),
+			erroEsperado: mysql.ErrUsuarioNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+				}
 			},
-			wantErr: true,
+		},
+		{
+			nome: "erro de validacao ao atualizar permissao",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
+			},
+			id:           usuarioTesteID,
+			params:       novoAtualizarPermissaoParamsInvalidosTeste(),
+			erroEsperado: dmn.NovoErrosValidacao(),
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				original, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if original.Permissao() != usr.PermADM {
+					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro de validação: '%v'", usuario)
+				}
+			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			service := NovoUsuarioService(nil, tt.repo)
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
 
-			// Act
-			u, err := service.AtualizarPermissao(ctx, "user-123", tt.params)
+			repo := tt.prepararRepo()
+			service := NovoUsuarioService(nil, repo)
+			usuario, err := service.AtualizarPermissao(ctx, tt.id, tt.params)
 
-			// Assert
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("esperava erro, mas recebeu nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("erro inesperado: %v", err)
-			}
-
-			if u.Permissao() != tt.params.Permissao {
-				t.Fatalf(
-					"esperava permissao '%s', recebeu '%s'",
-					tt.params.Permissao,
-					u.Permissao(),
-				)
+			verificarErro(t, err, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, usuario)
 			}
 		})
 	}
 }
 
-// TestUsuarioService_AtualizarUltimoLogin testa o método AtualizarUltimoLogin do UsuarioService.
+// TestUsuarioService_BuscarCategoriaPermissaoPorID2 testa o método BuscarCategoriaPermissaoPorID do serviço de usuário.
 func TestUsuarioService_AtualizarUltimoLogin(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
-	usuarioBase := func() *usr.Usuario {
-		u, _ := usr.Novo(
-			"user-123",
-			"Rogério",
-			"rogerio",
-			usr.NovoEmail("rogerio@email.com"),
-			usr.PermADM,
-			nil,
-		)
-		return u
-	}
-
 	tests := []struct {
-		name    string
-		repo    usr.Repository
-		wantErr bool
+		nome               string
+		prepararRepo       func() usr.Repository
+		id                 string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo usr.Repository, usuario *usr.Usuario)
 	}{
 		{
-			name: "atualizar ultimo login com sucesso",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioBase(), nil
-				},
-				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-					return &u, nil
-				},
+			nome: "atualizar ultimo login com sucesso",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
 			},
-			wantErr: false,
+			id:           usuarioTesteID,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				atual, existe := fakeRepo.usuarios[usuario.ID()]
+				if !existe {
+					t.Error("deveia existir usuário atualizado no repositório")
+					return
+				}
+				if atual.UltimoLogin().IsZero() {
+					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
+				}
+				if atual.UltimoLogin().Before(atual.CriadoEm()) {
+					t.Errorf("UltimoLogin(%v) não pode ser anterior a CriadoEm(%v)", atual.UltimoLogin(), atual.CriadoEm())
+				}
+			},
 		},
 		{
-			name: "erro ao buscar usuario",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			nome: "erro ao buscar usuario no repositório para atualizar ultimo login",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = errFakeRepo
+				return repo
 			},
-			wantErr: true,
+			id:           usuarioTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				_, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
+				}
+			},
 		},
 		{
-			name: "erro ao salvar no repositorio",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioBase(), nil
-				},
-				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			nome: "erro ao persistir usuario com ultimo login atualizado no repositório",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
 			},
-			wantErr: true,
+			id:           usuarioTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				_, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao persistir: '%v'", usuario)
+				}
+			},
+		},
+		{
+			nome: "usuario nao encontrado para atualizar ultimo login",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
+				return repo
+			},
+			id:           "id-inexistente",
+			erroEsperado: mysql.ErrUsuarioNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository2)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+				}
+			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			service := NovoUsuarioService(nil, tt.repo)
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
 
-			// Act
-			u, err := service.AtualizarUltimoLogin(ctx, "user-123")
+			repo := tt.prepararRepo()
+			service := NovoUsuarioService(nil, repo)
+			usuario, erroRecebido := service.AtualizarUltimoLogin(ctx, tt.id)
 
-			// Assert
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("esperava erro, mas recebeu nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("erro inesperado: %v", err)
-			}
-
-			if u == nil {
-				t.Fatalf("esperava usuario, recebeu nil")
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, usuario)
 			}
 		})
 	}
 }
 
-// TestUsuarioService_Desativar testa o método Desativar do UsuarioService.
+// TestUsuarioService_Desativar2 testa o método Desativar do serviço de usuário.
 func TestUsuarioService_Desativar(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
-	usuarioAtivo := func() *usr.Usuario {
-		u, _ := usr.Novo(
-			"user-123",
-			"Rogério",
-			"rogerio",
-			usr.NovoEmail("rogerio@email.com"),
-			usr.PermADM,
-			nil,
-		)
-		return u
-	}
-
 	tests := []struct {
-		name    string
-		repo    usr.Repository
-		wantErr bool
+		nome               string
+		prepararRepo       func() usr.Repository
+		id                 string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo usr.Repository, usuario *usr.Usuario)
 	}{
 		{
-			name: "desativar usuario com sucesso",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioAtivo(), nil
-				},
-				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-					return &u, nil
-				},
+			nome: "desativar usuario com sucesso",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
 			},
-			wantErr: false,
+			id:           usuarioTesteID,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				atual, existe := fakeRepo.usuarios[usuario.ID()]
+				if !existe {
+					t.Error("deveia existir usuário atualizado no repositório")
+					return
+				}
+				if atual.Status() {
+					t.Errorf("esperava usuário desativado, mas recebeu Status=%v", atual.Status())
+				}
+				if atual.UltimoLogin().IsZero() {
+					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
+				}
+				if atual.UltimoLogin().Before(atual.CriadoEm()) {
+					t.Errorf("UltimoLogin(%v) não pode ser anterior a CriadoEm(%v)", atual.UltimoLogin(), atual.CriadoEm())
+				}
+			},
 		},
 		{
-			name: "erro ao buscar usuario",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			nome: "erro ao buscar usuario no repositório para desativar",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = errFakeRepo
+				return repo
 			},
-			wantErr: true,
+			id:           usuarioTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository2)
+				_, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
+				}
+			},
 		},
 		{
-			name: "erro ao salvar no repositorio",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioAtivo(), nil
-				},
-				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			nome: "erro ao persistir usuario desativado no repositório",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
 			},
-			wantErr: true,
+			id:           usuarioTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				_, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao persistir: '%v'", usuario)
+				}
+			},
+		},
+		{
+			nome: "usuario nao encontrado para desativar",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
+				return repo
+			},
+			id:           "id-inexistente",
+			erroEsperado: mysql.ErrUsuarioNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+				}
+			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			service := NovoUsuarioService(nil, tt.repo)
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
 
-			// Act
-			u, err := service.Desativar(ctx, "user-123")
+			repo := tt.prepararRepo()
+			service := NovoUsuarioService(nil, repo)
+			usuario, erroRecebido := service.Desativar(ctx, tt.id)
 
-			// Assert
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("esperava erro, mas recebeu nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("erro inesperado: %v", err)
-			}
-
-			if u.Status() != false {
-				t.Fatalf("esperava usuario desativado")
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, usuario)
 			}
 		})
 	}
 }
 
-// TestUsuarioService_Ativar testa o método Ativar do UsuarioService.
+// TestUsuarioService_Ativar2 testa o método Ativar do serviço de usuário.
 func TestUsuarioService_Ativar(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
-	usuarioDesativado, _ := usr.Novo(
-		"user-123",
-		"Rogério",
-		"rogerio",
-		usr.NovoEmail("rogerio@email.com"),
-		usr.PermADM,
-		nil,
-	)
-
 	tests := []struct {
-		name    string
-		repo    usr.Repository
-		wantErr bool
+		nome               string
+		prepararRepo       func() usr.Repository
+		id                 string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo usr.Repository, usuario *usr.Usuario)
 	}{
 		{
-			name: "ativar usuario com sucesso",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioDesativado, nil
-				},
-				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-					return &u, nil
-				},
+			nome: "ativar usuario com sucesso",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
 			},
-			wantErr: false,
+			id:           usuarioTesteID,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				atual, existe := fakeRepo.usuarios[usuario.ID()]
+				if !existe {
+					t.Error("deveia existir usuário atualizado no repositório")
+					return
+				}
+				if !atual.Status() {
+					t.Errorf("esperava usuário ativado, recebeu Status=%v", atual.Status())
+				}
+				if atual.UltimoLogin().IsZero() {
+					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
+				}
+				if atual.UltimoLogin().Before(atual.CriadoEm()) {
+					t.Errorf("UltimoLogin(%v) não pode ser anterior a CriadoEm(%v)", atual.UltimoLogin(), atual.CriadoEm())
+				}
+			},
 		},
 		{
-			name: "erro ao buscar usuario",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			nome: "erro ao buscar usuario no repositório para ativar",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = errFakeRepo
+				return repo
 			},
-			wantErr: true,
+			id:           usuarioTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				_, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
+				}
+			},
 		},
 		{
-			name: "erro ao salvar no repositorio",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioDesativado, nil
-				},
-				atualizarFn: func(ctx context.Context, id string, u usr.Usuario) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			nome: "erro ao persistir usuario ativado no repositório",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
 			},
-			wantErr: true,
+			id:           usuarioTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				_, existe := fakeRepo.usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário original no repositório sem atualização")
+					return
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro ao persistir: '%v'", usuario)
+				}
+			},
+		},
+		{
+			nome: "usuario nao encontrado para ativar",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
+				return repo
+			},
+			id:           "id-inexistente",
+			erroEsperado: mysql.ErrUsuarioNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+				}
+			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			service := NovoUsuarioService(nil, tt.repo)
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
 
-			// Act
-			u, err := service.Ativar(ctx, "user-123")
+			repo := tt.prepararRepo()
+			service := NovoUsuarioService(nil, repo)
+			usuario, erroRecebido := service.Ativar(ctx, tt.id)
 
-			// Assert
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("esperava erro, mas recebeu nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("erro inesperado: %v", err)
-			}
-
-			if u.Status() != true {
-				t.Fatalf("esperava usuario ativado")
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, usuario)
 			}
 		})
 	}
 }
 
-// TestUsuarioService_Listar testa o método Listar do UsuarioService.
+// TestUsuarioService_Listar2 testa o método Listar do serviço de usuário.
 func TestUsuarioService_Listar(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
-	u, _ := usr.Novo(
-		"user-1",
-		"Rogério",
-		"rogerio",
-		usr.NovoEmail("rogerio@email.com"),
-		usr.PermADM,
-		nil,
-	)
-	usuarios := []usr.Usuario{*u}
-
 	tests := []struct {
-		name      string
-		repo      usr.Repository
-		filtro    usr.Filtro
-		wantTotal int
-		wantErr   bool
+		nome               string
+		prepararRepo       func() usr.Repository
+		filtro             usr.Filtro
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo usr.Repository, usuarios []usr.Usuario, total int, filtroRetornado usr.Filtro)
 	}{
 		{
-			name:   "listar usuarios com sucesso e normalizar filtro",
-			filtro: usr.Filtro{},
-			repo: &fakeUsuarioRepository{
-				listarFn: func(ctx context.Context, f usr.Filtro) ([]usr.Usuario, int, error) {
-					// Assert indireto: o filtro chegou normalizado no repo
-					if f.Pagina() <= 0 {
-						t.Fatalf("esperava pagina normalizada, recebeu %d", f.Pagina())
-					}
-					if f.Limite() <= 0 {
-						t.Fatalf("esperava limite normalizado, recebeu %d", f.Limite())
-					}
-					return usuarios, len(usuarios), nil
-				},
+			nome: "listar 10 usuarios paginados com sucesso - pagina 1 limite 5",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				popularUsuarios(repo, 10)
+				return repo
 			},
-			wantTotal: len(usuarios),
-			wantErr:   false,
+			filtro:       usr.NovoFiltro(dmn.NovoPaginacao(1, 5), nil, nil, nil),
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuarios []usr.Usuario, total int, filtroRetornado usr.Filtro) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 10 {
+					t.Errorf("esperava 10 usuários no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if filtroRetornado.Pagina() != 1 || filtroRetornado.Limite() != 5 {
+					t.Errorf("esperava filtro retornado com página 1 e limite 5, recebeu página %d e limite %d", filtroRetornado.Pagina(), filtroRetornado.Limite())
+				}
+				if total != 10 {
+					t.Errorf("esperava total 10 usuários retornados, recebeu %d", total)
+				}
+				if len(usuarios) != 5 {
+					t.Errorf("esperava 5 usuários na página, recebeu %d", len(usuarios))
+				}
+			},
 		},
 		{
-			name:   "erro ao listar usuarios",
-			filtro: usr.Filtro{},
-			repo: &fakeUsuarioRepository{
-				listarFn: func(ctx context.Context, f usr.Filtro) ([]usr.Usuario, int, error) {
-					return nil, 0, errors.New("erro no banco")
-				},
+			nome: "listar 10 usuarios paginados com sucesso - pagina 3 limite 4",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				popularUsuarios(repo, 10)
+				return repo
 			},
-			wantErr: true,
+			filtro:       usr.NovoFiltro(dmn.NovoPaginacao(3, 4), nil, nil, nil),
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuarios []usr.Usuario, total int, filtroRetornado usr.Filtro) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 10 {
+					t.Errorf("esperava 10 usuários no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if filtroRetornado.Pagina() != 3 || filtroRetornado.Limite() != 4 {
+					t.Errorf("esperava filtro retornado com página 3 e limite 4, recebeu página %d e limite %d", filtroRetornado.Pagina(), filtroRetornado.Limite())
+				}
+				if total != 10 {
+					t.Errorf("esperava total 10 usuários retornados, recebeu %d", total)
+				}
+				if len(usuarios) != 2 {
+					t.Errorf("esperava 2 usuários na página, recebeu %d", len(usuarios))
+				}
+			},
+		},
+		{
+			nome: "erro ao listar usuarios paginados no repositório",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoListar = errFakeRepo
+				return repo
+			},
+			filtro:       usr.NovoFiltro(dmn.NovoPaginacao(1, 10), nil, nil, nil),
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, usuarios []usr.Usuario, total int, filtroRetornado usr.Filtro) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository2)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if len(usuarios) != 0 {
+					t.Errorf("não esperava usuários retornados quando há erro ao listar: '%v'", usuarios)
+				}
+				if total != 0 {
+					t.Errorf("não esperava total de usuários quando há erro ao listar: %d", total)
+				}
+				if filtroRetornado.Pagina() != 0 || filtroRetornado.Limite() != 0 {
+					t.Errorf("deve retornar filtro vazio quando há erro ao listar")
+				}
+			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			service := NovoUsuarioService(nil, tt.repo)
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
 
-			// Act
-			us, total, filtroRetornado, err := service.Listar(ctx, tt.filtro)
+			repo := tt.prepararRepo()
+			service := NovoUsuarioService(nil, repo)
+			usuarios, total, filtroRetornado, erroRecebido := service.Listar(ctx, tt.filtro)
 
-			// Assert
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("esperava erro, mas recebeu nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("erro inesperado: %v", err)
-			}
-
-			if total != tt.wantTotal {
-				t.Fatalf("esperava total %d, recebeu %d", tt.wantTotal, total)
-			}
-
-			if len(us) != tt.wantTotal {
-				t.Fatalf("esperava %d usuarios, recebeu %d", tt.wantTotal, len(us))
-			}
-
-			// Assert importante: filtro retornado é o normalizado
-			if filtroRetornado.Pagina() <= 0 {
-				t.Fatalf("esperava filtro pagina normalizada")
-			}
-			if filtroRetornado.Limite() <= 0 {
-				t.Fatalf("esperava filtro limite normalizado")
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, usuarios, total, filtroRetornado)
 			}
 		})
 	}
 }
 
-// TestUsuarioService_VerificarPermissao testa o método VerificarPermissao do UsuarioService.
+// TestUsuarioService_VerificarPermissao2 testa o método VerificarPermissao do serviço de usuário.
 func TestUsuarioService_VerificarPermissao(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
-	usuarioADM := func() *usr.Usuario {
-		u, _ := usr.Novo(
-			"user-123",
-			"Rogério",
-			"rogerio",
-			usr.NovoEmail("rogerio@email.com"),
-			usr.PermADM,
-			nil,
-		)
-		return u
-	}
-
 	tests := []struct {
-		name       string
-		repo       usr.Repository
-		permissoes []usr.Permissao
-		want       bool
-		wantErr    bool
+		nome               string
+		prepararRepo       func() usr.Repository
+		id                 string
+		permissoes         []usr.Permissao
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo usr.Repository, ok bool)
 	}{
 		{
-			name: "usuario possui permissao",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioADM(), nil
-				},
+			nome: "usuario possui permissao",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
 			},
-			permissoes: []usr.Permissao{usr.PermUSR, usr.PermADM},
-			want:       true,
-			wantErr:    false,
+			id:           usuarioTesteID,
+			permissoes:   []usr.Permissao{usr.PermUSR, usr.PermADM},
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if !ok {
+					t.Error("esperava que o usuário possuísse a permissão")
+				}
+			},
 		},
 		{
-			name: "usuario nao possui permissao",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return usuarioADM(), nil
-				},
+			nome: "usuario nao possui permissao",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				return repo
 			},
-			permissoes: []usr.Permissao{usr.PermUSR},
-			want:       false,
-			wantErr:    false,
+			id:           usuarioTesteID,
+			permissoes:   []usr.Permissao{usr.PermUSR},
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if ok {
+					t.Error("não esperava que o usuário possuísse a permissão")
+				}
+			},
 		},
 		{
-			name: "erro ao buscar usuario",
-			repo: &fakeUsuarioRepository{
-				buscarPorIDFn: func(ctx context.Context, id string) (*usr.Usuario, error) {
-					return nil, errors.New("erro no banco")
-				},
+			nome: "erro ao buscar usuario",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = errFakeRepo
+				return repo
 			},
-			permissoes: []usr.Permissao{usr.PermADM},
-			want:       false,
-			wantErr:    true,
+			id:           usuarioTesteID,
+			permissoes:   []usr.Permissao{usr.PermADM},
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if ok {
+					t.Error("não esperava valor ok quando há erro ao buscar usuário")
+				}
+			},
+		},
+		{
+			nome: "usuario nao encontrado",
+			prepararRepo: func() usr.Repository {
+				repo := novoFakeUsuarioRepository()
+				novoUsuario := novoUsuarioTeste()
+				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
+				return repo
+			},
+			id:           "id-inexistente",
+			permissoes:   []usr.Permissao{usr.PermADM},
+			erroEsperado: mysql.ErrUsuarioNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeUsuarioRepository)
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				}
+				if ok {
+					t.Error("não esperava valor ok quando usuário não é encontrado")
+				}
+			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
-			service := NovoUsuarioService(nil, tt.repo)
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
 
-			// Act
-			ok, err := service.VerificarPermissao(ctx, "user-123", tt.permissoes)
+			repo := tt.prepararRepo()
+			service := NovoUsuarioService(nil, repo)
+			ok, err := service.VerificarPermissao(ctx, tt.id, tt.permissoes)
 
-			// Assert
-			if tt.wantErr {
-				if err == nil {
-					t.Fatalf("esperava erro, mas recebeu nil")
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("erro inesperado: %v", err)
-			}
-
-			if ok != tt.want {
-				t.Fatalf("esperava %v, recebeu %v", tt.want, ok)
+			verificarErro(t, err, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, ok)
 			}
 		})
 	}
 }
-

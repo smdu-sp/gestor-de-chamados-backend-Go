@@ -233,6 +233,9 @@ func (r *UsuarioRepository) ExistePorLogin(ctx context.Context, login string) (b
 }
 
 // scanUsuario recebe um scanner (row ou rows) e retorna o usuário escaneado.
+//
+// Retorna (nil, nil) quando nenhum usuário é encontrado.
+// Outros erros de scan são retornados normalmente.
 func (r *UsuarioRepository) scanUsuario(scanner scanner) (*usr.Usuario, error) {
 	var usrDB usr.UsuarioDB
 	err := scanner.Scan(
