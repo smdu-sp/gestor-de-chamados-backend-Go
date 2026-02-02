@@ -228,7 +228,7 @@ func TestAtendimentoService_Criar2(t *testing.T) {
 			categoriaPermissaoRepo := novoFakeCategoriaPermissaoRepository2()
 			categoriaPermissaoRepo.categoriasPermissoes[chaveComposta("categoria-123", "user-123")] = novoCategoriaPermissaoTest("categoria-123", "user-123", usr.PermTEC)
 			
-			usuarioRepo := novoFakeUsuarioRepository2()
+			usuarioRepo := novoFakeUsuarioRepository()
 			novoUsuario := novoUsuarioTeste()
 			usuarioRepo.usuarios[novoUsuario.ID()] = novoUsuario
 			

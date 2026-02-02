@@ -35,8 +35,9 @@ func (f *fakeUsuarioRepository) Criar(ctx context.Context, u usr.Usuario) (*usr.
 	if f.erroAoCriar != nil {
 		return nil, f.erroAoCriar
 	}
-	f.usuarios[u.ID()] = &u
-	return &u, nil
+	usuario := u // Criar uma cópia para evitar efeitos colaterais
+	f.usuarios[u.ID()] = &usuario
+	return &usuario, nil
 }
 
 // Atualizar atualiza um usuário existente no repositório falso.
@@ -44,8 +45,9 @@ func (f *fakeUsuarioRepository) Atualizar(ctx context.Context, id string, u usr.
 	if f.erroAoAtualizar != nil {
 		return nil, f.erroAoAtualizar
 	}
-	f.usuarios[id] = &u
-	return &u, nil
+	usuario := u // Criar uma cópia para evitar efeitos colaterais
+	f.usuarios[id] = &usuario
+	return &usuario, nil
 }
 
 // BuscarPorID busca um usuário por ID no repositório falso.
@@ -137,7 +139,7 @@ func novoUsuarioTeste() *usr.Usuario {
 }
 
 // popularUsuarios adiciona múltiplos usuários ao repositório falso para testes.
-func popularUsuarios(repo *fakeUsuarioRepository2, quantidade int) {
+func popularUsuarios(repo *fakeUsuarioRepository, quantidade int) {
 	for i := 1; i <= quantidade; i++ {
 		id := fmt.Sprintf("user-%02d", i)
 
@@ -198,24 +200,20 @@ func novoAtualizarUsuarioParamsInvalidosTeste() usr.AtualizarParams {
 
 // novoAtualizarPermissaoUsuarioParamsTeste cria parâmetros de atualização de permissão de usuário para testes.
 func novoAtualizarPermissaoParamsTeste() usr.AtualizarPermissaoParams {
-	return usr.AtualizarPermissaoParams{
-		Permissao: usr.PermUSR,
-	}
+	return usr.AtualizarPermissaoParams{Permissao: usr.PermUSR}
 }
 
 // novoAtualizarPermissaoParamsInvalidosTeste cria parâmetros inválidos de atualização de permissão de usuário para testes.
 func novoAtualizarPermissaoParamsInvalidosTeste() usr.AtualizarPermissaoParams {
-	return usr.AtualizarPermissaoParams{
-		Permissao: "",
-	}
+	return usr.AtualizarPermissaoParams{Permissao: ""}
 }
 
 // =====================================================================================================================
 // TESTES
 // =====================================================================================================================
 
-// TestUsuarioService_Criar testa o método Criar do serviço de usuário.
-func TestUsuarioService_Criar(t *testing.T) {
+// Test_UsuarioService_Criar testa o método Criar do serviço de usuário.
+func Test_UsuarioService_Criar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -241,43 +239,57 @@ func TestUsuarioService_Criar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				// verifica se usuário foi retornado
+				if usuario == nil {
+					t.Fatal("esperava usuário criado, recebeu nil")
 				}
+
+				// verifica se foi salvo no repositório
+				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuario.ID()]
+				if !ok {
+					t.Fatalf("usuário com ID '%s' não foi salvo no repositório", usuario.ID())
+					return
+				}
+
+				// verificar se os parametros foram salvos corretamente
+				if usuario.Nome() != novoCriarUsuarioParamsTeste().Nome {
+					t.Errorf("Nome esperado '%s', recebido '%s'", novoCriarUsuarioParamsTeste().Nome, usuario.Nome())
+				}
+				if usuario.Login() != novoCriarUsuarioParamsTeste().Login {
+					t.Errorf("Login esperado '%s', recebido '%s'", novoCriarUsuarioParamsTeste().Login, usuario.Login())
+				}
+				if usuario.Email().String() != novoCriarUsuarioParamsTeste().Email.String() {
+					t.Errorf("Email esperado '%s', recebido '%s'", novoCriarUsuarioParamsTeste().Email.String(), usuario.Email().String())
+				}
+				if usuario.Permissao() != novoCriarUsuarioParamsTeste().Permissao {
+					t.Errorf("Permissão esperada '%s', recebida '%s'", novoCriarUsuarioParamsTeste().Permissao, usuario.Permissao())
+				}
+				if usuario.Avatar() != nil {
+					t.Errorf("Avatar esperado 'nil', recebido '%v'", usuario.Avatar())
+				}
+
+				// verificar se campos automáticos foram definidos corretamente
 				if usuario.ID() != usuarioTesteID {
-					t.Errorf("esperava ID '%s', recebeu '%s'", usuarioTesteID, usuario.ID())
+					t.Errorf("ID esperado '%s', recebido '%s'", usuarioTesteID, usuario.ID())
 				}
-				if usuario.Nome() != "Rogério" {
-					t.Errorf("esperava nome 'Rogério', recebeu '%s'", usuario.Nome())
-				}
-				if usuario.Login() != "rogerio" {
-					t.Errorf("esperava login 'rogerio', recebeu '%s'", usuario.Login())
-				}
-				if usuario.Email() != "rogerio@email.com" {
-					t.Errorf("esperava email 'rogerio@email.com', recebeu '%s'", usuario.Email())
-				}
-				if usuario.Permissao() != usr.PermADM {
-					t.Errorf("esperava permissão 'ADM', recebeu '%s'", usuario.Permissao())
-				}
-				if !usuario.Status() {
-					t.Error("esperava usuário ativo ao criar")
+				if usuario.Status() != true {
+					t.Errorf("Status esperado 'true', recebido '%v'", usuario.Status())
 				}
 				if usuario.UltimoLogin().IsZero() {
-					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
+					t.Errorf("ÚltimoLogin(%v) não deveria ser zero", usuario.UltimoLogin())
 				}
 				if usuario.CriadoEm().IsZero() {
-					t.Error("esperava campo CriadoEm preenchido, mas está zerado")
+					t.Errorf("CriadoEm(%v) não deveria ser zero", usuario.CriadoEm())
 				}
-				if usuario.AtualizadoEm().IsZero() {
-					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
-				}
+
+				// verificar invariantes do usuário
 				if usuario.AtualizadoEm().Before(usuario.CriadoEm()) {
-					t.Errorf(
-						"AtualizadoEm não pode ser anterior a CriadoEm (CriadoEm=%v, AtualizadoEm=%v)",
-						usuario.CriadoEm(),
-						usuario.AtualizadoEm(),
-					)
+					t.Errorf("AtualizadoEm(%v) não deveria ser anterior a CriadoEm(%v)",
+						usuario.AtualizadoEm(), usuario.CriadoEm())
+				}
+				if usuario.UltimoLogin().Before(usuario.CriadoEm()) {
+					t.Errorf("ÚltimoLogin(%v) não deveria ser anterior a CriadoEm(%v)",
+						usuario.UltimoLogin(), usuario.CriadoEm())
 				}
 			},
 		},
@@ -357,18 +369,18 @@ func TestUsuarioService_Criar(t *testing.T) {
 
 			repo := tt.prepararRepo()
 			service := NovoUsuarioService(tt.geradorID, repo)
-			usuario, erroRecebido := service.Criar(ctx, tt.params)
+			usuarioCriado, erroRecebido := service.Criar(ctx, tt.params)
 
 			verificarErro(t, erroRecebido, tt.erroEsperado)
 			if tt.verificarResultado != nil {
-				tt.verificarResultado(t, repo, usuario)
+				tt.verificarResultado(t, repo, usuarioCriado)
 			}
 		})
 	}
 }
 
-// TestUsuarioService_Atualizar2 testa o método Atualizar do serviço de usuário.
-func TestUsuarioService_Atualizar(t *testing.T) {
+// Test_UsuarioService_Atualizar testa o método Atualizar do serviço de usuário.
+func Test_UsuarioService_Atualizar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -395,35 +407,54 @@ func TestUsuarioService_Atualizar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				atual, existe := fakeRepo.usuarios[usuario.ID()]
-				if !existe {
-					t.Error("deveia existir usuário atualizado no repositório")
-					return
+				// verifica se usuário foi retornado
+				if usuario == nil {
+					t.Fatal("esperava usuário atualizado, recebeu nil")
 				}
-				if atual.Nome() != "Rogério Atualizado" {
-					t.Errorf("Nome esperado 'Rogério Atualizado', recebido '%s'", atual.Nome())
+
+				// verificar se os parametros foram atualizados corretamente
+				if novoAtualizarUsuarioParamsTeste().Nome != nil {
+					if usuario.Nome() != *novoAtualizarUsuarioParamsTeste().Nome {
+						t.Errorf("Nome esperado '%s', recebido '%s'", *novoAtualizarUsuarioParamsTeste().Nome, usuario.Nome())
+					}
 				}
-				if atual.Login() != "rogerioatualizado" {
-					t.Errorf("Login esperado 'rogerioatualizado', recebido '%s'", atual.Login())
+				if novoAtualizarUsuarioParamsTeste().Login != nil {
+					if usuario.Login() != *novoAtualizarUsuarioParamsTeste().Login {
+						t.Errorf("Login esperado '%s', recebido '%s'", *novoAtualizarUsuarioParamsTeste().Login, usuario.Login())
+					}
 				}
-				if atual.Email() != "rogerioatualizado@email.com" {
-					t.Errorf("Email esperado 'rogerioatualizado@email.com', recebido '%s'", atual.Email())
+				if novoAtualizarUsuarioParamsTeste().Email != nil {
+					if usuario.Email().String() != novoAtualizarUsuarioParamsTeste().Email.String() {
+						t.Errorf("Email esperado '%s', recebido '%s'", (*novoAtualizarUsuarioParamsTeste().Email).String(), usuario.Email().String())
+					}
 				}
-				if atual.Permissao() != usr.PermADM {
-					t.Errorf("Permissão esperada 'ADM', recebida '%s'", atual.Permissao())
+				if novoAtualizarUsuarioParamsTeste().Permissao != nil {
+					if usuario.Permissao() != *novoAtualizarUsuarioParamsTeste().Permissao {
+						t.Errorf("Permissão esperada '%s', recebida '%s'", *novoAtualizarUsuarioParamsTeste().Permissao, usuario.Permissao())
+					}
 				}
-				if !atual.Status() {
-					t.Error("Status esperado 'true', recebido 'false'")
+				if novoAtualizarUsuarioParamsTeste().Status != nil {
+					if usuario.Status() != *novoAtualizarUsuarioParamsTeste().Status {
+						t.Errorf("Status esperado '%v', recebido '%v'", *novoAtualizarUsuarioParamsTeste().Status, usuario.Status())
+					}
 				}
-				if atual.Avatar() != nil {
-					t.Errorf("Avatar esperado 'nil', recebido '%v'", atual.Avatar())
+
+				// verificar se campos automáticos foram atualizados corretamente
+				if usuario.AtualizadoEm().IsZero() {
+					t.Errorf("AtualizadoEm(%v) não deveria ser zero", usuario.AtualizadoEm())
 				}
-				if atual.AtualizadoEm().IsZero() {
-					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
+				if usuario.CriadoEm().IsZero() {
+					t.Errorf("CriadoEm(%v) não deveria ser zero", usuario.CriadoEm())
 				}
-				if atual.AtualizadoEm().Before(atual.CriadoEm()) {
-					t.Errorf("AtualizadoEm(%v) não pode ser anterior a CriadoEm(%v)", atual.AtualizadoEm(), atual.CriadoEm())
+
+				// verificar invariantes do usuário
+				if usuario.AtualizadoEm().Before(usuario.CriadoEm()) {
+					t.Errorf("AtualizadoEm(%v) não deveria ser anterior a CriadoEm(%v)",
+						usuario.AtualizadoEm(), usuario.CriadoEm())
+				}
+				if usuario.UltimoLogin().Before(usuario.CriadoEm()) {
+					t.Errorf("ÚltimoLogin(%v) não deveria ser anterior a CriadoEm(%v)",
+						usuario.UltimoLogin(), usuario.CriadoEm())
 				}
 			},
 		},
@@ -442,30 +473,36 @@ func TestUsuarioService_Atualizar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				original, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
+				// verifica se usuário original permanece no repositório sem atualização
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
 					t.Error("deve existir usuário original no repositório sem atualização")
 					return
 				}
-				if original.Nome() != "Rogério" {
-					t.Errorf("Nome esperado 'Rogério', recebido '%s'", original.Nome())
+
+				if usuarioRepo.Nome() != novoUsuarioTeste().Nome() {
+					t.Errorf("Nome do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Nome(), usuarioRepo.Nome())
 				}
-				if original.Login() != "rogerio" {
-					t.Errorf("Login esperado 'rogerio', recebido '%s'", original.Login())
+				if usuarioRepo.Login() != novoUsuarioTeste().Login() {
+					t.Errorf("Login do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Login(), usuarioRepo.Login())
 				}
-				if original.Email() != "rogerio@email.com" {
-					t.Errorf("Email esperado 'rogerio@email.com', recebido '%s'", original.Email())
+				if usuarioRepo.Email().String() != novoUsuarioTeste().Email().String() {
+					t.Errorf("Email do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Email().String(), usuarioRepo.Email().String())
 				}
-				if original.Permissao() != usr.PermADM {
-					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
+				if usuarioRepo.Permissao() != novoUsuarioTeste().Permissao() {
+					t.Errorf("Permissão do usuário original esperada '%s', recebida '%s'", novoUsuarioTeste().Permissao(), usuarioRepo.Permissao())
 				}
-				if !original.Status() {
-					t.Error("Status esperado 'true', recebido 'false'")
+				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
+					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
 				}
-				if original.Avatar() != nil {
-					t.Errorf("Avatar esperado 'nil', recebido '%v'", original.Avatar())
+				if usuarioRepo.CriadoEm() != novoUsuarioTeste().CriadoEm() {
+					t.Errorf("CriadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().CriadoEm(), usuarioRepo.CriadoEm())
 				}
+				if usuarioRepo.AtualizadoEm() != novoUsuarioTeste().AtualizadoEm() {
+					t.Errorf("AtualizadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().AtualizadoEm(), usuarioRepo.AtualizadoEm())
+				}
+
+				// verifica se não foi retornado usuário atualizado
 				if usuario != nil {
 					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
@@ -486,33 +523,36 @@ func TestUsuarioService_Atualizar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				original, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
+				// verifica se usuário original permanece no repositório sem atualização
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
 					t.Error("deve existir usuário original no repositório sem atualização")
 					return
 				}
-				if original.Nome() != "Rogério" {
-					t.Errorf("Nome esperado 'Rogério', recebido '%s'", original.Nome())
+
+				if usuarioRepo.Nome() != novoUsuarioTeste().Nome() {
+					t.Errorf("Nome do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Nome(), usuarioRepo.Nome())
 				}
-				if original.Login() != "rogerio" {
-					t.Errorf("Login esperado 'rogerio', recebido '%s'", original.Login())
+				if usuarioRepo.Login() != novoUsuarioTeste().Login() {
+					t.Errorf("Login do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Login(), usuarioRepo.Login())
 				}
-				if original.Email() != "rogerio@email.com" {
-					t.Errorf("Email esperado 'rogerio@email.com', recebido '%s'", original.Email())
+				if usuarioRepo.Email().String() != novoUsuarioTeste().Email().String() {
+					t.Errorf("Email do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Email().String(), usuarioRepo.Email().String())
 				}
-				if original.Permissao() != usr.PermADM {
-					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
+				if usuarioRepo.Permissao() != novoUsuarioTeste().Permissao() {
+					t.Errorf("Permissão do usuário original esperada '%s', recebida '%s'", novoUsuarioTeste().Permissao(), usuarioRepo.Permissao())
 				}
-				if original.Avatar() != nil {
-					t.Errorf("Avatar esperado 'nil', recebido '%v'", original.Avatar())
+				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
+					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
 				}
-				if original.AtualizadoEm().IsZero() {
-					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
+				if usuarioRepo.CriadoEm() != novoUsuarioTeste().CriadoEm() {
+					t.Errorf("CriadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().CriadoEm(), usuarioRepo.CriadoEm())
 				}
-				if original.AtualizadoEm().Before(original.CriadoEm()) {
-					t.Errorf("AtualizadoEm(%v) não pode ser anterior a CriadoEm(%v)", original.AtualizadoEm(), original.CriadoEm())
+				if usuarioRepo.AtualizadoEm() != novoUsuarioTeste().AtualizadoEm() {
+					t.Errorf("AtualizadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().AtualizadoEm(), usuarioRepo.AtualizadoEm())
 				}
+
+				// verifica se não foi retornado usuário atualizado
 				if usuario != nil {
 					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
 				}
@@ -533,12 +573,19 @@ func TestUsuarioService_Atualizar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				// verifica se havia 1 usuário no repositório com id diferente
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
+					t.Error("deve existir usuário no repositório")
+					return
 				}
+				if usuarioRepo.ID() == "id-inexistente" {
+					t.Error("o id buscado não deve existir no repositório")
+				}
+
+				// verifica se não foi retornado usuário encontrado
 				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
 			},
 		},
@@ -556,32 +603,38 @@ func TestUsuarioService_Atualizar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				original, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
+				// verifica se usuário original permanece no repositório sem atualização
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
 					t.Error("deve existir usuário original no repositório sem atualização")
 					return
 				}
-				if original.Nome() != "Rogério" {
-					t.Errorf("Nome esperado 'Rogério', recebido '%s'", original.Nome())
+
+				if usuarioRepo.Nome() != novoUsuarioTeste().Nome() {
+					t.Errorf("Nome do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Nome(), usuarioRepo.Nome())
 				}
-				if original.Login() != "rogerio" {
-					t.Errorf("Login esperado 'rogerio', recebido '%s'", original.Login())
+				if usuarioRepo.Login() != novoUsuarioTeste().Login() {
+					t.Errorf("Login do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Login(), usuarioRepo.Login())
 				}
-				if original.Email() != "rogerio@email.com" {
-					t.Errorf("Email esperado 'rogerio@email.com', recebido '%s'", original.Email())
+				if usuarioRepo.Email().String() != novoUsuarioTeste().Email().String() {
+					t.Errorf("Email do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Email().String(), usuarioRepo.Email().String())
 				}
-				if original.Permissao() != usr.PermADM {
-					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
+				if usuarioRepo.Permissao() != novoUsuarioTeste().Permissao() {
+					t.Errorf("Permissão do usuário original esperada '%s', recebida '%s'", novoUsuarioTeste().Permissao(), usuarioRepo.Permissao())
 				}
-				if original.Avatar() != nil {
-					t.Errorf("Avatar esperado 'nil', recebido '%v'", original.Avatar())
+				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
+					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
 				}
-				if original.AtualizadoEm().IsZero() {
-					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
+				if usuarioRepo.CriadoEm() != novoUsuarioTeste().CriadoEm() {
+					t.Errorf("CriadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().CriadoEm(), usuarioRepo.CriadoEm())
 				}
-				if original.AtualizadoEm().Before(original.CriadoEm()) {
-					t.Errorf("AtualizadoEm(%v) não pode ser anterior a CriadoEm(%v)", original.AtualizadoEm(), original.CriadoEm())
+				if usuarioRepo.AtualizadoEm() != novoUsuarioTeste().AtualizadoEm() {
+					t.Errorf("AtualizadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().AtualizadoEm(), usuarioRepo.AtualizadoEm())
+				}
+
+				// verifica se não foi retornado usuário atualizado
+				if usuario != nil {
+					t.Errorf("não esperava usuário retornado quando há erro de validação: '%v'", usuario)
 				}
 			},
 		},
@@ -603,7 +656,8 @@ func TestUsuarioService_Atualizar(t *testing.T) {
 	}
 }
 
-func TestUsuarioService_BuscarPorID(t *testing.T) {
+// Test_UsuarioService_BuscarPorID testa o método BuscarPorID do serviço de usuário.
+func Test_UsuarioService_BuscarPorID(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -628,43 +682,14 @@ func TestUsuarioService_BuscarPorID(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				// verifica se usuário foi retornado
+				if usuario == nil {
+					t.Fatal("esperava usuário encontrado, recebeu nil")
 				}
+
+				// verifica se o usuário retornado é o esperado
 				if usuario.ID() != usuarioTesteID {
-					t.Errorf("esperava ID '%s', recebeu '%s'", usuarioTesteID, usuario.ID())
-				}
-				if usuario.Nome() != "Rogério" {
-					t.Errorf("esperava nome 'Rogério', recebeu '%s'", usuario.Nome())
-				}
-				if usuario.Login() != "rogerio" {
-					t.Errorf("esperava login 'rogerio', recebeu '%s'", usuario.Login())
-				}
-				if usuario.Email() != "rogerio@email.com" {
-					t.Errorf("esperava email 'rogerio@email.com', recebeu '%s'", usuario.Email())
-				}
-				if usuario.Permissao() != usr.PermADM {
-					t.Errorf("esperava permissão 'ADM', recebeu '%s'", usuario.Permissao())
-				}
-				if !usuario.Status() {
-					t.Error("esperava usuário ativo ao criar")
-				}
-				if usuario.UltimoLogin().IsZero() {
-					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
-				}
-				if usuario.CriadoEm().IsZero() {
-					t.Error("esperava campo CriadoEm preenchido, mas está zerado")
-				}
-				if usuario.AtualizadoEm().IsZero() {
-					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
-				}
-				if usuario.AtualizadoEm().Before(usuario.CriadoEm()) {
-					t.Errorf(
-						"AtualizadoEm não pode ser anterior a CriadoEm (CriadoEm=%v, AtualizadoEm=%v)",
-						usuario.CriadoEm(),
-						usuario.AtualizadoEm(),
-					)
+					t.Errorf("ID esperado '%s', recebido '%s'", usuarioTesteID, usuario.ID())
 				}
 			},
 		},
@@ -682,10 +707,13 @@ func TestUsuarioService_BuscarPorID(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository2)
+				// verifica se havia 1 usuário no repositório
+				fakeRepo := repo.(*fakeUsuarioRepository)
 				if len(fakeRepo.usuarios) != 1 {
 					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
 				}
+
+				// verifica se não foi retornado usuário encontrado
 				if usuario != nil {
 					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
@@ -705,12 +733,19 @@ func TestUsuarioService_BuscarPorID(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository2)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				// verifica se havia 1 usuário no repositório com id diferente
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
+					t.Error("deve existir usuário no repositório")
+					return
 				}
+				if usuarioRepo.ID() == "id-inexistente" {
+					t.Error("o id buscado não deve existir no repositório")
+				}
+
+				// verifica se não foi retornado usuário encontrado
 				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
 			},
 		},
@@ -732,8 +767,8 @@ func TestUsuarioService_BuscarPorID(t *testing.T) {
 	}
 }
 
-// TestUsuarioService_BuscarPorLogin2 testa o método BuscarPorLogin do serviço de usuário.
-func TestUsuarioService_BuscarPorLogin(t *testing.T) {
+// Test_UsuarioService_BuscarPorLogin testa o método BuscarPorLogin do serviço de usuário.
+func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -758,43 +793,14 @@ func TestUsuarioService_BuscarPorLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				// verfica se usuário foi retornado
+				if usuario == nil {
+					t.Fatal("esperava usuário encontrado, recebeu nil")
 				}
-				if usuario.ID() != usuarioTesteID {
-					t.Errorf("esperava ID '%s', recebeu '%s'", usuarioTesteID, usuario.ID())
-				}
-				if usuario.Nome() != "Rogério" {
-					t.Errorf("esperava nome 'Rogério', recebeu '%s'", usuario.Nome())
-				}
+
+				// verifica se o usuário retornado é o esperado
 				if usuario.Login() != usuarioTesteLogin {
-					t.Errorf("esperava login '%s', recebeu '%s'", usuarioTesteLogin, usuario.Login())
-				}
-				if usuario.Email() != "rogerio@email.com" {
-					t.Errorf("esperava email 'rogerio@email.com', recebeu '%s'", usuario.Email())
-				}
-				if usuario.Permissao() != usr.PermADM {
-					t.Errorf("esperava permissão 'ADM', recebeu '%s'", usuario.Permissao())
-				}
-				if !usuario.Status() {
-					t.Error("esperava usuário ativo ao criar")
-				}
-				if usuario.UltimoLogin().IsZero() {
-					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
-				}
-				if usuario.CriadoEm().IsZero() {
-					t.Error("esperava campo CriadoEm preenchido, mas está zerado")
-				}
-				if usuario.AtualizadoEm().IsZero() {
-					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
-				}
-				if usuario.AtualizadoEm().Before(usuario.CriadoEm()) {
-					t.Errorf(
-						"AtualizadoEm não pode ser anterior a CriadoEm (CriadoEm=%v, AtualizadoEm=%v)",
-						usuario.CriadoEm(),
-						usuario.AtualizadoEm(),
-					)
+					t.Errorf("Login esperado '%s', recebido '%s'", usuarioTesteLogin, usuario.Login())
 				}
 			},
 		},
@@ -812,10 +818,13 @@ func TestUsuarioService_BuscarPorLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository2)
+				// verifica se havia 1 usuário no repositório
+				fakeRepo := repo.(*fakeUsuarioRepository)
 				if len(fakeRepo.usuarios) != 1 {
 					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
 				}
+
+				// verifica se não foi retornado usuário encontrado
 				if usuario != nil {
 					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
@@ -835,12 +844,19 @@ func TestUsuarioService_BuscarPorLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository2)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				// verifica se havia 1 usuário no repositório com login diferente
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
+					t.Error("deve existir usuário no repositório")
+					return
 				}
+				if usuarioRepo.Login() == "login-inexistente" {
+					t.Error("o login buscado não deve existir no repositório")
+				}
+
+				// verifica se não foi retornado usuário encontrado
 				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
 			},
 		},
@@ -862,8 +878,8 @@ func TestUsuarioService_BuscarPorLogin(t *testing.T) {
 	}
 }
 
-// TestUsuarioService_BuscarCategoriaPermissaoPorID2 testa o método BuscarCategoriaPermissaoPorID do serviço de usuário.
-func TestUsuarioService_AtualizarPermissao(t *testing.T) {
+// Test_UsuarioService_AtualizarPermissao testa o método AtualizarPermissao do serviço de usuário.
+func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -889,20 +905,33 @@ func TestUsuarioService_AtualizarPermissao(t *testing.T) {
 			erroEsperado: nil,
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				atualizado, existe := fakeRepo.usuarios[usuario.ID()]
-				if !existe {
-					t.Error("deveia existir usuário atualizado no repositório")
-					return
+
+				// verifica se usuário foi retornado
+				if usuario == nil {
+					t.Fatal("esperava usuário atualizado, recebeu nil")
 				}
-				if atualizado.Permissao() != usr.PermUSR {
-					t.Errorf("Permissão esperada 'USR', recebida '%s'", atualizado.Permissao())
+
+				// verificar se a permissão foi atualizada corretamente
+				if usuario.Permissao() != novoAtualizarPermissaoParamsTeste().Permissao {
+					t.Errorf("Permissão esperada '%s', recebida '%s'", novoAtualizarPermissaoParamsTeste().Permissao, usuario.Permissao())
 				}
-				if atualizado.AtualizadoEm().IsZero() {
-					t.Error("esperava campo AtualizadoEm preenchido, mas está zerado")
+
+				// verificar se campos automáticos foram atualizados corretamente
+				if usuario.AtualizadoEm().IsZero() {
+					t.Errorf("AtualizadoEm(%v) não deveria ser zero", usuario.AtualizadoEm())
 				}
-				if atualizado.AtualizadoEm().Before(atualizado.CriadoEm()) {
-					t.Errorf("AtualizadoEm(%v) não pode ser anterior a CriadoEm(%v)", atualizado.AtualizadoEm(), atualizado.CriadoEm())
+				if usuario.CriadoEm().IsZero() {
+					t.Errorf("CriadoEm(%v) não deveria ser zero", usuario.CriadoEm())
+				}
+
+				// verificar invariantes do usuário
+				if usuario.AtualizadoEm().Before(usuario.CriadoEm()) {
+					t.Errorf("AtualizadoEm(%v) não deveria ser anterior a CriadoEm(%v)",
+						usuario.AtualizadoEm(), usuario.CriadoEm())
+				}
+				if usuario.UltimoLogin().Before(usuario.CriadoEm()) {
+					t.Errorf("ÚltimoLogin(%v) não deveria ser anterior a CriadoEm(%v)",
+						usuario.UltimoLogin(), usuario.CriadoEm())
 				}
 			},
 		},
@@ -921,15 +950,13 @@ func TestUsuarioService_AtualizarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
+				// verifica se havia 1 usuário no repositório
 				fakeRepo := repo.(*fakeUsuarioRepository)
-				original, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
+				if len(fakeRepo.usuarios) != 1 {
+					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
 				}
-				if original.Permissao() != usr.PermADM {
-					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
-				}
+
+				// verifica se não foi retornado usuário encontrado
 				if usuario != nil {
 					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
@@ -950,15 +977,17 @@ func TestUsuarioService_AtualizarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				original, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
+				// verifica se usuário original permanece no repositório sem atualização
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
 					t.Error("deve existir usuário original no repositório sem atualização")
 					return
 				}
-				if original.Permissao() != usr.PermADM {
-					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
+				if usuarioRepo.Permissao() != novoUsuarioTeste().Permissao() {
+					t.Errorf("Permissão do usuário original esperada '%s', recebida '%s'", novoUsuarioTeste().Permissao(), usuarioRepo.Permissao())
 				}
+
+				// verifica se não foi retornado usuário atualizado
 				if usuario != nil {
 					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
 				}
@@ -979,12 +1008,19 @@ func TestUsuarioService_AtualizarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				// verifica se havia 1 usuário no repositório com id diferente
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
+					t.Error("deve existir usuário no repositório")
+					return
 				}
+				if usuarioRepo.ID() == "id-inexistente" {
+					t.Error("o id buscado não deve existir no repositório")
+				}
+
+				// verifica se não foi retornado usuário encontrado
 				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
 			},
 		},
@@ -1002,15 +1038,17 @@ func TestUsuarioService_AtualizarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				original, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
+				// verifica se usuário original permanece no repositório sem atualização
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
 					t.Error("deve existir usuário original no repositório sem atualização")
 					return
 				}
-				if original.Permissao() != usr.PermADM {
-					t.Errorf("Permissão esperada 'ADM', recebida '%s'", original.Permissao())
+				if usuarioRepo.Permissao() != novoUsuarioTeste().Permissao() {
+					t.Errorf("Permissão do usuário original esperada '%s', recebida '%s'", novoUsuarioTeste().Permissao(), usuarioRepo.Permissao())
 				}
+
+				// verifica se não foi retornado usuário atualizado
 				if usuario != nil {
 					t.Errorf("não esperava usuário retornado quando há erro de validação: '%v'", usuario)
 				}
@@ -1034,8 +1072,8 @@ func TestUsuarioService_AtualizarPermissao(t *testing.T) {
 	}
 }
 
-// TestUsuarioService_BuscarCategoriaPermissaoPorID2 testa o método BuscarCategoriaPermissaoPorID do serviço de usuário.
-func TestUsuarioService_AtualizarUltimoLogin(t *testing.T) {
+// Test_UsuarioService_AtualizarUltimoLogin testa o método AtualizarUltimoLogin do serviço de usuário.
+func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -1060,17 +1098,17 @@ func TestUsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				atual, existe := fakeRepo.usuarios[usuario.ID()]
-				if !existe {
-					t.Error("deveia existir usuário atualizado no repositório")
-					return
+				// verifica se usuário foi retornado
+				if usuario == nil {
+					t.Fatal("esperava usuário atualizado, recebeu nil")
 				}
-				if atual.UltimoLogin().IsZero() {
+
+				// verificar se o ultimo login foi atualizado corretamente
+				if usuario.UltimoLogin().IsZero() {
 					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
 				}
-				if atual.UltimoLogin().Before(atual.CriadoEm()) {
-					t.Errorf("UltimoLogin(%v) não pode ser anterior a CriadoEm(%v)", atual.UltimoLogin(), atual.CriadoEm())
+				if usuario.UltimoLogin().Before(usuario.CriadoEm()) {
+					t.Errorf("UltimoLogin(%v) não pode ser anterior a CriadoEm(%v)", usuario.UltimoLogin(), usuario.CriadoEm())
 				}
 			},
 		},
@@ -1088,12 +1126,17 @@ func TestUsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				_, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
+				// verifica se usuário original permanece no repositório sem atualização
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
 					t.Error("deve existir usuário original no repositório sem atualização")
 					return
 				}
+				if usuarioRepo.UltimoLogin() != novoUsuarioTeste().UltimoLogin() {
+					t.Errorf("UltimoLogin do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().UltimoLogin(), usuarioRepo.UltimoLogin())
+				}
+
+				// verifica se não foi retornado usuário atualizado
 				if usuario != nil {
 					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
@@ -1113,14 +1156,20 @@ func TestUsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				_, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
+				// verifica se usuário original permanece no repositório sem atualização
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
 					t.Error("deve existir usuário original no repositório sem atualização")
 					return
 				}
+
+				if usuarioRepo.UltimoLogin() != novoUsuarioTeste().UltimoLogin() {
+					t.Errorf("UltimoLogin do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().UltimoLogin(), usuarioRepo.UltimoLogin())
+				}
+
+				// verifica se não foi retornado usuário atualizado
 				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao persistir: '%v'", usuario)
+					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
 				}
 			},
 		},
@@ -1138,12 +1187,19 @@ func TestUsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository2)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				// verifica se havia 1 usuário no repositório com id diferente
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
+					t.Error("deve existir usuário no repositório")
+					return
 				}
+				if usuarioRepo.ID() == "id-inexistente" {
+					t.Error("o id buscado não deve existir no repositório")
+				}
+
+				// verifica se não foi retornado usuário encontrado
 				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
 			},
 		},
@@ -1165,8 +1221,8 @@ func TestUsuarioService_AtualizarUltimoLogin(t *testing.T) {
 	}
 }
 
-// TestUsuarioService_Desativar2 testa o método Desativar do serviço de usuário.
-func TestUsuarioService_Desativar(t *testing.T) {
+// Test_UsuarioService_Desativar testa o método Desativar do serviço de usuário.
+func Test_UsuarioService_Desativar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -1183,6 +1239,7 @@ func TestUsuarioService_Desativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
+				novoUsuario.Ativar() // garante que o usuário está ativo antes de desativar
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				return repo
 			},
@@ -1191,20 +1248,14 @@ func TestUsuarioService_Desativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				atual, existe := fakeRepo.usuarios[usuario.ID()]
-				if !existe {
-					t.Error("deveia existir usuário atualizado no repositório")
-					return
+				// verifica se usuário foi retornado
+				if usuario == nil {
+					t.Fatal("esperava usuário atualizado, recebeu nil")
 				}
-				if atual.Status() {
-					t.Errorf("esperava usuário desativado, mas recebeu Status=%v", atual.Status())
-				}
-				if atual.UltimoLogin().IsZero() {
-					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
-				}
-				if atual.UltimoLogin().Before(atual.CriadoEm()) {
-					t.Errorf("UltimoLogin(%v) não pode ser anterior a CriadoEm(%v)", atual.UltimoLogin(), atual.CriadoEm())
+
+				// verificar se o status foi atualizado corretamente
+				if usuario.Status() {
+					t.Errorf("esperava usuário desativado, recebeu Status=%v", usuario.Status())
 				}
 			},
 		},
@@ -1213,6 +1264,7 @@ func TestUsuarioService_Desativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
+				novoUsuario.Ativar() // garante que o usuário está ativo antes de desativar
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				repo.erroAoBuscar = errFakeRepo
 				return repo
@@ -1222,12 +1274,17 @@ func TestUsuarioService_Desativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository2)
-				_, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
+				// verifica se usuário original permanece no repositório sem atualização
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
 					t.Error("deve existir usuário original no repositório sem atualização")
 					return
 				}
+				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
+					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
+				}
+
+				// verifica se não foi retornado usuário atualizado
 				if usuario != nil {
 					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
@@ -1247,14 +1304,19 @@ func TestUsuarioService_Desativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				_, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
+				// verifica se usuário original permanece no repositório sem atualização
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
 					t.Error("deve existir usuário original no repositório sem atualização")
 					return
 				}
+				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
+					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
+				}
+
+				// verifica se não foi retornado usuário atualizado
 				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao persistir: '%v'", usuario)
+					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
 				}
 			},
 		},
@@ -1272,12 +1334,19 @@ func TestUsuarioService_Desativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				// verifica se havia 1 usuário no repositório com id diferente
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
+					t.Error("deve existir usuário no repositório")
+					return
 				}
+				if usuarioRepo.ID() == "id-inexistente" {
+					t.Error("o id buscado não deve existir no repositório")
+				}
+
+				// verifica se não foi retornado usuário encontrado
 				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
 			},
 		},
@@ -1299,8 +1368,8 @@ func TestUsuarioService_Desativar(t *testing.T) {
 	}
 }
 
-// TestUsuarioService_Ativar2 testa o método Ativar do serviço de usuário.
-func TestUsuarioService_Ativar(t *testing.T) {
+// Test_UsuarioService_Ativar testa o método Ativar do serviço de usuário.
+func Test_UsuarioService_Ativar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -1317,6 +1386,7 @@ func TestUsuarioService_Ativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
+				novoUsuario.Desativar() // garante que o usuário está desativado antes de ativar
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				return repo
 			},
@@ -1325,20 +1395,14 @@ func TestUsuarioService_Ativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				atual, existe := fakeRepo.usuarios[usuario.ID()]
-				if !existe {
-					t.Error("deveia existir usuário atualizado no repositório")
-					return
+				// verifica se usuário foi retornado
+				if usuario == nil {
+					t.Fatal("esperava usuário atualizado, recebeu nil")
 				}
-				if !atual.Status() {
-					t.Errorf("esperava usuário ativado, recebeu Status=%v", atual.Status())
-				}
-				if atual.UltimoLogin().IsZero() {
-					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
-				}
-				if atual.UltimoLogin().Before(atual.CriadoEm()) {
-					t.Errorf("UltimoLogin(%v) não pode ser anterior a CriadoEm(%v)", atual.UltimoLogin(), atual.CriadoEm())
+
+				// verificar se o status foi atualizado corretamente
+				if !usuario.Status() {
+					t.Errorf("esperava usuário ativado, recebeu Status=%v", usuario.Status())
 				}
 			},
 		},
@@ -1347,6 +1411,7 @@ func TestUsuarioService_Ativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
+				novoUsuario.Desativar() // garante que o usuário está desativado antes de ativar
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				repo.erroAoBuscar = errFakeRepo
 				return repo
@@ -1356,12 +1421,17 @@ func TestUsuarioService_Ativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				_, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
+				// verifica se usuário original permanece no repositório sem atualização
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
 					t.Error("deve existir usuário original no repositório sem atualização")
 					return
 				}
+				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
+					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
+				}
+
+				// verifica se não foi retornado usuário atualizado
 				if usuario != nil {
 					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
@@ -1372,6 +1442,7 @@ func TestUsuarioService_Ativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
+				novoUsuario.Desativar() // garante que o usuário está desativado antes de ativar
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				repo.erroAoAtualizar = errFakeRepo
 				return repo
@@ -1381,14 +1452,19 @@ func TestUsuarioService_Ativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				_, existe := fakeRepo.usuarios[usuarioTesteID]
-				if !existe {
+				// verifica se usuário original permanece no repositório sem atualização
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
 					t.Error("deve existir usuário original no repositório sem atualização")
 					return
 				}
+				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
+					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
+				}
+
+				// verifica se não foi retornado usuário atualizado
 				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao persistir: '%v'", usuario)
+					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
 				}
 			},
 		},
@@ -1406,12 +1482,19 @@ func TestUsuarioService_Ativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				// verifica se havia 1 usuário no repositório com id diferente
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !ok {
+					t.Error("deve existir usuário no repositório")
+					return
 				}
+				if usuarioRepo.ID() == "id-inexistente" {
+					t.Error("o id buscado não deve existir no repositório")
+				}
+
+				// verifica se não foi retornado usuário encontrado
 				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando usuário não é encontrado: '%v'", usuario)
+					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
 				}
 			},
 		},
@@ -1433,8 +1516,8 @@ func TestUsuarioService_Ativar(t *testing.T) {
 	}
 }
 
-// TestUsuarioService_Listar2 testa o método Listar do serviço de usuário.
-func TestUsuarioService_Listar(t *testing.T) {
+// Test_UsuarioService_Listar testa o método Listar do serviço de usuário.
+func Test_UsuarioService_Listar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -1514,7 +1597,7 @@ func TestUsuarioService_Listar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuarios []usr.Usuario, total int, filtroRetornado usr.Filtro) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository2)
+				fakeRepo := repo.(*fakeUsuarioRepository)
 				if len(fakeRepo.usuarios) != 1 {
 					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
 				}
@@ -1547,8 +1630,8 @@ func TestUsuarioService_Listar(t *testing.T) {
 	}
 }
 
-// TestUsuarioService_VerificarPermissao2 testa o método VerificarPermissao do serviço de usuário.
-func TestUsuarioService_VerificarPermissao(t *testing.T) {
+// Test_UsuarioService_VerificarPermissao testa o método VerificarPermissao do serviço de usuário.
+func Test_UsuarioService_VerificarPermissao(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -1575,6 +1658,7 @@ func TestUsuarioService_VerificarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
 				t.Helper()
 
+				// verifica se havia 1 usuário no repositório
 				fakeRepo := repo.(*fakeUsuarioRepository)
 				if len(fakeRepo.usuarios) != 1 {
 					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
@@ -1598,6 +1682,7 @@ func TestUsuarioService_VerificarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
 				t.Helper()
 
+				// verifica se havia 1 usuário no repositório
 				fakeRepo := repo.(*fakeUsuarioRepository)
 				if len(fakeRepo.usuarios) != 1 {
 					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
@@ -1622,6 +1707,7 @@ func TestUsuarioService_VerificarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
 				t.Helper()
 
+				// verifica se havia 1 usuário no repositório
 				fakeRepo := repo.(*fakeUsuarioRepository)
 				if len(fakeRepo.usuarios) != 1 {
 					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
@@ -1646,12 +1732,19 @@ func TestUsuarioService_VerificarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
+				// verifica se havia 1 usuário no repositório com id diferente
+				usuarioRepo, existe := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				if !existe {
+					t.Error("deve existir usuário no repositório")
+					return
 				}
+				if usuarioRepo.ID() == "id-inexistente" {
+					t.Error("o id buscado não deve existir no repositório")
+				}
+
+				// verifica se não foi retornado ok
 				if ok {
-					t.Error("não esperava valor ok quando usuário não é encontrado")
+					t.Error("não esperava valor ok quando o usuário não é encontrado")
 				}
 			},
 		},
