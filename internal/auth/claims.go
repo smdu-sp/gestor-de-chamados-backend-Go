@@ -37,7 +37,7 @@ func novoClaims(u *usr.Usuario) Claims {
 		ID:        u.ID(),
 		Login:     u.Login(),
 		Nome:      u.Nome(),
-		Email:     u.Email(),
+		Email:     u.Email().String(),
 		Permissao: u.Permissao().String(),
 	}
 }

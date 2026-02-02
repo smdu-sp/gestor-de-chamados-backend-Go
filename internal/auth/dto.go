@@ -51,7 +51,7 @@ func ParaUsuarioResp(u usr.Usuario) UsuarioResp {
 		ID:           u.ID(),
 		Nome:         u.Nome(),
 		Login:        u.Login(),
-		Email:        u.Email(),
+		Email:        u.Email().String(),
 		Permissao:    u.Permissao().String(),
 		Status:       u.Status(),
 		Avatar:       u.Avatar(),
