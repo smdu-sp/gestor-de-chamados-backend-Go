@@ -40,7 +40,7 @@ func (e *Email) ValidarEmail() error {
 }
 
 // String retorna o valor do email como string.
-func (e *Email) String() string {
+func (e Email) String() string {
 	return e.endereco
 }
 

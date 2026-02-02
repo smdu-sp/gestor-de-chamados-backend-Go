@@ -103,8 +103,8 @@ func TestCarregarDoBD(t *testing.T) {
 		t.Errorf("esperava Login %s, mas recebeu %s", usuarioDB.Login, u.Login())
 	}
 
-	if u.Email() != usuarioDB.Email {
-		t.Errorf("esperava Email %s, mas recebeu %s", usuarioDB.Email, u.Email())
+	if u.Email().String() != usuarioDB.Email {
+		t.Errorf("esperava Email %s, mas recebeu %s", usuarioDB.Email, u.Email().String())
 	}
 
 	if u.Permissao().String() != usuarioDB.Permissao {
@@ -231,8 +231,8 @@ func TestComDadosAtualizados(t *testing.T) {
 		t.Errorf("esperava Login atualizado para 'rogerios', mas recebeu %s", usuarioAtualizado.Login())
 	}
 
-	if usuarioAtualizado.Email() != "rogerio.s@email.com" {
-		t.Errorf("esperava Email atualizado para 'rogerio.s@email.com', mas recebeu %s", usuarioAtualizado.Email())
+	if usuarioAtualizado.Email().String() != "rogerio.s@email.com" {
+		t.Errorf("esperava Email atualizado para 'rogerio.s@email.com', mas recebeu %s", usuarioAtualizado.Email().String())
 	}
 
 	if !usuarioAtualizado.AtualizadoEm().After(usuarioAtualizado.CriadoEm()) {

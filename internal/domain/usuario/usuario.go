@@ -176,7 +176,7 @@ func (u Usuario) AtualizarUltimoLogin() Usuario {
 func (u Usuario) ID() string              { return u.id }
 func (u Usuario) Nome() string            { return u.nome }
 func (u Usuario) Login() string           { return u.login }
-func (u Usuario) Email() string           { return strings.ToLower(u.email.String()) }
+func (u Usuario) Email() Email            { return u.email }
 func (u Usuario) Permissao() Permissao    { return u.permissao }
 func (u Usuario) Status() bool            { return u.status }
 func (u Usuario) Avatar() *string         { return u.avatar }
