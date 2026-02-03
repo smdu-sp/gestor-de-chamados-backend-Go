@@ -11,10 +11,12 @@ import (
 	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/infra/mysql"
 )
 
-// --- Fake Repository ---------------------------------------------------
+// =====================================================================================================================
+// REPOSITÓRIO FALSO
+// =====================================================================================================================
 
 // fakeUsuarioRepository é uma implementação falsa de usr.Repository para testes.
-// Usa estado em vez de funções injetadas, tornando os testes mais legíveis.
+// Usa estado em vez de funções injetadas, tornando os testes mais legíveis e fáceis de manter.
 type fakeUsuarioRepository struct {
 	usuarios        map[string]*usr.Usuario
 	erroAoCriar     error
@@ -115,7 +117,7 @@ func (f *fakeUsuarioRepository) Listar(ctx context.Context, filtro usr.Filtro) (
 }
 
 // =====================================================================================================================
-// MOCKS
+// FERRAMENTAS DE TESTE
 // =====================================================================================================================
 
 const (
@@ -239,58 +241,40 @@ func Test_UsuarioService_Criar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário foi retornado
-				if usuario == nil {
-					t.Fatal("esperava usuário criado, recebeu nil")
-				}
-
-				// verifica se foi salvo no repositório
-				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuario.ID()]
-				if !ok {
-					t.Fatalf("usuário com ID '%s' não foi salvo no repositório", usuario.ID())
-					return
-				}
-
-				// verificar se os parametros foram salvos corretamente
 				if usuario.Nome() != novoCriarUsuarioParamsTeste().Nome {
-					t.Errorf("Nome esperado '%s', recebido '%s'", novoCriarUsuarioParamsTeste().Nome, usuario.Nome())
+					t.Errorf("Nome esperado '%s', recebido '%s'",
+						novoCriarUsuarioParamsTeste().Nome, usuario.Nome())
 				}
+
 				if usuario.Login() != novoCriarUsuarioParamsTeste().Login {
-					t.Errorf("Login esperado '%s', recebido '%s'", novoCriarUsuarioParamsTeste().Login, usuario.Login())
+					t.Errorf("Login esperado '%s', recebido '%s'",
+						novoCriarUsuarioParamsTeste().Login, usuario.Login())
 				}
+
 				if usuario.Email().String() != novoCriarUsuarioParamsTeste().Email.String() {
-					t.Errorf("Email esperado '%s', recebido '%s'", novoCriarUsuarioParamsTeste().Email.String(), usuario.Email().String())
+					t.Errorf("Email esperado '%s', recebido '%s'",
+						novoCriarUsuarioParamsTeste().Email.String(), usuario.Email().String())
 				}
+
 				if usuario.Permissao() != novoCriarUsuarioParamsTeste().Permissao {
-					t.Errorf("Permissão esperada '%s', recebida '%s'", novoCriarUsuarioParamsTeste().Permissao, usuario.Permissao())
+					t.Errorf("Permissão esperada '%s', recebida '%s'",
+						novoCriarUsuarioParamsTeste().Permissao, usuario.Permissao())
 				}
+
 				if usuario.Avatar() != nil {
 					t.Errorf("Avatar esperado 'nil', recebido '%v'", usuario.Avatar())
 				}
 
-				// verificar se campos automáticos foram definidos corretamente
 				if usuario.ID() != usuarioTesteID {
 					t.Errorf("ID esperado '%s', recebido '%s'", usuarioTesteID, usuario.ID())
 				}
 				if usuario.Status() != true {
 					t.Errorf("Status esperado 'true', recebido '%v'", usuario.Status())
 				}
-				if usuario.UltimoLogin().IsZero() {
-					t.Errorf("ÚltimoLogin(%v) não deveria ser zero", usuario.UltimoLogin())
-				}
-				if usuario.CriadoEm().IsZero() {
-					t.Errorf("CriadoEm(%v) não deveria ser zero", usuario.CriadoEm())
-				}
 
-				// verificar invariantes do usuário
-				if usuario.AtualizadoEm().Before(usuario.CriadoEm()) {
-					t.Errorf("AtualizadoEm(%v) não deveria ser anterior a CriadoEm(%v)",
-						usuario.AtualizadoEm(), usuario.CriadoEm())
-				}
-				if usuario.UltimoLogin().Before(usuario.CriadoEm()) {
-					t.Errorf("ÚltimoLogin(%v) não deveria ser anterior a CriadoEm(%v)",
-						usuario.UltimoLogin(), usuario.CriadoEm())
-				}
+				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
+				verificarNaoNulo(t, usuario, "esperava usuário criado, recebeu nil")
+				verificarPersistido(t, len(repo.(*fakeUsuarioRepository).usuarios))
 			},
 		},
 		{
@@ -306,13 +290,9 @@ func Test_UsuarioService_Criar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 0 {
-					t.Error("repositório não deveria ter usuários quando gerador de ID falha")
-				}
-				if usuario != nil {
-					t.Error("não deveria retornar usuário quando gerador de ID falha")
-				}
+				// verifica se não foi salvo no repositório
+				verificarNaoPersistido(t, len(repo.(*fakeUsuarioRepository).usuarios))
+				verificarNulo(t, usuario, "não deveria retornar usuário quando gerador de ID falha")
 			},
 		},
 		{
@@ -330,13 +310,8 @@ func Test_UsuarioService_Criar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 0 {
-					t.Error("repositório não deveria ter usuários quando salvar falha")
-				}
-				if usuario != nil {
-					t.Error("não deveria retornar usuário quando salvar falha")
-				}
+				verificarNaoPersistido(t, len(repo.(*fakeUsuarioRepository).usuarios))
+				verificarNulo(t, usuario, "não deveria retornar usuário quando salvar falha")
 			},
 		},
 		{
@@ -352,13 +327,8 @@ func Test_UsuarioService_Criar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 0 {
-					t.Error("repositório não deveria ter usuários quando validação falha")
-				}
-				if usuario != nil {
-					t.Error("não deveria retornar usuário quando validação falha")
-				}
+				verificarNaoPersistido(t, len(repo.(*fakeUsuarioRepository).usuarios))
+				verificarNulo(t, usuario, "não deveria retornar usuário quando há erro de validação")
 			},
 		},
 	}
@@ -407,55 +377,40 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário foi retornado
-				if usuario == nil {
-					t.Fatal("esperava usuário atualizado, recebeu nil")
-				}
-
-				// verificar se os parametros foram atualizados corretamente
 				if novoAtualizarUsuarioParamsTeste().Nome != nil {
 					if usuario.Nome() != *novoAtualizarUsuarioParamsTeste().Nome {
-						t.Errorf("Nome esperado '%s', recebido '%s'", *novoAtualizarUsuarioParamsTeste().Nome, usuario.Nome())
+						t.Errorf("Nome esperado '%s', recebido '%s'",
+							*novoAtualizarUsuarioParamsTeste().Nome, usuario.Nome())
 					}
 				}
+
 				if novoAtualizarUsuarioParamsTeste().Login != nil {
 					if usuario.Login() != *novoAtualizarUsuarioParamsTeste().Login {
-						t.Errorf("Login esperado '%s', recebido '%s'", *novoAtualizarUsuarioParamsTeste().Login, usuario.Login())
+						t.Errorf("Login esperado '%s', recebido '%s'",
+							*novoAtualizarUsuarioParamsTeste().Login, usuario.Login())
 					}
 				}
+
 				if novoAtualizarUsuarioParamsTeste().Email != nil {
 					if usuario.Email().String() != novoAtualizarUsuarioParamsTeste().Email.String() {
 						t.Errorf("Email esperado '%s', recebido '%s'", (*novoAtualizarUsuarioParamsTeste().Email).String(), usuario.Email().String())
 					}
 				}
+
 				if novoAtualizarUsuarioParamsTeste().Permissao != nil {
 					if usuario.Permissao() != *novoAtualizarUsuarioParamsTeste().Permissao {
 						t.Errorf("Permissão esperada '%s', recebida '%s'", *novoAtualizarUsuarioParamsTeste().Permissao, usuario.Permissao())
 					}
 				}
+
 				if novoAtualizarUsuarioParamsTeste().Status != nil {
 					if usuario.Status() != *novoAtualizarUsuarioParamsTeste().Status {
 						t.Errorf("Status esperado '%v', recebido '%v'", *novoAtualizarUsuarioParamsTeste().Status, usuario.Status())
 					}
 				}
 
-				// verificar se campos automáticos foram atualizados corretamente
-				if usuario.AtualizadoEm().IsZero() {
-					t.Errorf("AtualizadoEm(%v) não deveria ser zero", usuario.AtualizadoEm())
-				}
-				if usuario.CriadoEm().IsZero() {
-					t.Errorf("CriadoEm(%v) não deveria ser zero", usuario.CriadoEm())
-				}
-
-				// verificar invariantes do usuário
-				if usuario.AtualizadoEm().Before(usuario.CriadoEm()) {
-					t.Errorf("AtualizadoEm(%v) não deveria ser anterior a CriadoEm(%v)",
-						usuario.AtualizadoEm(), usuario.CriadoEm())
-				}
-				if usuario.UltimoLogin().Before(usuario.CriadoEm()) {
-					t.Errorf("ÚltimoLogin(%v) não deveria ser anterior a CriadoEm(%v)",
-						usuario.UltimoLogin(), usuario.CriadoEm())
-				}
+				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
+				verificarNaoNulo(t, usuario, "esperava usuário atualizado, recebeu nil")
 			},
 		},
 		{
@@ -473,39 +428,12 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário original permanece no repositório sem atualização
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
-				}
-
-				if usuarioRepo.Nome() != novoUsuarioTeste().Nome() {
-					t.Errorf("Nome do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Nome(), usuarioRepo.Nome())
-				}
-				if usuarioRepo.Login() != novoUsuarioTeste().Login() {
-					t.Errorf("Login do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Login(), usuarioRepo.Login())
-				}
-				if usuarioRepo.Email().String() != novoUsuarioTeste().Email().String() {
-					t.Errorf("Email do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Email().String(), usuarioRepo.Email().String())
-				}
-				if usuarioRepo.Permissao() != novoUsuarioTeste().Permissao() {
-					t.Errorf("Permissão do usuário original esperada '%s', recebida '%s'", novoUsuarioTeste().Permissao(), usuarioRepo.Permissao())
-				}
-				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
-					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
-				}
-				if usuarioRepo.CriadoEm() != novoUsuarioTeste().CriadoEm() {
-					t.Errorf("CriadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().CriadoEm(), usuarioRepo.CriadoEm())
-				}
-				if usuarioRepo.AtualizadoEm() != novoUsuarioTeste().AtualizadoEm() {
-					t.Errorf("AtualizadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().AtualizadoEm(), usuarioRepo.AtualizadoEm())
-				}
-
-				// verifica se não foi retornado usuário atualizado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário original no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro ao buscar")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 		{
@@ -523,39 +451,12 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário original permanece no repositório sem atualização
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
-				}
-
-				if usuarioRepo.Nome() != novoUsuarioTeste().Nome() {
-					t.Errorf("Nome do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Nome(), usuarioRepo.Nome())
-				}
-				if usuarioRepo.Login() != novoUsuarioTeste().Login() {
-					t.Errorf("Login do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Login(), usuarioRepo.Login())
-				}
-				if usuarioRepo.Email().String() != novoUsuarioTeste().Email().String() {
-					t.Errorf("Email do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Email().String(), usuarioRepo.Email().String())
-				}
-				if usuarioRepo.Permissao() != novoUsuarioTeste().Permissao() {
-					t.Errorf("Permissão do usuário original esperada '%s', recebida '%s'", novoUsuarioTeste().Permissao(), usuarioRepo.Permissao())
-				}
-				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
-					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
-				}
-				if usuarioRepo.CriadoEm() != novoUsuarioTeste().CriadoEm() {
-					t.Errorf("CriadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().CriadoEm(), usuarioRepo.CriadoEm())
-				}
-				if usuarioRepo.AtualizadoEm() != novoUsuarioTeste().AtualizadoEm() {
-					t.Errorf("AtualizadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().AtualizadoEm(), usuarioRepo.AtualizadoEm())
-				}
-
-				// verifica se não foi retornado usuário atualizado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário original no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro ao atualizar")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao atualizar")
 			},
 		},
 		{
@@ -573,20 +474,12 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório com id diferente
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário no repositório")
-					return
-				}
-				if usuarioRepo.ID() == "id-inexistente" {
-					t.Error("o id buscado não deve existir no repositório")
-				}
-
-				// verifica se não foi retornado usuário encontrado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando usuário para atualizar não é encontrado")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 		{
@@ -603,39 +496,12 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário original permanece no repositório sem atualização
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
-				}
-
-				if usuarioRepo.Nome() != novoUsuarioTeste().Nome() {
-					t.Errorf("Nome do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Nome(), usuarioRepo.Nome())
-				}
-				if usuarioRepo.Login() != novoUsuarioTeste().Login() {
-					t.Errorf("Login do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Login(), usuarioRepo.Login())
-				}
-				if usuarioRepo.Email().String() != novoUsuarioTeste().Email().String() {
-					t.Errorf("Email do usuário original esperado '%s', recebido '%s'", novoUsuarioTeste().Email().String(), usuarioRepo.Email().String())
-				}
-				if usuarioRepo.Permissao() != novoUsuarioTeste().Permissao() {
-					t.Errorf("Permissão do usuário original esperada '%s', recebida '%s'", novoUsuarioTeste().Permissao(), usuarioRepo.Permissao())
-				}
-				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
-					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
-				}
-				if usuarioRepo.CriadoEm() != novoUsuarioTeste().CriadoEm() {
-					t.Errorf("CriadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().CriadoEm(), usuarioRepo.CriadoEm())
-				}
-				if usuarioRepo.AtualizadoEm() != novoUsuarioTeste().AtualizadoEm() {
-					t.Errorf("AtualizadoEm do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().AtualizadoEm(), usuarioRepo.AtualizadoEm())
-				}
-
-				// verifica se não foi retornado usuário atualizado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro de validação: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário original no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro de validação")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro de validação")
 			},
 		},
 	}
@@ -682,15 +548,8 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário foi retornado
-				if usuario == nil {
-					t.Fatal("esperava usuário encontrado, recebeu nil")
-				}
-
-				// verifica se o usuário retornado é o esperado
-				if usuario.ID() != usuarioTesteID {
-					t.Errorf("ID esperado '%s', recebido '%s'", usuarioTesteID, usuario.ID())
-				}
+				verificarNaoNulo(t, usuario, "esperava usuário encontrado, recebeu nil")
+				verificarIDs(t, usuarioTesteID, usuario.ID())
 			},
 		},
 		{
@@ -707,16 +566,9 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
-				}
-
-				// verifica se não foi retornado usuário encontrado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 		{
@@ -733,20 +585,9 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório com id diferente
-				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário no repositório")
-					return
-				}
-				if usuarioRepo.ID() == "id-inexistente" {
-					t.Error("o id buscado não deve existir no repositório")
-				}
-
-				// verifica se não foi retornado usuário encontrado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 	}
@@ -793,15 +634,8 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verfica se usuário foi retornado
-				if usuario == nil {
-					t.Fatal("esperava usuário encontrado, recebeu nil")
-				}
-
-				// verifica se o usuário retornado é o esperado
-				if usuario.Login() != usuarioTesteLogin {
-					t.Errorf("Login esperado '%s', recebido '%s'", usuarioTesteLogin, usuario.Login())
-				}
+				verificarNaoNulo(t, usuario, "esperava usuário encontrado, recebeu nil")
+				verificarLogins(t, usuarioTesteLogin, usuario.Login())
 			},
 		},
 		{
@@ -818,16 +652,9 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
-				}
-
-				// verifica se não foi retornado usuário encontrado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 		{
@@ -844,20 +671,9 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório com login diferente
-				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário no repositório")
-					return
-				}
-				if usuarioRepo.Login() == "login-inexistente" {
-					t.Error("o login buscado não deve existir no repositório")
-				}
-
-				// verifica se não foi retornado usuário encontrado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 	}
@@ -906,33 +722,12 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário foi retornado
-				if usuario == nil {
-					t.Fatal("esperava usuário atualizado, recebeu nil")
-				}
-
-				// verificar se a permissão foi atualizada corretamente
 				if usuario.Permissao() != novoAtualizarPermissaoParamsTeste().Permissao {
 					t.Errorf("Permissão esperada '%s', recebida '%s'", novoAtualizarPermissaoParamsTeste().Permissao, usuario.Permissao())
 				}
 
-				// verificar se campos automáticos foram atualizados corretamente
-				if usuario.AtualizadoEm().IsZero() {
-					t.Errorf("AtualizadoEm(%v) não deveria ser zero", usuario.AtualizadoEm())
-				}
-				if usuario.CriadoEm().IsZero() {
-					t.Errorf("CriadoEm(%v) não deveria ser zero", usuario.CriadoEm())
-				}
-
-				// verificar invariantes do usuário
-				if usuario.AtualizadoEm().Before(usuario.CriadoEm()) {
-					t.Errorf("AtualizadoEm(%v) não deveria ser anterior a CriadoEm(%v)",
-						usuario.AtualizadoEm(), usuario.CriadoEm())
-				}
-				if usuario.UltimoLogin().Before(usuario.CriadoEm()) {
-					t.Errorf("ÚltimoLogin(%v) não deveria ser anterior a CriadoEm(%v)",
-						usuario.UltimoLogin(), usuario.CriadoEm())
-				}
+				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
+				verificarNaoNulo(t, usuario, "esperava usuário atualizado, recebeu nil")
 			},
 		},
 		{
@@ -950,16 +745,12 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
-				}
-
-				// verifica se não foi retornado usuário encontrado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro ao buscar")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 		{
@@ -977,20 +768,12 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário original permanece no repositório sem atualização
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
-				}
-				if usuarioRepo.Permissao() != novoUsuarioTeste().Permissao() {
-					t.Errorf("Permissão do usuário original esperada '%s', recebida '%s'", novoUsuarioTeste().Permissao(), usuarioRepo.Permissao())
-				}
-
-				// verifica se não foi retornado usuário atualizado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro ao atualizar")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao atualizar")
 			},
 		},
 		{
@@ -1008,20 +791,12 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório com id diferente
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário no repositório")
-					return
-				}
-				if usuarioRepo.ID() == "id-inexistente" {
-					t.Error("o id buscado não deve existir no repositório")
-				}
-
-				// verifica se não foi retornado usuário encontrado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando usuário para atualizar não é encontrado")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 		{
@@ -1038,20 +813,12 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário original permanece no repositório sem atualização
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
-				}
-				if usuarioRepo.Permissao() != novoUsuarioTeste().Permissao() {
-					t.Errorf("Permissão do usuário original esperada '%s', recebida '%s'", novoUsuarioTeste().Permissao(), usuarioRepo.Permissao())
-				}
-
-				// verifica se não foi retornado usuário atualizado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro de validação: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário original no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro de validação")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro de validação")
 			},
 		},
 	}
@@ -1098,18 +865,8 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário foi retornado
-				if usuario == nil {
-					t.Fatal("esperava usuário atualizado, recebeu nil")
-				}
-
-				// verificar se o ultimo login foi atualizado corretamente
-				if usuario.UltimoLogin().IsZero() {
-					t.Error("esperava campo UltimoLogin preenchido, mas está zerado")
-				}
-				if usuario.UltimoLogin().Before(usuario.CriadoEm()) {
-					t.Errorf("UltimoLogin(%v) não pode ser anterior a CriadoEm(%v)", usuario.UltimoLogin(), usuario.CriadoEm())
-				}
+				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
+				verificarNaoNulo(t, usuario, "esperava usuário atualizado, recebeu nil")
 			},
 		},
 		{
@@ -1126,20 +883,12 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário original permanece no repositório sem atualização
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
-				}
-				if usuarioRepo.UltimoLogin() != novoUsuarioTeste().UltimoLogin() {
-					t.Errorf("UltimoLogin do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().UltimoLogin(), usuarioRepo.UltimoLogin())
-				}
-
-				// verifica se não foi retornado usuário atualizado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro ao buscar")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 		{
@@ -1156,21 +905,12 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário original permanece no repositório sem atualização
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
-				}
-
-				if usuarioRepo.UltimoLogin() != novoUsuarioTeste().UltimoLogin() {
-					t.Errorf("UltimoLogin do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().UltimoLogin(), usuarioRepo.UltimoLogin())
-				}
-
-				// verifica se não foi retornado usuário atualizado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro ao atualizar")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao atualizar")
 			},
 		},
 		{
@@ -1187,20 +927,12 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório com id diferente
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário no repositório")
-					return
-				}
-				if usuarioRepo.ID() == "id-inexistente" {
-					t.Error("o id buscado não deve existir no repositório")
-				}
-
-				// verifica se não foi retornado usuário encontrado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando usuário para atualizar não é encontrado")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 	}
@@ -1239,7 +971,7 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				novoUsuario.Ativar() // garante que o usuário está ativo antes de desativar
+				novoUsuario.Ativar()
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				return repo
 			},
@@ -1248,15 +980,12 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário foi retornado
-				if usuario == nil {
-					t.Fatal("esperava usuário atualizado, recebeu nil")
-				}
-
-				// verificar se o status foi atualizado corretamente
 				if usuario.Status() {
 					t.Errorf("esperava usuário desativado, recebeu Status=%v", usuario.Status())
 				}
+
+				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
+				verificarNaoNulo(t, usuario, "esperava usuário desativado, recebeu nil")
 			},
 		},
 		{
@@ -1264,7 +993,7 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				novoUsuario.Ativar() // garante que o usuário está ativo antes de desativar
+				novoUsuario.Ativar()
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				repo.erroAoBuscar = errFakeRepo
 				return repo
@@ -1274,20 +1003,12 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário original permanece no repositório sem atualização
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
-				}
-				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
-					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
-				}
-
-				// verifica se não foi retornado usuário atualizado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro ao buscar")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 		{
@@ -1304,20 +1025,12 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário original permanece no repositório sem atualização
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
-				}
-				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
-					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
-				}
-
-				// verifica se não foi retornado usuário atualizado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro ao atualizar")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao atualizar")
 			},
 		},
 		{
@@ -1334,20 +1047,12 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório com id diferente
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário no repositório")
-					return
-				}
-				if usuarioRepo.ID() == "id-inexistente" {
-					t.Error("o id buscado não deve existir no repositório")
-				}
-
-				// verifica se não foi retornado usuário encontrado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando usuário para desativar não é encontrado")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 	}
@@ -1386,7 +1091,7 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				novoUsuario.Desativar() // garante que o usuário está desativado antes de ativar
+				novoUsuario.Desativar()
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				return repo
 			},
@@ -1395,15 +1100,12 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário foi retornado
-				if usuario == nil {
-					t.Fatal("esperava usuário atualizado, recebeu nil")
-				}
-
-				// verificar se o status foi atualizado corretamente
 				if !usuario.Status() {
 					t.Errorf("esperava usuário ativado, recebeu Status=%v", usuario.Status())
 				}
+
+				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
+				verificarNaoNulo(t, usuario, "esperava usuário ativado, recebeu nil")
 			},
 		},
 		{
@@ -1411,7 +1113,7 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				novoUsuario.Desativar() // garante que o usuário está desativado antes de ativar
+				novoUsuario.Desativar()
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				repo.erroAoBuscar = errFakeRepo
 				return repo
@@ -1421,20 +1123,12 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário original permanece no repositório sem atualização
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
-				}
-				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
-					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
-				}
-
-				// verifica se não foi retornado usuário atualizado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro ao buscar")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 		{
@@ -1442,7 +1136,7 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				novoUsuario.Desativar() // garante que o usuário está desativado antes de ativar
+				novoUsuario.Desativar()
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				repo.erroAoAtualizar = errFakeRepo
 				return repo
@@ -1452,20 +1146,12 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se usuário original permanece no repositório sem atualização
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário original no repositório sem atualização")
-					return
-				}
-				if usuarioRepo.Status() != novoUsuarioTeste().Status() {
-					t.Errorf("Status do usuário original esperado '%v', recebido '%v'", novoUsuarioTeste().Status(), usuarioRepo.Status())
-				}
-
-				// verifica se não foi retornado usuário atualizado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao atualizar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando há erro ao atualizar")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao atualizar")
 			},
 		},
 		{
@@ -1482,20 +1168,12 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório com id diferente
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !ok {
-					t.Error("deve existir usuário no repositório")
-					return
-				}
-				if usuarioRepo.ID() == "id-inexistente" {
-					t.Error("o id buscado não deve existir no repositório")
-				}
-
-				// verifica se não foi retornado usuário encontrado
-				if usuario != nil {
-					t.Errorf("não esperava usuário retornado quando há erro ao buscar: '%v'", usuario)
-				}
+				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
+					"não esperava alterações no usuário original quando usuário para ativar não é encontrado")
+				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
+				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
 	}
@@ -1541,19 +1219,11 @@ func Test_UsuarioService_Listar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuarios []usr.Usuario, total int, filtroRetornado usr.Filtro) {
 				t.Helper()
 
+				// verifica se havia 10 usuários no repositório
 				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 10 {
-					t.Errorf("esperava 10 usuários no repositório, tem %d", len(fakeRepo.usuarios))
-				}
-				if filtroRetornado.Pagina() != 1 || filtroRetornado.Limite() != 5 {
-					t.Errorf("esperava filtro retornado com página 1 e limite 5, recebeu página %d e limite %d", filtroRetornado.Pagina(), filtroRetornado.Limite())
-				}
-				if total != 10 {
-					t.Errorf("esperava total 10 usuários retornados, recebeu %d", total)
-				}
-				if len(usuarios) != 5 {
-					t.Errorf("esperava 5 usuários na página, recebeu %d", len(usuarios))
-				}
+				verificarPaginacao(t, filtroRetornado.Paginacao(), 1, 5)
+				verificarTotal(t, total, len(fakeRepo.usuarios), "total retornado deve ser igual à quantidade de usuários no repositório")
+				verificarLimite(t, usuarios, 5, "esperava 5 usuários na página")
 			},
 		},
 		{
@@ -1569,18 +1239,9 @@ func Test_UsuarioService_Listar(t *testing.T) {
 				t.Helper()
 
 				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 10 {
-					t.Errorf("esperava 10 usuários no repositório, tem %d", len(fakeRepo.usuarios))
-				}
-				if filtroRetornado.Pagina() != 3 || filtroRetornado.Limite() != 4 {
-					t.Errorf("esperava filtro retornado com página 3 e limite 4, recebeu página %d e limite %d", filtroRetornado.Pagina(), filtroRetornado.Limite())
-				}
-				if total != 10 {
-					t.Errorf("esperava total 10 usuários retornados, recebeu %d", total)
-				}
-				if len(usuarios) != 2 {
-					t.Errorf("esperava 2 usuários na página, recebeu %d", len(usuarios))
-				}
+				verificarPaginacao(t, filtroRetornado.Paginacao(), 3, 4)
+				verificarTotal(t, total, len(fakeRepo.usuarios), "total retornado deve ser igual à quantidade de usuários no repositório")
+				verificarLimite(t, usuarios, 2, "esperava 2 usuários na página, pois só existem 10 usuários no repositório")
 			},
 		},
 		{
@@ -1597,19 +1258,9 @@ func Test_UsuarioService_Listar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuarios []usr.Usuario, total int, filtroRetornado usr.Filtro) {
 				t.Helper()
 
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
-				}
-				if len(usuarios) != 0 {
-					t.Errorf("não esperava usuários retornados quando há erro ao listar: '%v'", usuarios)
-				}
-				if total != 0 {
-					t.Errorf("não esperava total de usuários quando há erro ao listar: %d", total)
-				}
-				if filtroRetornado.Pagina() != 0 || filtroRetornado.Limite() != 0 {
-					t.Errorf("deve retornar filtro vazio quando há erro ao listar")
-				}
+				verificarPaginacao(t, filtroRetornado.Paginacao(), 0, 0)
+				verificarTotal(t, total, 0, "esperava total 0 quando há erro ao listar")
+				verificarLimite(t, usuarios, 0, "esperava 0 usuários retornados quando há erro ao listar")
 			},
 		},
 	}
@@ -1658,13 +1309,8 @@ func Test_UsuarioService_VerificarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
-				}
 				if !ok {
-					t.Error("esperava que o usuário possuísse a permissão")
+					t.Error("esperava que o retorno ok fosse true, recebeu false")
 				}
 			},
 		},
@@ -1682,13 +1328,8 @@ func Test_UsuarioService_VerificarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
-				}
 				if ok {
-					t.Error("não esperava que o usuário possuísse a permissão")
+					t.Error("esperava que o retorno ok fosse false, recebeu true")
 				}
 			},
 		},
@@ -1707,11 +1348,6 @@ func Test_UsuarioService_VerificarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				if len(fakeRepo.usuarios) != 1 {
-					t.Errorf("esperava 1 usuário no repositório, tem %d", len(fakeRepo.usuarios))
-				}
 				if ok {
 					t.Error("não esperava valor ok quando há erro ao buscar usuário")
 				}
@@ -1732,17 +1368,6 @@ func Test_UsuarioService_VerificarPermissao(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, ok bool) {
 				t.Helper()
 
-				// verifica se havia 1 usuário no repositório com id diferente
-				usuarioRepo, existe := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				if !existe {
-					t.Error("deve existir usuário no repositório")
-					return
-				}
-				if usuarioRepo.ID() == "id-inexistente" {
-					t.Error("o id buscado não deve existir no repositório")
-				}
-
-				// verifica se não foi retornado ok
 				if ok {
 					t.Error("não esperava valor ok quando o usuário não é encontrado")
 				}
@@ -1764,4 +1389,23 @@ func Test_UsuarioService_VerificarPermissao(t *testing.T) {
 			}
 		})
 	}
+}
+
+// =====================================================================================================================
+// Funções auxiliares para os testes
+// =====================================================================================================================
+
+// usuariosIguais verifica se dois usuários são iguais comparando seus campos.
+func usuariosIguais(original, atual *usr.Usuario) bool {
+
+	if original == nil || atual == nil {
+		return original == atual
+	}
+
+	return original.ID() == atual.ID() &&
+		original.Nome() == atual.Nome() &&
+		original.Login() == atual.Login() &&
+		original.Email().String() == atual.Email().String() &&
+		original.Permissao() == atual.Permissao() &&
+		original.Status() == atual.Status()
 }

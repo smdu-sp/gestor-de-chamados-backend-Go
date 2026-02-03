@@ -20,12 +20,17 @@ func NovoFiltro(paginacao domain.Paginacao, busca *string, status *bool, permiss
 	}
 }
 
+// Paginacao retorna a estrutura de paginação do filtro.
+func (f *Filtro) Paginacao() domain.Paginacao {
+	return f.paginacao
+}
+
 // Pagina retorna a página atual do filtro de paginação.
 func (f *Filtro) Pagina() int {
 	return f.paginacao.Pagina()
 }
 
-// GetLimite retorna o limite de itens por página do filtro de paginação.
+// Limite retorna o limite de itens por página do filtro de paginação.
 func (f *Filtro) Limite() int {
 	return f.paginacao.Limite()
 }
