@@ -135,7 +135,7 @@ func (s *SubcategoriaService) Listar(ctx context.Context, f sub.Filtro) ([]sub.S
 	f.Normalizar()
 	subcategorias, total, err := s.repo.Listar(ctx, f)
 	if err != nil {
-		return nil, 0, f, fmt.Errorf("listar subcategorias: %w", err)
+		return nil, 0, sub.Filtro{}, fmt.Errorf("listar subcategorias: %w", err)
 	}
 
 	return subcategorias, total, f, nil

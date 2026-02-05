@@ -81,15 +81,19 @@ func (f *fakeChamadoRepository2) Listar(ctx context.Context, filtro chm.Filtro) 
 }
 
 // =====================================================================================================================
-// HELPERS
+// FUNÇÕES AUXILIARES DE TESTE
 // =====================================================================================================================
+
+const (
+	chamadoTesteID = "chamado-123"
+)
 
 // novoChamadoTeste cria um novo chamado para testes.
 func novoChamadoTeste(id string) *chm.Chamado {
 	c, _ := chm.Novo(
 		id,
 		"categoria-123",
-		"subcategoria-123",
+		subcategoriaTesteID,
 		"criador-123",
 		"Título do Chamado",
 		"Descrição detalhada do chamado para fins de teste.",
@@ -103,7 +107,7 @@ func novoCriarChamadoParamsTeste() chm.CriarParams {
 		Titulo:         "Título do Chamado",
 		Descricao:      "Descrição detalhada do chamado para fins de teste.",
 		CategoriaID:    "categoria-123",
-		SubcategoriaID: "subcategoria-123",
+		SubcategoriaID: subcategoriaTesteID,
 		CriadorID:      "criador-123",
 	}
 }
@@ -115,7 +119,7 @@ func novoAtualizarChamadoParamsTeste() chm.AtualizarParams {
 		Descricao:      ptr("Descrição atualizada do chamado para fins de teste."),
 		Arquivado:      ptr(false),
 		CategoriaID:    ptr("categoria-456"),
-		SubcategoriaID: ptr("subcategoria-456"),
+		SubcategoriaID: ptr(subcategoriaTesteID),
 	}
 }
 
@@ -210,8 +214,8 @@ func TestChamadoService_Criar2(t *testing.T) {
 			repo := tt.repoSetup()
 			categoriaRepo := novoFakeCategoriaRepository2()
 			categoriaRepo.categorias["categoria-123"] = novoCategoriaTeste("categoria-123", "Categoria Teste")
-			subcategoriaRepo := novoFakeSubcategoriaRepository2()
-			subcategoriaRepo.subcategorias["subcategoria-123"] = novoSubcategoriaTeste("subcategoria-123", "Subcategoria Teste", "categoria-123")
+			subcategoriaRepo := novoFakeSubcategoriaRepository()
+			subcategoriaRepo.subcategorias["subcategoria-123"] = novoSubcategoriaTeste()
 
 			service := NovoChamadoService(tt.geradorID, repo, categoriaRepo, subcategoriaRepo, nil, nil, nil)
 
@@ -325,8 +329,8 @@ func TestChamadoService_Atualizar2(t *testing.T) {
 			repo := tt.repoSetup()
 			categoriaRepo := novoFakeCategoriaRepository2()
 			categoriaRepo.categorias["categoria-456"] = novoCategoriaTeste("categoria-456", "Categoria Atualizada")
-			subcategoriaRepo := novoFakeSubcategoriaRepository2()
-			subcategoriaRepo.subcategorias["subcategoria-456"] = novoSubcategoriaTeste("subcategoria-456", "Subcategoria Atualizada", "categoria-456")
+			subcategoriaRepo := novoFakeSubcategoriaRepository()
+			subcategoriaRepo.subcategorias["subcategoria-456"] = novoSubcategoriaTeste()
 
 			service := NovoChamadoService(nil, repo, categoriaRepo, subcategoriaRepo, nil, nil, nil)
 

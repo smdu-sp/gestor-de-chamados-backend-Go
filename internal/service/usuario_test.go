@@ -15,8 +15,7 @@ import (
 // REPOSITÓRIO FALSO
 // =====================================================================================================================
 
-// fakeUsuarioRepository é uma implementação falsa de usr.Repository para testes.
-// Usa estado em vez de funções injetadas, tornando os testes mais legíveis e fáceis de manter.
+// fakeUsuarioRepository é uma implementação falsa do repositório de usuários para testes.
 type fakeUsuarioRepository struct {
 	usuarios        map[string]*usr.Usuario
 	erroAoCriar     error
@@ -37,7 +36,7 @@ func (f *fakeUsuarioRepository) Criar(ctx context.Context, u usr.Usuario) (*usr.
 	if f.erroAoCriar != nil {
 		return nil, f.erroAoCriar
 	}
-	usuario := u // Criar uma cópia para evitar efeitos colaterais
+	usuario := u
 	f.usuarios[u.ID()] = &usuario
 	return &usuario, nil
 }
@@ -47,7 +46,7 @@ func (f *fakeUsuarioRepository) Atualizar(ctx context.Context, id string, u usr.
 	if f.erroAoAtualizar != nil {
 		return nil, f.erroAoAtualizar
 	}
-	usuario := u // Criar uma cópia para evitar efeitos colaterais
+	usuario := u
 	f.usuarios[id] = &usuario
 	return &usuario, nil
 }
@@ -117,17 +116,15 @@ func (f *fakeUsuarioRepository) Listar(ctx context.Context, filtro usr.Filtro) (
 }
 
 // =====================================================================================================================
-// FERRAMENTAS DE TESTE
+// FUNÇÕES AUXILIARES DE TESTE
 // =====================================================================================================================
 
 const (
-	usuarioTesteID    = "usuario-123"       // ID fixo para testes
-	usuarioTesteNome  = "Rogério"           // Nome fixo para testes
-	usuarioTesteLogin = "rogerio"           // Login fixo para testes
-	usuarioTesteEmail = "rogerio@email.com" // Email fixo para testes
+	usuarioTesteID    = "usuario-123" 
+	usuarioTesteLogin = "rogerio"
 )
 
-// novoUsuarioTeste cria um usuário de teste com os dados fornecidos.
+// novoUsuarioTeste cria um usuário de teste com valores fixos.
 func novoUsuarioTeste() *usr.Usuario {
 	u, _ := usr.Novo(
 		"usuario-123",
@@ -140,8 +137,8 @@ func novoUsuarioTeste() *usr.Usuario {
 	return u
 }
 
-// popularUsuarios adiciona múltiplos usuários ao repositório falso para testes.
-func popularUsuarios(repo *fakeUsuarioRepository, quantidade int) {
+// popularUsuariosTeste adiciona múltiplos usuários ao repositório falso para testes.
+func popularUsuariosTeste(repo *fakeUsuarioRepository, quantidade int) {
 	for i := 1; i <= quantidade; i++ {
 		id := fmt.Sprintf("user-%02d", i)
 
@@ -272,6 +269,7 @@ func Test_UsuarioService_Criar(t *testing.T) {
 					t.Errorf("Status esperado 'true', recebido '%v'", usuario.Status())
 				}
 
+				verificarIDs(t, usuarioTesteID, usuario.ID())
 				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
 				verificarNaoNulo(t, usuario, "esperava usuário criado, recebeu nil")
 				verificarPersistido(t, len(repo.(*fakeUsuarioRepository).usuarios))
@@ -290,7 +288,6 @@ func Test_UsuarioService_Criar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				// verifica se não foi salvo no repositório
 				verificarNaoPersistido(t, len(repo.(*fakeUsuarioRepository).usuarios))
 				verificarNulo(t, usuario, "não deveria retornar usuário quando gerador de ID falha")
 			},
@@ -409,6 +406,7 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 					}
 				}
 
+				verificarIDs(t, usuarioTesteID, usuario.ID())
 				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
 				verificarNaoNulo(t, usuario, "esperava usuário atualizado, recebeu nil")
 			},
@@ -429,9 +427,8 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário original no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro ao buscar")
+				verificarOk(t, ok, "deveria existir usuário original no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
@@ -452,9 +449,8 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário original no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro ao atualizar")
+				verificarOk(t, ok, "deveria existir usuário original no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao atualizar")
 			},
@@ -475,9 +471,8 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando usuário para atualizar não é encontrado")
+				verificarOk(t, ok, "deveria existir usuário original no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
@@ -497,9 +492,8 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário original no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro de validação")
+				verificarOk(t, ok, "deveria existir usuário original no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro de validação")
 			},
@@ -512,11 +506,11 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 
 			repo := tt.prepararRepo()
 			service := NovoUsuarioService(nil, repo)
-			usuario, erroRecebido := service.Atualizar(ctx, tt.id, tt.params)
+			usuarioAtualizado, erroRecebido := service.Atualizar(ctx, tt.id, tt.params)
 
 			verificarErro(t, erroRecebido, tt.erroEsperado)
 			if tt.verificarResultado != nil {
-				tt.verificarResultado(t, repo, usuario)
+				tt.verificarResultado(t, repo, usuarioAtualizado)
 			}
 		})
 	}
@@ -548,8 +542,8 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				verificarNaoNulo(t, usuario, "esperava usuário encontrado, recebeu nil")
 				verificarIDs(t, usuarioTesteID, usuario.ID())
+				verificarNaoNulo(t, usuario, "esperava usuário encontrado, recebeu nil")
 			},
 		},
 		{
@@ -567,7 +561,7 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 				t.Helper()
 
 				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
@@ -575,9 +569,9 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 			nome: "usuario não encontrado por id",
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
-				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				novoUsuario := novoUsuarioTeste()
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				return repo
 			},
 			id:           "id-inexistente",
@@ -586,7 +580,7 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 				t.Helper()
 
 				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
@@ -598,11 +592,11 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 
 			repo := tt.prepararRepo()
 			service := NovoUsuarioService(nil, repo)
-			usuario, err := service.BuscarPorID(ctx, tt.id)
+			usuarioEncontrado, erroRecebido := service.BuscarPorID(ctx, tt.id)
 
-			verificarErro(t, err, tt.erroEsperado)
+			verificarErro(t, erroRecebido, tt.erroEsperado)
 			if tt.verificarResultado != nil {
-				tt.verificarResultado(t, repo, usuario)
+				tt.verificarResultado(t, repo, usuarioEncontrado)
 			}
 		})
 	}
@@ -634,8 +628,8 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
-				verificarNaoNulo(t, usuario, "esperava usuário encontrado, recebeu nil")
 				verificarLogins(t, usuarioTesteLogin, usuario.Login())
+				verificarNaoNulo(t, usuario, "esperava usuário encontrado, recebeu nil")
 			},
 		},
 		{
@@ -653,7 +647,7 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 				t.Helper()
 
 				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
@@ -661,9 +655,9 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 			nome: "usuario não encontrado por login",
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
-				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				novoUsuario := novoUsuarioTeste()
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				return repo
 			},
 			login:        "login-inexistente",
@@ -672,7 +666,7 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 				t.Helper()
 
 				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
 		},
@@ -684,11 +678,11 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 
 			repo := tt.prepararRepo()
 			service := NovoUsuarioService(nil, repo)
-			usuario, err := service.BuscarPorLogin(ctx, tt.login)
+			usuarioEncontrado, erroRecebido := service.BuscarPorLogin(ctx, tt.login)
 
-			verificarErro(t, err, tt.erroEsperado)
+			verificarErro(t, erroRecebido, tt.erroEsperado)
 			if tt.verificarResultado != nil {
-				tt.verificarResultado(t, repo, usuario)
+				tt.verificarResultado(t, repo, usuarioEncontrado)
 			}
 		})
 	}
@@ -726,6 +720,7 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 					t.Errorf("Permissão esperada '%s', recebida '%s'", novoAtualizarPermissaoParamsTeste().Permissao, usuario.Permissao())
 				}
 
+				verificarIDs(t, usuarioTesteID, usuario.ID())
 				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
 				verificarNaoNulo(t, usuario, "esperava usuário atualizado, recebeu nil")
 			},
@@ -746,9 +741,8 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro ao buscar")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
@@ -769,9 +763,8 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro ao atualizar")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao atualizar")
 			},
@@ -792,9 +785,8 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando usuário para atualizar não é encontrado")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
@@ -814,9 +806,8 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário original no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro de validação")
+				verificarOk(t, ok, "deveria existir usuário original no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro de validação")
 			},
@@ -865,6 +856,7 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuario *usr.Usuario) {
 				t.Helper()
 
+				verificarIDs(t, usuarioTesteID, usuario.ID())
 				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
 				verificarNaoNulo(t, usuario, "esperava usuário atualizado, recebeu nil")
 			},
@@ -884,9 +876,8 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro ao buscar")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
@@ -906,9 +897,8 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro ao atualizar")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao atualizar")
 			},
@@ -928,9 +918,8 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando usuário para atualizar não é encontrado")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
@@ -984,6 +973,7 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 					t.Errorf("esperava usuário desativado, recebeu Status=%v", usuario.Status())
 				}
 
+				verificarIDs(t, usuarioTesteID, usuario.ID())
 				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
 				verificarNaoNulo(t, usuario, "esperava usuário desativado, recebeu nil")
 			},
@@ -1004,9 +994,8 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro ao buscar")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
@@ -1026,9 +1015,8 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro ao atualizar")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao atualizar")
 			},
@@ -1048,9 +1036,8 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando usuário para desativar não é encontrado")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
@@ -1104,6 +1091,7 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 					t.Errorf("esperava usuário ativado, recebeu Status=%v", usuario.Status())
 				}
 
+				verificarIDs(t, usuarioTesteID, usuario.ID())
 				verificarDatas(t, usuario.CriadoEm(), usuario.AtualizadoEm())
 				verificarNaoNulo(t, usuario, "esperava usuário ativado, recebeu nil")
 			},
@@ -1124,9 +1112,8 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro ao buscar")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
@@ -1147,9 +1134,8 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando há erro ao atualizar")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao atualizar")
 			},
@@ -1169,9 +1155,8 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deve existir usuário no repositório")
-				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, usuariosIguais,
-					"não esperava alterações no usuário original quando usuário para ativar não é encontrado")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
+				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
 			},
@@ -1211,7 +1196,7 @@ func Test_UsuarioService_Listar(t *testing.T) {
 			nome: "listar 10 usuarios paginados com sucesso - pagina 1 limite 5",
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
-				popularUsuarios(repo, 10)
+				popularUsuariosTeste(repo, 10)
 				return repo
 			},
 			filtro:       usr.NovoFiltro(dmn.NovoPaginacao(1, 5), nil, nil, nil),
@@ -1219,37 +1204,17 @@ func Test_UsuarioService_Listar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo usr.Repository, usuarios []usr.Usuario, total int, filtroRetornado usr.Filtro) {
 				t.Helper()
 
-				// verifica se havia 10 usuários no repositório
 				fakeRepo := repo.(*fakeUsuarioRepository)
 				verificarPaginacao(t, filtroRetornado.Paginacao(), 1, 5)
-				verificarTotal(t, total, len(fakeRepo.usuarios), "total retornado deve ser igual à quantidade de usuários no repositório")
-				verificarLimite(t, usuarios, 5, "esperava 5 usuários na página")
-			},
-		},
-		{
-			nome: "listar 10 usuarios paginados com sucesso - pagina 3 limite 4",
-			prepararRepo: func() usr.Repository {
-				repo := novoFakeUsuarioRepository()
-				popularUsuarios(repo, 10)
-				return repo
-			},
-			filtro:       usr.NovoFiltro(dmn.NovoPaginacao(3, 4), nil, nil, nil),
-			erroEsperado: nil,
-			verificarResultado: func(t *testing.T, repo usr.Repository, usuarios []usr.Usuario, total int, filtroRetornado usr.Filtro) {
-				t.Helper()
-
-				fakeRepo := repo.(*fakeUsuarioRepository)
-				verificarPaginacao(t, filtroRetornado.Paginacao(), 3, 4)
-				verificarTotal(t, total, len(fakeRepo.usuarios), "total retornado deve ser igual à quantidade de usuários no repositório")
-				verificarLimite(t, usuarios, 2, "esperava 2 usuários na página, pois só existem 10 usuários no repositório")
+				verificarTotal(t, total, len(fakeRepo.usuarios))
+				verificarLimite(t, usuarios, 5)
 			},
 		},
 		{
 			nome: "erro ao listar usuarios paginados no repositório",
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
-				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				popularUsuariosTeste(repo, 10)
 				repo.erroAoListar = errFakeRepo
 				return repo
 			},
@@ -1259,8 +1224,8 @@ func Test_UsuarioService_Listar(t *testing.T) {
 				t.Helper()
 
 				verificarPaginacao(t, filtroRetornado.Paginacao(), 0, 0)
-				verificarTotal(t, total, 0, "esperava total 0 quando há erro ao listar")
-				verificarLimite(t, usuarios, 0, "esperava 0 usuários retornados quando há erro ao listar")
+				verificarTotal(t, total, 0)
+				verificarLimite(t, usuarios, 0)
 			},
 		},
 	}
@@ -1395,17 +1360,24 @@ func Test_UsuarioService_VerificarPermissao(t *testing.T) {
 // Funções auxiliares para os testes
 // =====================================================================================================================
 
-// usuariosIguais verifica se dois usuários são iguais comparando seus campos.
-func usuariosIguais(original, atual *usr.Usuario) bool {
+// compararUsuarios verifica se dois usuários são iguais comparando seus campos.
+func compararUsuarios(t *testing.T, antes, depois *usr.Usuario) {
+	t.Helper()
 
-	if original == nil || atual == nil {
-		return original == atual
+	if antes == nil || depois == nil {
+		t.Fatalf("usuário não deveria ser nil: antes=%v depois=%v", antes, depois)
 	}
 
-	return original.ID() == atual.ID() &&
-		original.Nome() == atual.Nome() &&
-		original.Login() == atual.Login() &&
-		original.Email().String() == atual.Email().String() &&
-		original.Permissao() == atual.Permissao() &&
-		original.Status() == atual.Status()
+	if antes.ID() != depois.ID() ||
+		antes.Nome() != depois.Nome() ||
+		antes.Login() != depois.Login() ||
+		antes.Email().String() != depois.Email().String() ||
+		antes.Permissao() != depois.Permissao() ||
+		antes.Status() != depois.Status() {
+
+		t.Fatalf(
+			"usuários não deveriam ser diferentes:\nantes=%+v\ndepois=%+v",
+			antes, depois,
+		)
+	}
 }

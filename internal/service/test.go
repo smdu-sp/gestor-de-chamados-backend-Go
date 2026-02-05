@@ -21,8 +21,8 @@ var (
 //  TIPOS AUXILIARES
 // =====================================================================================================================
 
-// comparadorFn é um tipo de função que compara dois valores do mesmo tipo e retorna true se forem iguais.
-type comparadorFn[T any] func(a, b T) bool
+// comparadorFn é um tipo de função que compara dois valores.
+type comparadorFn[T any] func(t *testing.T, antes, depois T)
 
 // =====================================================================================================================
 //  FAKES
@@ -57,7 +57,7 @@ func assertError(t *testing.T, erroRecebido error, wantErr bool) {
 }
 
 // verificarErro é um helper que verifica se o erro recebido corresponde ao erro esperado.
-// Usado para validar erros retornados por funções em testes.
+// Retorna falha no teste se não corresponder indicando o motivo.
 func verificarErro(t *testing.T, recebido, esperado error) {
 	t.Helper()
 
@@ -87,7 +87,6 @@ func verificarErro(t *testing.T, recebido, esperado error) {
 }
 
 // verificarNaoNulo é um helper que verifica se o valor fornecido não é nulo.
-// Usado para garantir que uma entidade foi criada ou retornada.
 func verificarNaoNulo[T any](t *testing.T, valor *T, mensagem string) {
 	t.Helper()
 
@@ -97,7 +96,6 @@ func verificarNaoNulo[T any](t *testing.T, valor *T, mensagem string) {
 }
 
 // verificarNulo é um helper que verifica se o valor fornecido é nulo.
-// Usado para garantir que nenhuma entidade foi criada ou retornada.
 func verificarNulo[T any](t *testing.T, valor *T, mensagem string) {
 	t.Helper()
 
@@ -108,33 +106,31 @@ func verificarNulo[T any](t *testing.T, valor *T, mensagem string) {
 
 // verificarLimite é um helper que verifica se o tamanho do slice corresponde ao esperado.
 // Usado para garantir que a quantidade de itens retornados por uma consulta está correta.
-func verificarLimite[T any](t *testing.T, slice []T, esperado int, mensagem string) {
+func verificarLimite[T any](t *testing.T, slice []T, esperado int) {
 	t.Helper()
 
 	if len(slice) != esperado {
-		t.Fatalf("%s: esperado %d, obtido %d", mensagem, esperado, len(slice))
+		t.Fatalf("tamanho do slice deve ser igual ao esperado: esperado %d, obtido %d", esperado, len(slice))
 	}
 }
 
 // verificarTotal é um helper que verifica se o total retornado corresponde ao esperado.
 // Usado para garantir que o total de itens retornados por uma consulta está correto.
-func verificarTotal(t *testing.T, total, esperado int, mensagem string) {
+func verificarTotal(t *testing.T, total, esperado int) {
 	t.Helper()
 
 	if total != esperado {
-		t.Fatalf("%s: esperado total %d, obtido %d", mensagem, esperado, total)
+		t.Fatalf("total retornado deve ser igual ao esperado: esperado %d, obtido %d", esperado, total)
 	}
 }
 
 // verificarNaoAlterado é um helper que verifica se o valor antes e depois são iguais, usando a função de comparação fornecida.
 // Usado para garantir que certas operações não alterem o estado de um objeto.
-func verificarNaoAlterado[T any](t *testing.T, antes T, depois T, igual comparadorFn[T], mensagem string) {
+func verificarNaoAlterado[T any](t *testing.T, antes T, depois T, comparar comparadorFn[T]) {
 	t.Helper()
-
-	if !igual(antes, depois) {
-		t.Fatal(mensagem)
-	}
+	comparar(t, antes, depois)
 }
+
 
 // verificarDatas é um helper que verifica se as datas de criação e atualização estão corretas.
 // Garante que não são zero e que atualizadoEm não é anterior a criadoEm.
@@ -183,7 +179,6 @@ func verificarOk(t *testing.T, ok bool, mensagem string) {
 }
 
 // verificarIDs é um helper que compara dois IDs e falha o teste se eles não forem iguais.
-// Usado para garantir que entidades esperadas e recebidas correspondam.
 func verificarIDs(t *testing.T, esperado, recebido string) {
 	if esperado != recebido {
 		t.Errorf("ID esperado '%s', recebido '%s'", esperado, recebido)
@@ -191,15 +186,20 @@ func verificarIDs(t *testing.T, esperado, recebido string) {
 }
 
 // verificarLogins é um helper que compara dois logins e falha o teste se eles não forem iguais.
-// Usado para garantir que logins esperados e recebidos correspondam.
 func verificarLogins(t *testing.T, esperado, recebido string) {
 	if esperado != recebido {
 		t.Errorf("Login esperado '%s', recebido '%s'", esperado, recebido)
 	}
 }
 
+// verificarNomes é um helper que compara dois nomes e falha o teste se eles não forem iguais.
+func verificarNomes(t *testing.T, esperado, recebido string) {
+	if esperado != recebido {
+		t.Errorf("Nome esperado '%s', recebido '%s'", esperado, recebido)
+	}
+}
+
 // verificarPaginacao é um helper que verifica se a página e o limite do filtro retornado correspondem aos esperados.
-// Usado para garantir que a paginação esteja funcionando corretamente.
 func verificarPaginacao(t *testing.T, filtroRetornado dmn.Paginacao, paginaEsperada, limiteEsperado int) {
 	if filtroRetornado.Pagina() != paginaEsperada || filtroRetornado.Limite() != limiteEsperado {
 		t.Errorf("esperava filtro retornado com página %d e limite %d, mas recebeu página %d e limite %d", 
