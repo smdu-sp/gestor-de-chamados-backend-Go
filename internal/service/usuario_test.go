@@ -127,9 +127,9 @@ const (
 // novoUsuarioTeste cria um usuário de teste com valores fixos.
 func novoUsuarioTeste() *usr.Usuario {
 	u, _ := usr.Novo(
-		"usuario-123",
+		usuarioTesteID,
 		"Rogério",
-		"rogerio",
+		usuarioTesteLogin,
 		usr.NovoEmail("rogerio@email.com"),
 		usr.PermADM,
 		nil,
@@ -293,7 +293,7 @@ func Test_UsuarioService_Criar(t *testing.T) {
 			},
 		},
 		{
-			nome: "erro ao salvar no repositorio",
+			nome: "erro ao salvar usuário no repositorio",
 			geradorID: &fakeGeradorID{
 				id: usuarioTesteID,
 			},
@@ -562,7 +562,7 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 
 				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
 				verificarOk(t, ok, "deveria existir usuário no repositório")
-				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
+				verificarNulo(t, usuario, "não esperava usuário encontrado quando há erro ao buscar")
 			},
 		},
 		{
@@ -581,7 +581,7 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 
 				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
 				verificarOk(t, ok, "deveria existir usuário no repositório")
-				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
+				verificarNulo(t, usuario, "não esperava usuário encontrado quando há erro ao buscar")
 			},
 		},
 	}
@@ -648,7 +648,7 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 
 				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
 				verificarOk(t, ok, "deveria existir usuário no repositório")
-				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
+				verificarNulo(t, usuario, "não esperava usuário encontrado quando há erro ao buscar")
 			},
 		},
 		{
@@ -667,7 +667,7 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 
 				_, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
 				verificarOk(t, ok, "deveria existir usuário no repositório")
-				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
+				verificarNulo(t, usuario, "não esperava usuário encontrado quando há erro ao buscar")
 			},
 		},
 	}

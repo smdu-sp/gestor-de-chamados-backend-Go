@@ -34,6 +34,11 @@ func NovoLogFiltro(
 	}
 }
 
+// Paginacao retorna a estrutura de paginação do filtro.
+func (f *LogFiltro) Paginacao() domain.Paginacao {
+	return f.paginacao
+}
+
 // Pagina retorna a página atual do filtro de paginação.
 func (f *LogFiltro) Pagina() int {
 	return f.paginacao.Pagina()

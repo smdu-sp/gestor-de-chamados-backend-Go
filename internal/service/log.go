@@ -69,7 +69,7 @@ func (u *LogService) Listar(ctx context.Context, f log.LogFiltro) ([]log.Log, in
 	f.Normalizar()
 	logSlice, total, err := u.repo.Listar(ctx, f)
 	if err != nil {
-		return nil, 0, f, fmt.Errorf("listar logs: %w", err)
+		return nil, 0, log.LogFiltro{}, fmt.Errorf("listar logs: %w", err)
 	}
 
 	return logSlice, total, f, nil
