@@ -621,6 +621,246 @@ func Test_SubcategoriaService_BuscarPorNome(t *testing.T) {
 	}
 }
 
+// Test_SubcategoriaService_Desativar testa o método Desativar do serviço de subcategorias.
+func Test_SubcategoriaService_Desativar(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	tests := []struct {
+		nome               string
+		prepararRepo       func() subc.Repository
+		id                 string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria)
+	}{
+		{
+			nome: "desativar subcategoria com sucesso",
+			prepararRepo: func() subc.Repository {
+				repo := novoFakeSubcategoriaRepository()
+				novaSubcategoria := novoSubcategoriaTeste()
+				novaSubcategoria.Ativar()
+				repo.subcategorias[novaSubcategoria.ID()] = novaSubcategoria
+				return repo
+			},
+			id: 				 subcategoriaTesteID,
+			erroEsperado:       nil,
+			verificarResultado: func (t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+				t.Helper()
+
+				if subcategoria.Status() {
+					t.Errorf("Status esperado desativado, recebeu Status=%v", subcategoria.Status())
+				}
+
+				verificarIDs(t, subcategoriaTesteID, subcategoria.ID())
+				verificarDatas(t, subcategoria.CriadoEm(), subcategoria.AtualizadoEm())
+				verificarNaoNulo(t, subcategoria, "esperava subcategoria desativada, recebeu nil")
+			},
+		},
+		{
+			nome: "erro ao buscar subcategoria no repositório para desativar",
+			prepararRepo: func() subc.Repository {
+				repo := novoFakeSubcategoriaRepository()
+				novaSubcategoria := novoSubcategoriaTeste()
+				novaSubcategoria.Ativar()
+				repo.subcategorias[novaSubcategoria.ID()] = novaSubcategoria
+				repo.erroAoBuscar = errFakeRepo
+				return repo
+			},
+			id: 				 subcategoriaTesteID,
+			erroEsperado:       errFakeRepo,
+			verificarResultado: func (t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+				t.Helper()
+
+				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
+				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
+				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
+				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao buscar")
+			},
+		},
+		{
+			nome: "erro ao persistir subcategoria desativada no repositório",
+			prepararRepo: func() subc.Repository {
+				repo := novoFakeSubcategoriaRepository()
+				novaSubcategoria := novoSubcategoriaTeste()
+				novaSubcategoria.Ativar()
+				repo.subcategorias[novaSubcategoria.ID()] = novaSubcategoria
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
+			},
+			id: 				 subcategoriaTesteID,
+			erroEsperado:       errFakeRepo,
+			verificarResultado: func (t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+				t.Helper()
+
+				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
+				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
+				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
+				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao atualizar")
+			},
+		},
+		{
+			nome: "subcategoria não encontrada para desativar",
+			prepararRepo: func() subc.Repository {
+				repo := novoFakeSubcategoriaRepository()
+				novaSubcategoria := novoSubcategoriaTeste()
+				novaSubcategoria.Ativar()
+				repo.subcategorias[novaSubcategoria.ID()] = novaSubcategoria
+				repo.erroAoBuscar = mysql.ErrSubcategoriaNaoEncontrada
+				return repo
+			},
+			id: 				 "id-inexistente",
+			erroEsperado:       mysql.ErrSubcategoriaNaoEncontrada,
+			verificarResultado: func (t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+				t.Helper()
+
+				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
+				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
+				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
+				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando subcategoria não é encontrada")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
+
+			repo := tt.prepararRepo()
+			service := NovoSubcategoriaService(nil, repo)
+			subcategoriaDesativada, erroRecebido := service.Desativar(ctx, tt.id)
+
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, subcategoriaDesativada)
+			}
+		})
+	}
+}
+
+// Test_SubcategoriaService_Ativar testa o método Ativar do serviço de subcategorias.
+func Test_SubcategoriaService_Ativar(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	
+	tests := []struct {
+		nome               string
+		prepararRepo       func() subc.Repository
+		id                 string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria)
+	}{
+		{
+			nome: "ativar subcategoria com sucesso",
+			prepararRepo: func() subc.Repository {
+				repo := novoFakeSubcategoriaRepository()
+				novaSubcategoria := novoSubcategoriaTeste()
+				novaSubcategoria.Desativar()
+				repo.subcategorias[novaSubcategoria.ID()] = novaSubcategoria
+				return repo
+			},
+			id:           subcategoriaTesteID,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+				t.Helper()
+
+				if !subcategoria.Status() {
+					t.Errorf("Status esperado ativado, recebeu Status=%v", subcategoria.Status())
+				}
+
+				verificarIDs(t, subcategoriaTesteID, subcategoria.ID())
+				verificarDatas(t, subcategoria.CriadoEm(), subcategoria.AtualizadoEm())
+				verificarNaoNulo(t, subcategoria, "esperava subcategoria ativada, recebeu nil")
+			},
+		},
+		{
+			nome: "erro ao buscar subcategoria no repositório para ativar",
+			prepararRepo: func() subc.Repository {
+				repo := novoFakeSubcategoriaRepository()
+				novaSubcategoria := novoSubcategoriaTeste()
+				novaSubcategoria.Desativar()
+				repo.subcategorias[novaSubcategoria.ID()] = novaSubcategoria
+				repo.erroAoBuscar = errFakeRepo
+				return repo
+			},
+			id:           subcategoriaTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+				t.Helper()
+
+				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
+				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
+				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
+				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao buscar")
+			},
+		},
+		{
+			nome: "erro ao persistir subcategoria ativada no repositório",
+			prepararRepo: func() subc.Repository {
+				repo := novoFakeSubcategoriaRepository()
+				novaSubcategoria := novoSubcategoriaTeste()
+				novaSubcategoria.Desativar()
+				repo.subcategorias[novaSubcategoria.ID()] = novaSubcategoria
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
+			},
+			id:           subcategoriaTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+				t.Helper()
+
+				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
+				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
+				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
+				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao atualizar")
+			},
+		},
+		{
+			nome: "subcategoria não encontrada para ativar",
+			prepararRepo: func() subc.Repository {
+				repo := novoFakeSubcategoriaRepository()
+				novaSubcategoria := novoSubcategoriaTeste()
+				novaSubcategoria.Desativar()
+				repo.subcategorias[novaSubcategoria.ID()] = novaSubcategoria
+				repo.erroAoBuscar = mysql.ErrSubcategoriaNaoEncontrada
+				return repo
+			},
+			id:           "id-inexistente",
+			erroEsperado: mysql.ErrSubcategoriaNaoEncontrada,
+			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+				t.Helper()
+
+				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
+				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
+				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
+				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando subcategoria não é encontrada")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
+
+			repo := tt.prepararRepo()
+			service := NovoSubcategoriaService(nil, repo)
+			subcategoriaAtivada, erroRecebido := service.Ativar(ctx, tt.id)
+
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, subcategoriaAtivada)
+			}
+		})
+	}
+}
+
 // Test_SubcategoriaService_Listar testa o método Listar do serviço de subcategorias.
 func Test_SubcategoriaService_Listar(t *testing.T) {
 	t.Parallel()

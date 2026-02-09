@@ -1005,6 +1005,7 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
+				novoUsuario.Ativar()
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				repo.erroAoAtualizar = errFakeRepo
 				return repo
@@ -1145,6 +1146,7 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
+				novoUsuario.Ativar()
 				repo.usuarios[novoUsuario.ID()] = novoUsuario
 				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				return repo
