@@ -1,11 +1,14 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
 
+	"github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/auth"
 	dmn "github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain"
+	usr "github.com/smdu-sp/gestor-de-chamados-backend-Go/internal/domain/usuario"
 )
 
 // =====================================================================================================================
@@ -40,7 +43,7 @@ func (f *fakeGeradorID) NovoID() (string, error) {
 }
 
 // =====================================================================================================================
-// FUNÇÕES AUXILIARES
+// FUNÇÕES DE VERIFICAÇÃO
 // =====================================================================================================================
 
 // assertError é um helper que verifica se o erro está conforme esperado.
@@ -207,8 +210,27 @@ func verificarPaginacao(t *testing.T, filtroRetornado dmn.Paginacao, paginaEsper
 	}
 }
 
+// =====================================================================================================================
+// FUNÇÕES AUXILIARES
+// =====================================================================================================================
+
 // ptr é um helper que retorna um ponteiro para o valor fornecido.
-// Usado para facilitar a criação de ponteiros em testes.
 func ptr[T any](valor T) *T {
 	return &valor
+}
+
+// claimsTeste retorna um conjunto de claims para uso em testes, representando um usuário com permissão de TEC.
+func claimsTeste() *auth.Claims {
+	return &auth.Claims{
+		ID:        "usuario-123",
+		Login:     "testuser",
+		Nome:      "Test User",
+		Email:     "test@example.com",
+		Permissao: usr.PermTEC.String(),
+	}
+}
+
+// contextoTeste retorna um contexto contendo os claims de teste, para uso em testes que requerem autenticação.
+func contextoTeste() context.Context {
+	return auth.ContextoComClaims(context.Background(), claimsTeste())
 }

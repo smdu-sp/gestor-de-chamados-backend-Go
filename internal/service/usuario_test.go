@@ -15,6 +15,9 @@ import (
 // REPOSITÓRIO FALSO
 // =====================================================================================================================
 
+// asserção de interface para garantir que fakeUsuarioRepository implementa usr.Repository
+var _ usr.Repository = (*fakeUsuarioRepository)(nil)
+
 // fakeUsuarioRepository é uma implementação falsa do repositório de usuários para testes.
 type fakeUsuarioRepository struct {
 	usuarios        map[string]*usr.Usuario
@@ -427,7 +430,7 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deveria existir usuário original no repositório")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
 				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
 				verificarNulo(t, usuario, "não esperava usuário retornado quando há erro ao buscar")
@@ -1367,7 +1370,7 @@ func compararUsuarios(t *testing.T, antes, depois *usr.Usuario) {
 	t.Helper()
 
 	if antes == nil || depois == nil {
-		t.Fatalf("usuário não deveria ser nil: antes=%v depois=%v", antes, depois)
+		t.Fatalf("usuários para comparação não podem ser nil: antes=%v depois=%v", antes, depois)
 	}
 
 	if antes.ID() != depois.ID() ||

@@ -156,7 +156,7 @@ func (c Chamado) AtualizarStatus(status StatusChamado, solucao *string) (Chamado
 	return c, nil
 }
 
-// ComDadosAtualizados recebe os parâmetros para atualização do chamado 
+// ComDadosAtualizados recebe os parâmetros para atualização do chamado
 // e retorna uma nova instância com os dados atualizados.
 //
 // Em caso de erro de validação, retorna uma instância de domain.ErrosValidacao.
@@ -229,15 +229,22 @@ func (c Chamado) Arquivado() bool           { return c.arquivado }
 func (c Chamado) Solucao() *string          { return c.solucao }
 func (c Chamado) SolucionadoEm() *time.Time { return c.solucionadoEm }
 func (c Chamado) FechadoEm() *time.Time     { return c.fechadoEm }
-func (c Chamado) CriadoEm() *time.Time      { return &c.criadoEm }
-func (c Chamado) AtualizadoEm() *time.Time  { return &c.atualizadoEm }
+func (c Chamado) CriadoEm() time.Time       { return c.criadoEm }
+func (c Chamado) AtualizadoEm() time.Time   { return c.atualizadoEm }
 
 // String retorna uma representação em string do Chamado para fins de logging.
 func (c Chamado) String() string {
+	formatTime := func(t *time.Time) string {
+		if t == nil {
+			return "<nil>"
+		}
+		return t.Format(time.RFC3339)
+	}
+
 	return fmt.Sprintf(
 		"[ID: %s | CategoriaID: %s | SubcategoriaID: %s | CriadorID: %s | Titulo: %s"+
-			"| Descricao: %s | Status: %s | Arquivado: %t | Solucao: %v | SolucionadoEm: %v"+
-			"| FechadoEm: %v | CriadoEm: %s | AtualizadoEm: %s]",
+			"| Descricao: %s | Status: %s | Arquivado: %t | Solucao: %v | SolucionadoEm: %s"+
+			"| FechadoEm: %s | CriadoEm: %s | AtualizadoEm: %s]",
 		c.id,
 		c.categoriaID,
 		c.subcategoriaID,
@@ -247,9 +254,10 @@ func (c Chamado) String() string {
 		c.status.String(),
 		c.arquivado,
 		c.solucao,
-		c.SolucionadoEm().Format(time.RFC3339),
-		c.FechadoEm().Format(time.RFC3339),
-		c.CriadoEm().Format(time.RFC3339),
-		c.AtualizadoEm().Format(time.RFC3339),
+		formatTime(c.solucionadoEm),
+		formatTime(c.fechadoEm),
+		formatTime(&c.criadoEm),
+		formatTime(&c.atualizadoEm),
 	)
 }
+

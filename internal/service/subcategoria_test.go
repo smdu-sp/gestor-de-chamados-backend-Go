@@ -15,6 +15,9 @@ import (
 // REPOSITÓRIO FALSO
 // =====================================================================================================================
 
+// asserção de interface para garantir que fakeSubcategoriaRepository implementa subc.Repository
+var _ subc.Repository = (*fakeSubcategoriaRepository)(nil)
+
 // fakeSubcategoriaRepository é um repositório fake para testes, com estado interno.
 type fakeSubcategoriaRepository struct {
 	subcategorias   map[string]*subc.Subcategoria
@@ -129,7 +132,7 @@ func novoSubcategoriaTeste() *subc.Subcategoria {
 	s, _ := subc.Novo(
 		subcategoriaTesteID,
 		subcategoriaTesteNome,
-		"cat-123",
+		categoriaTesteID,
 	)
 	return s
 }
@@ -142,7 +145,7 @@ func popularSubcategoriasTeste(repo *fakeSubcategoriaRepository, quantidade int)
 		s, _ := subc.Novo(
 			id,
 			fmt.Sprintf("Subcategoria %02d", i),
-			"cat-123",
+			categoriaTesteID,
 		)
 		repo.subcategorias[id] = s
 	}
@@ -152,7 +155,7 @@ func popularSubcategoriasTeste(repo *fakeSubcategoriaRepository, quantidade int)
 func novoCriarSubcategoriaParamsTeste() subc.CriarParams {
 	return subc.CriarParams{
 		Nome:        subcategoriaTesteNome,
-		CategoriaID: "cat-123",
+		CategoriaID: categoriaTesteID,
 	}
 }
 

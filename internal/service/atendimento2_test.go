@@ -222,8 +222,8 @@ func TestAtendimentoService_Criar2(t *testing.T) {
 			t.Parallel()
 
 			repo := tt.repoSetup()
-			chamadoRepo := NovoFakeChamadoRepository2()
-			chamadoRepo.chamados["chm-456"] = novoChamadoTeste("chm-456")
+			chamadoRepo := novoFakeChamadoRepository()
+			chamadoRepo.chamados["chm-456"] = novoChamadoTeste()
 			
 			categoriaPermissaoRepo := novoFakeCategoriaPermissaoRepository2()
 			categoriaPermissaoRepo.categoriasPermissoes[chaveComposta("categoria-123", "user-123")] = novoCategoriaPermissaoTest("categoria-123", "user-123", usr.PermTEC)

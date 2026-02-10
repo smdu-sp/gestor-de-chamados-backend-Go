@@ -291,7 +291,7 @@ func TestChamado_ComDadosAtualizados(t *testing.T) {
 		t.Fatalf("esperava SubcategoriaID %s, mas recebeu %s", *params.SubcategoriaID, chamadoAtualizado.SubcategoriaID())
 	}
 
-	if !chamadoAtualizado.AtualizadoEm().After(*chamadoAtualizado.CriadoEm()) {
+	if !chamadoAtualizado.AtualizadoEm().After(chamadoAtualizado.CriadoEm()) {
 		t.Fatalf("esperava AtualizadoEm após CriadoEm")
 	}
 }

@@ -11,8 +11,8 @@ import (
 
 // --- Fake Repository (simplificado com estado) ---------------------------------------------------
 
-// fakeCategoriaRepository2 é uma implementação fake do repositório de categorias para testes.
-type fakeCategoriaRepository2 struct {
+// fakeCategoriaRepository é uma implementação fake do repositório de categorias para testes.
+type fakeCategoriaRepository struct {
 	categorias      map[string]*ctg.Categoria
 	erroAoCriar     error
 	erroAoAtualizar error
@@ -21,15 +21,15 @@ type fakeCategoriaRepository2 struct {
 	totalListar     int
 }
 
-// novoFakeCategoriaRepository2 cria uma nova instância do repositório fake.
-func novoFakeCategoriaRepository2() *fakeCategoriaRepository2 {
-	return &fakeCategoriaRepository2{
+// novoFakeCategoriaRepository cria uma nova instância do repositório fake.
+func novoFakeCategoriaRepository() *fakeCategoriaRepository {
+	return &fakeCategoriaRepository{
 		categorias: make(map[string]*ctg.Categoria),
 	}
 }
 
 // Criar adiciona uma nova categoria ao repositório fake.
-func (f *fakeCategoriaRepository2) Criar(ctx context.Context, u ctg.Categoria) (*ctg.Categoria, error) {
+func (f *fakeCategoriaRepository) Criar(ctx context.Context, u ctg.Categoria) (*ctg.Categoria, error) {
 	if f.erroAoCriar != nil {
 		return nil, f.erroAoCriar
 	}
@@ -38,7 +38,7 @@ func (f *fakeCategoriaRepository2) Criar(ctx context.Context, u ctg.Categoria) (
 }
 
 // Atualizar atualiza uma categoria existente no repositório fake.
-func (f *fakeCategoriaRepository2) Atualizar(ctx context.Context, id string, u ctg.Categoria) (*ctg.Categoria, error) {
+func (f *fakeCategoriaRepository) Atualizar(ctx context.Context, id string, u ctg.Categoria) (*ctg.Categoria, error) {
 	if f.erroAoAtualizar != nil {
 		return nil, f.erroAoAtualizar
 	}
@@ -47,7 +47,7 @@ func (f *fakeCategoriaRepository2) Atualizar(ctx context.Context, id string, u c
 }
 
 // BuscarPorID recupera uma categoria pelo ID do repositório fake.
-func (f *fakeCategoriaRepository2) BuscarPorID(ctx context.Context, id string) (*ctg.Categoria, error) {
+func (f *fakeCategoriaRepository) BuscarPorID(ctx context.Context, id string) (*ctg.Categoria, error) {
 	if f.erroAoBuscar != nil {
 		return nil, f.erroAoBuscar
 	}
@@ -60,7 +60,7 @@ func (f *fakeCategoriaRepository2) BuscarPorID(ctx context.Context, id string) (
 }
 
 // BuscarPorNome recupera uma categoria pelo nome do repositório fake.
-func (f *fakeCategoriaRepository2) BuscarPorNome(ctx context.Context, nome string) (*ctg.Categoria, error) {
+func (f *fakeCategoriaRepository) BuscarPorNome(ctx context.Context, nome string) (*ctg.Categoria, error) {
 	if f.erroAoBuscar != nil {
 		return nil, f.erroAoBuscar
 	}
@@ -74,7 +74,7 @@ func (f *fakeCategoriaRepository2) BuscarPorNome(ctx context.Context, nome strin
 }
 
 // Listar lista categorias do repositório fake com paginação.
-func (f *fakeCategoriaRepository2) Listar(ctx context.Context, filtro ctg.Filtro) ([]ctg.Categoria, int, error) {
+func (f *fakeCategoriaRepository) Listar(ctx context.Context, filtro ctg.Filtro) ([]ctg.Categoria, int, error) {
 	if f.erroAoListar != nil {
 		return nil, 0, f.erroAoListar
 	}
@@ -96,9 +96,11 @@ func (f *fakeCategoriaRepository2) Listar(ctx context.Context, filtro ctg.Filtro
 // HELPERS
 // =====================================================================================================================
 
+const categoriaTesteID = "categoria-123"
+
 // novoCategoriaTeste cria uma nova categoria para testes.
-func novoCategoriaTeste(id, nome string) *ctg.Categoria {
-	c, _ := ctg.Novo(id, nome)
+func novoCategoriaTeste() *ctg.Categoria {
+	c, _ := ctg.Novo(categoriaTesteID, "Categoria de Teste")
 	return c
 }
 
@@ -141,7 +143,7 @@ func TestCategoriaService_Criar2(t *testing.T) {
 				id: "categoria-123",
 			},
 			repoSetup: func() ctg.Repository {
-				return novoFakeCategoriaRepository2()
+				return novoFakeCategoriaRepository()
 			},
 			params:  novoCriarCategoriaParamsTeste(),
 			wantErr: false,
@@ -156,7 +158,7 @@ func TestCategoriaService_Criar2(t *testing.T) {
 				}
 
 				// Verificar se a categoria foi salva no repositório
-				fake := repo.(*fakeCategoriaRepository2)
+				fake := repo.(*fakeCategoriaRepository)
 				if len(fake.categorias) != 1 {
 					t.Errorf("Esperava 1 categoria no repositório, recebeu %d", len(fake.categorias))
 				}
@@ -168,14 +170,14 @@ func TestCategoriaService_Criar2(t *testing.T) {
 				err: errors.New("falha ao gerar ID"),
 			},
 			repoSetup: func() ctg.Repository {
-				return novoFakeCategoriaRepository2()
+				return novoFakeCategoriaRepository()
 			},
 			params:  novoCriarCategoriaParamsTeste(),
 			wantErr: true,
 			assertFn: func(t *testing.T, repo ctg.Repository, c *ctg.Categoria) {
 				t.Helper()
 
-				fake := repo.(*fakeCategoriaRepository2)
+				fake := repo.(*fakeCategoriaRepository)
 				if len(fake.categorias) != 0 {
 					t.Errorf("Esperava 0 categorias no repositório, recebeu %d", len(fake.categorias))
 				}
@@ -187,7 +189,7 @@ func TestCategoriaService_Criar2(t *testing.T) {
 				id: "categoria-123",
 			},
 			repoSetup: func() ctg.Repository {
-				repo := novoFakeCategoriaRepository2()
+				repo := novoFakeCategoriaRepository()
 				repo.erroAoCriar = errors.New("falha ao salvar categoria")
 				return repo
 			},
@@ -196,7 +198,7 @@ func TestCategoriaService_Criar2(t *testing.T) {
 			assertFn: func(t *testing.T, repo ctg.Repository, c *ctg.Categoria) {
 				t.Helper()
 
-				fake := repo.(*fakeCategoriaRepository2)
+				fake := repo.(*fakeCategoriaRepository)
 				if len(fake.categorias) != 0 {
 					t.Errorf("Esperava 0 categorias no repositório, recebeu %d", len(fake.categorias))
 				}
@@ -238,8 +240,8 @@ func TestCategoriaService_Atualizar2(t *testing.T) {
 		{
 			name: "atualizar categoria com sucesso",
 			repoSetup: func() ctg.Repository {
-				repo := novoFakeCategoriaRepository2()
-				repo.categorias["categoria-123"] = novoCategoriaTeste("categoria-123", "Categoria Antiga")
+				repo := novoFakeCategoriaRepository()
+				repo.categorias["categoria-123"] = novoCategoriaTeste()
 				return repo
 			},
 			params:  novoAtualizarCategoriaParamsTeste(),
@@ -252,7 +254,7 @@ func TestCategoriaService_Atualizar2(t *testing.T) {
 				}
 
 				// Verificar se a categoria foi atualizada no repositório
-				fake := repo.(*fakeCategoriaRepository2)
+				fake := repo.(*fakeCategoriaRepository)
 				atualizada, existe := fake.categorias["categoria-123"]
 				if !existe {
 					t.Errorf("Categoria não encontrada no repositório")
@@ -265,7 +267,7 @@ func TestCategoriaService_Atualizar2(t *testing.T) {
 		{
 			name: "erro ao buscar categoria inexistente",
 			repoSetup: func() ctg.Repository {
-				return novoFakeCategoriaRepository2()
+				return novoFakeCategoriaRepository()
 			},
 			params:  novoAtualizarCategoriaParamsTeste(),
 			wantErr: true,
@@ -273,7 +275,7 @@ func TestCategoriaService_Atualizar2(t *testing.T) {
 				t.Helper()
 
 				// Verificar se nenhuma categoria foi adicionada no repositório
-				fake := repo.(*fakeCategoriaRepository2)
+				fake := repo.(*fakeCategoriaRepository)
 				if len(fake.categorias) != 0 {
 					t.Errorf("Esperava 0 categorias no repositório, recebeu %d", len(fake.categorias))
 				}
@@ -282,8 +284,8 @@ func TestCategoriaService_Atualizar2(t *testing.T) {
 		{
 			name: "erro ao atualizar categoria no repositório",
 			repoSetup: func() ctg.Repository {
-				repo := novoFakeCategoriaRepository2()
-				repo.categorias["categoria-123"] = novoCategoriaTeste("categoria-123", "Categoria Antiga")
+				repo := novoFakeCategoriaRepository()
+				repo.categorias["categoria-123"] = novoCategoriaTeste()
 				repo.erroAoAtualizar = errors.New("falha ao atualizar categoria")
 				return repo
 			},
@@ -293,7 +295,7 @@ func TestCategoriaService_Atualizar2(t *testing.T) {
 				t.Helper()
 
 				// Verificar se a categoria não foi alterada no repositório
-				fake := repo.(*fakeCategoriaRepository2)
+				fake := repo.(*fakeCategoriaRepository)
 				atual, existe := fake.categorias["categoria-123"]
 				if !existe {
 					t.Errorf("Categoria não encontrada no repositório")
@@ -306,7 +308,7 @@ func TestCategoriaService_Atualizar2(t *testing.T) {
 		{
 			name: "erro ao buscar categoria devido a erro no repositório",
 			repoSetup: func() ctg.Repository {
-				repo := novoFakeCategoriaRepository2()
+				repo := novoFakeCategoriaRepository()
 				repo.erroAoBuscar = errors.New("falha ao buscar categoria")
 				return repo
 			},
@@ -316,7 +318,7 @@ func TestCategoriaService_Atualizar2(t *testing.T) {
 				t.Helper()
 
 				// Verificar se nenhuma categoria foi adicionada no repositório
-				fake := repo.(*fakeCategoriaRepository2)
+				fake := repo.(*fakeCategoriaRepository)
 				if len(fake.categorias) != 0 {
 					t.Errorf("Esperava 0 categorias no repositório, recebeu %d", len(fake.categorias))
 				}
@@ -358,8 +360,8 @@ func TestCategoriaService_BuscarPorID2(t *testing.T) {
 		{
 			name: "buscar categoria por ID com sucesso",
 			repoSetup: func() ctg.Repository {
-				repo := novoFakeCategoriaRepository2()
-				repo.categorias["categoria-123"] = novoCategoriaTeste("categoria-123", "Categoria de Teste")
+				repo := novoFakeCategoriaRepository()
+				repo.categorias["categoria-123"] = novoCategoriaTeste()
 				return repo
 			},
 			id:      "categoria-123",
@@ -378,7 +380,7 @@ func TestCategoriaService_BuscarPorID2(t *testing.T) {
 		{
 			name: "erro ao buscar categoria inexistente por ID",
 			repoSetup: func() ctg.Repository {
-				return novoFakeCategoriaRepository2()
+				return novoFakeCategoriaRepository()
 			},
 			id:      "categoria-inexistente",
 			wantErr: true,
@@ -393,7 +395,7 @@ func TestCategoriaService_BuscarPorID2(t *testing.T) {
 		{
 			name: "erro ao buscar categoria por ID devido a erro no repositório",
 			repoSetup: func() ctg.Repository {
-				repo := novoFakeCategoriaRepository2()
+				repo := novoFakeCategoriaRepository()
 				repo.erroAoBuscar = errors.New("falha ao buscar categoria")
 				return repo
 			},
@@ -443,8 +445,8 @@ func TestCategoriaService_BuscarPorNome2(t *testing.T) {
 		{
 			name: "buscar categoria por nome com sucesso",
 			repoSetup: func() ctg.Repository {
-				repo := novoFakeCategoriaRepository2()
-				repo.categorias["Categoria de Teste"] = novoCategoriaTeste("categoria-123", "Categoria de Teste")
+				repo := novoFakeCategoriaRepository()
+				repo.categorias["Categoria de Teste"] = novoCategoriaTeste()
 				return repo
 			},
 			nome:    "Categoria de Teste",
@@ -463,7 +465,7 @@ func TestCategoriaService_BuscarPorNome2(t *testing.T) {
 		{
 			name: "erro ao buscar categoria inexistente por nome",
 			repoSetup: func() ctg.Repository {
-				return novoFakeCategoriaRepository2()
+				return novoFakeCategoriaRepository()
 			},
 			nome:    "Categoria Inexistente",
 			wantErr: true,
@@ -478,7 +480,7 @@ func TestCategoriaService_BuscarPorNome2(t *testing.T) {
 		{
 			name: "erro ao buscar categoria por nome devido a erro no repositório",
 			repoSetup: func() ctg.Repository {
-				repo := novoFakeCategoriaRepository2()
+				repo := novoFakeCategoriaRepository()
 				repo.erroAoBuscar = errors.New("falha ao buscar categoria")
 				return repo
 			},
@@ -529,9 +531,9 @@ func TestCategoriaService_Listar2(t *testing.T) {
 		{
 			name: "listar categorias com sucesso",
 			repoSetup: func() ctg.Repository {
-				repo := novoFakeCategoriaRepository2()
-				repo.categorias["categoria-1"] = novoCategoriaTeste("categoria-1", "Categoria 1")
-				repo.categorias["categoria-2"] = novoCategoriaTeste("categoria-2", "Categoria 2")
+				repo := novoFakeCategoriaRepository()
+				repo.categorias["categoria-1"] = novoCategoriaTeste()
+				repo.categorias["categoria-2"] = novoCategoriaTeste()
 				return repo
 			},
 			filtro: ctg.Filtro{},
@@ -555,7 +557,7 @@ func TestCategoriaService_Listar2(t *testing.T) {
 		{
 			name: "erro ao listar categorias devido a erro no repositório",
 			repoSetup: func() ctg.Repository {
-				repo := novoFakeCategoriaRepository2()
+				repo := novoFakeCategoriaRepository()
 				repo.erroAoListar = errors.New("falha ao listar categorias")
 				return repo
 			},

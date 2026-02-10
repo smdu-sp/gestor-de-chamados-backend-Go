@@ -27,22 +27,22 @@ var _ usr.Service = (*UsuarioService)(nil)
 //
 // Erros sentinela possíveis: ErrUsuarioNaoEncontrado.
 func (u *UsuarioService) BuscarPorID(ctx context.Context, id string) (*usr.Usuario, error) {
-	usr, err := u.repo.BuscarPorID(ctx, id)
+	usuario, err := u.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("buscar usuário por ID: %w", err)
 	}
-	return usr, nil
+	return usuario, nil
 }
 
 // BuscarPorLogin recebe um login e retorna o usuário correspondente.
 //
 // Erros sentinela possíveis: ErrUsuarioNaoEncontrado.
 func (u *UsuarioService) BuscarPorLogin(ctx context.Context, login string) (*usr.Usuario, error) {
-	usr, err := u.repo.BuscarPorLogin(ctx, login)
+	usuario, err := u.repo.BuscarPorLogin(ctx, login)
 	if err != nil {
 		return nil, fmt.Errorf("buscar usuário por login: %w", err)
 	}
-	return usr, nil
+	return usuario, nil
 }
 
 // Criar recebe os parâmetros para criação de um usuário e retorna o usuário criado.
@@ -56,7 +56,7 @@ func (u *UsuarioService) Criar(ctx context.Context, criar usr.CriarParams) (*usr
 	}
 
 	// 2 - Criar o usuário
-	usr, err := usr.Novo(
+	usuario, err := usr.Novo(
 		id,
 		criar.Nome,
 		criar.Login,
@@ -69,11 +69,11 @@ func (u *UsuarioService) Criar(ctx context.Context, criar usr.CriarParams) (*usr
 	}
 
 	// 3 - Salvar o usuário no repositório
-	usrCriado, err := u.repo.Criar(ctx, *usr)
+	usuarioCriado, err := u.repo.Criar(ctx, *usuario)
 	if err != nil {
 		return nil, fmt.Errorf("criar usuário: %w", err)
 	}
-	return usrCriado, nil
+	return usuarioCriado, nil
 }
 
 // AtualizarUltimoLogin recebe um ID e atualiza o último login do usuário correspondente.
@@ -81,20 +81,20 @@ func (u *UsuarioService) Criar(ctx context.Context, criar usr.CriarParams) (*usr
 // Erros sentinela possíveis: ErrUsuarioNaoEncontrado.
 func (u *UsuarioService) AtualizarUltimoLogin(ctx context.Context, id string) (*usr.Usuario, error) {
 	// 1 - Buscar o usuário pelo ID
-	usr, err := u.repo.BuscarPorID(ctx, id)
+	usuario, err := u.repo.BuscarPorID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar último login: %w", err)
 	}
 
 	// 2 - Atualizar o último login
-	usr.AtualizarUltimoLogin()
+	usuario.AtualizarUltimoLogin()
 
 	// 3 - Salvar a atualização no repositório
-	usrAtualizado, err := u.repo.Atualizar(ctx, id, *usr)
+	usuarioAtualizado, err := u.repo.Atualizar(ctx, id, *usuario)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar último login: %w", err)
 	}
-	return usrAtualizado, nil
+	return usuarioAtualizado, nil
 }
 
 // Atualizar recebe um ID e parâmetros para atualizar os dados do usuário correspondente.
