@@ -143,7 +143,7 @@ func novoUsuarioTeste() *usr.Usuario {
 // popularUsuariosTeste adiciona múltiplos usuários ao repositório falso para testes.
 func popularUsuariosTeste(repo *fakeUsuarioRepository, quantidade int) {
 	for i := 1; i <= quantidade; i++ {
-		id := fmt.Sprintf("user-%02d", i)
+		id := fmt.Sprintf("usuario-%02d", i)
 
 		u, _ := usr.Novo(
 			id,
@@ -455,7 +455,7 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 				t.Helper()
 
 				usuarioRepo, ok := repo.(*fakeUsuarioRepository).usuarios[usuarioTesteID]
-				verificarOk(t, ok, "deveria existir usuário original no repositório")
+				verificarOk(t, ok, "deveria existir usuário no repositório")
 				verificarNulo(t, usuario)
 				verificarNaoAlterado(t, novoUsuarioTeste(), usuarioRepo, compararUsuarios)
 				verificarDatas(t, usuarioRepo.CriadoEm(), usuarioRepo.AtualizadoEm())
@@ -466,7 +466,7 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				return repo
 			},
@@ -550,7 +550,6 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 
 				verificarNaoNulo(t, usuario)
 				verificarIDs(t, usuarioTesteID, usuario.ID())
-
 			},
 		},
 		{
@@ -558,7 +557,7 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = errFakeRepo
 				return repo
 			},
@@ -627,7 +626,7 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				return repo
 			},
 			login:        usuarioTesteLogin,

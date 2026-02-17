@@ -144,7 +144,7 @@ func (c *CategoriaService) Listar(ctx context.Context, f ctg.Filtro) ([]ctg.Cate
 	f.Normalizar()
 	ctgSlice, total, err := c.repo.Listar(ctx, f)
 	if err != nil {
-		return nil, 0, f, fmt.Errorf("listar categoria: %w", err)
+		return nil, 0, ctg.Filtro{}, fmt.Errorf("listar categoria: %w", err)
 	}
 
 	return ctgSlice, total, f, nil
