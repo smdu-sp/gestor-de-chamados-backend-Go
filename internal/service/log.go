@@ -65,12 +65,12 @@ func (u *LogService) Criar(ctx context.Context, acao log.Acao, entidade, detalhe
 
 // ListarLogs recebe um filtro e retorna uma lista de logs que correspondem aos critérios do filtro,
 // juntamente com o total de registros encontrados.
-func (u *LogService) Listar(ctx context.Context, f log.LogFiltro) ([]log.Log, int, log.LogFiltro, error) {
-	f.Normalizar()
-	logSlice, total, err := u.repo.Listar(ctx, f)
+func (u *LogService) Listar(ctx context.Context, filtro log.LogFiltro) ([]log.Log, int, log.LogFiltro, error) {
+	filtro.Normalizar()
+	logSlice, total, err := u.repo.Listar(ctx, filtro)
 	if err != nil {
 		return nil, 0, log.LogFiltro{}, fmt.Errorf("listar logs: %w", err)
 	}
 
-	return logSlice, total, f, nil
+	return logSlice, total, filtro, nil
 }

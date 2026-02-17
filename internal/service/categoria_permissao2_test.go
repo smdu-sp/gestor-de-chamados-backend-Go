@@ -11,7 +11,7 @@ import (
 
 // --- Fake Repository (simplificado com estado) ---------------------------------------------------
 
-type fakeCategoriaPermissaoRepository2 struct {
+type fakeCategoriaPermissaoRepository struct {
 	categoriasPermissoes map[string]*cpm.CategoriaPermissao
 	erroAoCriar          error
 	erroAoAtualizar      error
@@ -21,9 +21,9 @@ type fakeCategoriaPermissaoRepository2 struct {
 	totalListar          int
 }
 
-// novoFakeCategoriaPermissaoRepository2 cria uma nova instância do repositório fake.
-func novoFakeCategoriaPermissaoRepository2() *fakeCategoriaPermissaoRepository2 {
-	return &fakeCategoriaPermissaoRepository2{
+// novoFakeCategoriaPermissaoRepository cria uma nova instância do repositório fake.
+func novoFakeCategoriaPermissaoRepository() *fakeCategoriaPermissaoRepository {
+	return &fakeCategoriaPermissaoRepository{
 		categoriasPermissoes: make(map[string]*cpm.CategoriaPermissao),
 	}
 }
@@ -34,7 +34,7 @@ func chaveComposta(categoriaID, usuarioID string) string {
 }
 
 // Criar adiciona uma nova categoria ao repositório fake.
-func (f *fakeCategoriaPermissaoRepository2) Criar(ctx context.Context, u cpm.CategoriaPermissao) (*cpm.CategoriaPermissao, error) {
+func (f *fakeCategoriaPermissaoRepository) Criar(ctx context.Context, u cpm.CategoriaPermissao) (*cpm.CategoriaPermissao, error) {
 	if f.erroAoCriar != nil {
 		return nil, f.erroAoCriar
 	}
@@ -44,7 +44,7 @@ func (f *fakeCategoriaPermissaoRepository2) Criar(ctx context.Context, u cpm.Cat
 }
 
 // BuscarPorID busca uma categoria pelo ID composto no repositório fake.
-func (f *fakeCategoriaPermissaoRepository2) BuscarPorID(ctx context.Context, categoriaID, usuarioID string) (*cpm.CategoriaPermissao, error) {
+func (f *fakeCategoriaPermissaoRepository) BuscarPorID(ctx context.Context, categoriaID, usuarioID string) (*cpm.CategoriaPermissao, error) {
 	if f.erroAoBuscar != nil {
 		return nil, f.erroAoBuscar
 	}
@@ -57,7 +57,7 @@ func (f *fakeCategoriaPermissaoRepository2) BuscarPorID(ctx context.Context, cat
 }
 
 // Atualizar atualiza uma categoria existente no repositório fake.
-func (f *fakeCategoriaPermissaoRepository2) Atualizar(ctx context.Context, categoriaID, usuarioID string, c cpm.CategoriaPermissao) (*cpm.CategoriaPermissao, error) {
+func (f *fakeCategoriaPermissaoRepository) Atualizar(ctx context.Context, categoriaID, usuarioID string, c cpm.CategoriaPermissao) (*cpm.CategoriaPermissao, error) {
 	if f.erroAoAtualizar != nil {
 		return nil, f.erroAoAtualizar
 	}
@@ -67,7 +67,7 @@ func (f *fakeCategoriaPermissaoRepository2) Atualizar(ctx context.Context, categ
 }
 
 // Listar retorna uma lista de categorias do repositório fake.
-func (f *fakeCategoriaPermissaoRepository2) Listar(ctx context.Context, filtro cpm.Filtro) ([]cpm.CategoriaPermissao, int, error) {
+func (f *fakeCategoriaPermissaoRepository) Listar(ctx context.Context, filtro cpm.Filtro) ([]cpm.CategoriaPermissao, int, error) {
 	if f.erroAoListar != nil {
 		return nil, 0, f.erroAoListar
 	}
@@ -86,7 +86,7 @@ func (f *fakeCategoriaPermissaoRepository2) Listar(ctx context.Context, filtro c
 }
 
 // Deletar remove uma categoria do repositório fake.
-func (f *fakeCategoriaPermissaoRepository2) Deletar(ctx context.Context, categoriaID, usuarioID string) error {
+func (f *fakeCategoriaPermissaoRepository) Deletar(ctx context.Context, categoriaID, usuarioID string) error {
 	if f.erroAoDeletar != nil {
 		return f.erroAoDeletar
 	}
@@ -100,22 +100,22 @@ func (f *fakeCategoriaPermissaoRepository2) Deletar(ctx context.Context, categor
 // =====================================================================================================================
 
 // novoCategoriaPermissaoTest cria uma nova categoria de permissão para testes.
-func novoCategoriaPermissaoTest(ctgID, usrID string, permissao usr.Permissao) *cpm.CategoriaPermissao {
-	categoriaPermissao, _ := cpm.Novo(ctgID, usrID, permissao)
+func novoCategoriaPermissaoTeste() *cpm.CategoriaPermissao {
+	categoriaPermissao, _ := cpm.Novo(categoriaTesteID, usuarioTesteID, usr.PermADM)
 	return categoriaPermissao
 }
 
-// novoCriarCategoriaPermissaoParamsTest cria parâmetros para criar uma categoria de permissão para testes.
-func novoCriarCategoriaPermissaoParamsTest() cpm.CriarParams {
+// novoCriarCategoriaPermissaoParamsTeste cria parâmetros para criar uma categoria de permissão para testes.
+func novoCriarCategoriaPermissaoParamsTeste() cpm.CriarParams {
 	return cpm.CriarParams{
-		CategoriaID: "ctg-123",
-		UsuarioID:   "usr-123",
+		CategoriaID: categoriaTesteID,
+		UsuarioID:   usuarioTesteID,
 		Permissao:   usr.PermADM,
 	}
 }
 
-// novoAtualizarCategoriaPermissaoParamsTest cria parâmetros para atualizar uma categoria de permissão para testes.
-func novoAtualizarCategoriaPermissaoParamsTest() cpm.AtualizarParams {
+// novoAtualizarCategoriaPermissaoParamsTeste cria parâmetros para atualizar uma categoria de permissão para testes.
+func novoAtualizarCategoriaPermissaoParamsTeste() cpm.AtualizarParams {
 	return cpm.AtualizarParams{
 		Permissao: usr.PermADM,
 	}
@@ -125,8 +125,8 @@ func novoAtualizarCategoriaPermissaoParamsTest() cpm.AtualizarParams {
 // TESTES
 // =====================================================================================================================
 
-// TestCategoriaPermissaoService_Criar2 testa o método Criar do serviço de categoria de permissão.
-func TestCategoriaPermissaoService_Criar2(t *testing.T) {
+// TestCategoriaPermissaoService_Criar testa o método Criar do serviço de categoria de permissão.
+func TestCategoriaPermissaoService_Criar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -141,9 +141,9 @@ func TestCategoriaPermissaoService_Criar2(t *testing.T) {
 		{
 			name: "criar categoria/permissão com sucesso",
 			repoSetup: func() cpm.Repository {
-				return novoFakeCategoriaPermissaoRepository2()
+				return novoFakeCategoriaPermissaoRepository()
 			},
-			params:  novoCriarCategoriaPermissaoParamsTest(),
+			params:  novoCriarCategoriaPermissaoParamsTeste(),
 			wantErr: false,
 			assertFn: func(t *testing.T, repo cpm.Repository, cpm *cpm.CategoriaPermissao) {
 				t.Helper()
@@ -159,7 +159,7 @@ func TestCategoriaPermissaoService_Criar2(t *testing.T) {
 				}
 
 				// Verificar se foi salvo no repositório
-				fake := repo.(*fakeCategoriaPermissaoRepository2)
+				fake := repo.(*fakeCategoriaPermissaoRepository)
 				chave := chaveComposta("ctg-123", "usr-123")
 				salvo, existe := fake.categoriasPermissoes[chave]
 				if !existe {
@@ -173,16 +173,16 @@ func TestCategoriaPermissaoService_Criar2(t *testing.T) {
 		{
 			name: "erro ao criar categoria/permissão devido a erro no repositório",
 			repoSetup: func() cpm.Repository {
-				repo := novoFakeCategoriaPermissaoRepository2()
+				repo := novoFakeCategoriaPermissaoRepository()
 				repo.erroAoCriar = errors.New("erro ao criar no repositório")
 				return repo
 			},
-			params:  novoCriarCategoriaPermissaoParamsTest(),
+			params:  novoCriarCategoriaPermissaoParamsTeste(),
 			wantErr: true,
 			assertFn: func(t *testing.T, repo cpm.Repository, cpm *cpm.CategoriaPermissao) {
 				t.Helper()
 				// repositório deve estar vazio
-				fake := repo.(*fakeCategoriaPermissaoRepository2)
+				fake := repo.(*fakeCategoriaPermissaoRepository)
 				if len(fake.categoriasPermissoes) != 0 {
 					t.Errorf("esperado repositório vazio, mas contém dados")
 				}
@@ -208,8 +208,8 @@ func TestCategoriaPermissaoService_Criar2(t *testing.T) {
 	}
 }
 
-// TestCategoriaPermissaoService_BuscarPorID2 testa o método BuscarPorID do serviço de categoria de permissão.
-func TestCategoriaPermissaoService_BuscarPorID2(t *testing.T) {
+// TestCategoriaPermissaoService_BuscarPorID testa o método BuscarPorID do serviço de categoria de permissão.
+func TestCategoriaPermissaoService_BuscarPorID(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -224,22 +224,22 @@ func TestCategoriaPermissaoService_BuscarPorID2(t *testing.T) {
 	}{
 		{
 			name:  "buscar categoria/permissão com sucesso",
-			ctgID: "ctg-123",
-			usrID: "usr-123",
+			ctgID: categoriaTesteID,
+			usrID: usuarioTesteID,
 			repoSetup: func() cpm.Repository {
-				repo := novoFakeCategoriaPermissaoRepository2()
-				repo.categoriasPermissoes[chaveComposta("ctg-123", "usr-123")] = novoCategoriaPermissaoTest("ctg-123", "usr-123", usr.PermADM)
+				repo := novoFakeCategoriaPermissaoRepository()
+				repo.categoriasPermissoes[chaveComposta(categoriaTesteID, usuarioTesteID)] = novoCategoriaPermissaoTeste()
 				return repo
 			},
 			wantErr: false,
 			assertFn: func(t *testing.T, cpm *cpm.CategoriaPermissao) {
 				t.Helper()
 
-				if cpm.CategoriaID() != "ctg-123" {
-					t.Errorf("esperado CategoriaID 'ctg-123', obtido '%s'", cpm.CategoriaID())
+				if cpm.CategoriaID() != categoriaTesteID {
+					t.Errorf("esperado CategoriaID '%s', obtido '%s'", categoriaTesteID, cpm.CategoriaID())
 				}
-				if cpm.UsuarioID() != "usr-123" {
-					t.Errorf("esperado UsuarioID 'usr-123', obtido '%s'", cpm.UsuarioID())
+				if cpm.UsuarioID() != usuarioTesteID {
+					t.Errorf("esperado UsuarioID '%s', obtido '%s'", usuarioTesteID, cpm.UsuarioID())
 				}
 				if cpm.Permissao() != usr.PermADM.String() {
 					t.Errorf("esperado Permissao 'PermADM', obtido '%s'", cpm.Permissao())
@@ -248,10 +248,10 @@ func TestCategoriaPermissaoService_BuscarPorID2(t *testing.T) {
 		},
 		{
 			name:  "erro ao buscar categoria/permissão não existente",
-			ctgID: "ctg-999",
-			usrID: "usr-999",
+			ctgID: "id-inexistente",
+			usrID: "id-inexistente",
 			repoSetup: func() cpm.Repository {
-				return novoFakeCategoriaPermissaoRepository2()
+				return novoFakeCategoriaPermissaoRepository()
 			},
 			wantErr: true,
 			assertFn: func(t *testing.T, cpm *cpm.CategoriaPermissao) {
@@ -263,10 +263,10 @@ func TestCategoriaPermissaoService_BuscarPorID2(t *testing.T) {
 		},
 		{
 			name:  "erro ao buscar categoria/permissão devido a erro no repositório",
-			ctgID: "ctg-123",
-			usrID: "usr-123",
+			ctgID: categoriaTesteID,
+			usrID: usuarioTesteID,
 			repoSetup: func() cpm.Repository {
-				repo := novoFakeCategoriaPermissaoRepository2()
+				repo := novoFakeCategoriaPermissaoRepository()
 				repo.erroAoBuscar = errors.New("erro ao buscar no repositório")
 				return repo
 			},
@@ -298,8 +298,8 @@ func TestCategoriaPermissaoService_BuscarPorID2(t *testing.T) {
 	}
 }
 
-// TestCategoriaPermissaoService_Atualizar2 testa o método Atualizar do serviço de categoria de permissão.
-func TestCategoriaPermissaoService_Atualizar2(t *testing.T) {
+// TestCategoriaPermissaoService_Atualizar testa o método Atualizar do serviço de categoria de permissão.
+func TestCategoriaPermissaoService_Atualizar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -314,11 +314,11 @@ func TestCategoriaPermissaoService_Atualizar2(t *testing.T) {
 		{
 			name: "atualizar categoria/permissão com sucesso",
 			repoSetup: func() cpm.Repository {
-				repo := novoFakeCategoriaPermissaoRepository2()
-				repo.categoriasPermissoes[chaveComposta("ctg-123", "usr-123")] = novoCategoriaPermissaoTest("ctg-123", "usr-123", usr.PermADM)
+				repo := novoFakeCategoriaPermissaoRepository()
+				repo.categoriasPermissoes[chaveComposta(categoriaTesteID, usuarioTesteID)] = novoCategoriaPermissaoTeste()
 				return repo
 			},
-			params:  novoAtualizarCategoriaPermissaoParamsTest(),
+			params:  novoAtualizarCategoriaPermissaoParamsTeste(),
 			wantErr: false,
 			assertFn: func(t *testing.T, repo cpm.Repository, cpm *cpm.CategoriaPermissao) {
 				t.Helper()
@@ -328,8 +328,8 @@ func TestCategoriaPermissaoService_Atualizar2(t *testing.T) {
 				}
 
 				// Verificar se foi atualizado no repositório
-				fake := repo.(*fakeCategoriaPermissaoRepository2)
-				chave := chaveComposta("ctg-123", "usr-123")
+				fake := repo.(*fakeCategoriaPermissaoRepository)
+				chave := chaveComposta(categoriaTesteID, usuarioTesteID)
 				atualizado, existe := fake.categoriasPermissoes[chave]
 				if !existe {
 					t.Errorf("categoria/permissão não encontrada no repositório")
@@ -343,9 +343,9 @@ func TestCategoriaPermissaoService_Atualizar2(t *testing.T) {
 		{
 			name: "erro ao atualizar categoria/permissão não existente",
 			repoSetup: func() cpm.Repository {
-				return novoFakeCategoriaPermissaoRepository2()
+				return novoFakeCategoriaPermissaoRepository()
 			},
-			params:  novoAtualizarCategoriaPermissaoParamsTest(),
+			params:  novoAtualizarCategoriaPermissaoParamsTeste(),
 			wantErr: true,
 			assertFn: func(t *testing.T, repo cpm.Repository, cpm *cpm.CategoriaPermissao) {
 				t.Helper()
@@ -357,12 +357,12 @@ func TestCategoriaPermissaoService_Atualizar2(t *testing.T) {
 		{
 			name: "erro ao atualizar categoria/permissão devido a erro no repositório",
 			repoSetup: func() cpm.Repository {
-				repo := novoFakeCategoriaPermissaoRepository2()
-				repo.categoriasPermissoes[chaveComposta("ctg-123", "usr-123")] = novoCategoriaPermissaoTest("ctg-123", "usr-123", usr.PermADM)
+				repo := novoFakeCategoriaPermissaoRepository()
+				repo.categoriasPermissoes[chaveComposta(categoriaTesteID, usuarioTesteID)] = novoCategoriaPermissaoTeste()
 				repo.erroAoAtualizar = errors.New("erro ao atualizar no repositório")
 				return repo
 			},
-			params:  novoAtualizarCategoriaPermissaoParamsTest(),
+			params:  novoAtualizarCategoriaPermissaoParamsTeste(),
 			wantErr: true,
 			assertFn: func(t *testing.T, repo cpm.Repository, cpm *cpm.CategoriaPermissao) {
 				t.Helper()
@@ -380,7 +380,7 @@ func TestCategoriaPermissaoService_Atualizar2(t *testing.T) {
 			repo := tt.repoSetup()
 			service := NovoCategoriaPermissaoService(repo)
 
-			cpm, err := service.Atualizar(ctx, "ctg-123", "usr-123", tt.params)
+			cpm, err := service.Atualizar(ctx, categoriaTesteID, usuarioTesteID, tt.params)
 
 			assertError(t, err, tt.wantErr)
 
@@ -391,8 +391,8 @@ func TestCategoriaPermissaoService_Atualizar2(t *testing.T) {
 	}
 }
 
-// TestCategoriaPermissaoService_Deletar2 testa o método Deletar do serviço de categoria de permissão.
-func TestCategoriaPermissaoService_Deletar2(t *testing.T) {
+// TestCategoriaPermissaoService_Deletar testa o método Deletar do serviço de categoria de permissão.
+func TestCategoriaPermissaoService_Deletar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -407,11 +407,11 @@ func TestCategoriaPermissaoService_Deletar2(t *testing.T) {
 	}{
 		{
 			name:  "deletar categoria/permissão com sucesso",
-			ctgID: "ctg-123",
-			usrID: "usr-123",
+			ctgID: categoriaTesteID,
+			usrID: usuarioTesteID,
 			repoSetup: func() cpm.Repository {
-				repo := novoFakeCategoriaPermissaoRepository2()
-				repo.categoriasPermissoes[chaveComposta("ctg-123", "usr-123")] = novoCategoriaPermissaoTest("ctg-123", "usr-123", usr.PermADM)
+				repo := novoFakeCategoriaPermissaoRepository()
+				repo.categoriasPermissoes[chaveComposta(categoriaTesteID, usuarioTesteID)] = novoCategoriaPermissaoTeste()
 				return repo
 			},
 			wantErr: false,
@@ -419,8 +419,8 @@ func TestCategoriaPermissaoService_Deletar2(t *testing.T) {
 				t.Helper()
 
 				// Verificar se foi removido do repositório
-				fake := repo.(*fakeCategoriaPermissaoRepository2)
-				chave := chaveComposta("ctg-123", "usr-123")
+				fake := repo.(*fakeCategoriaPermissaoRepository)
+				chave := chaveComposta(categoriaTesteID, usuarioTesteID)
 				_, existe := fake.categoriasPermissoes[chave]
 				if existe {
 					t.Errorf("categoria/permissão ainda existe no repositório após deleção")
@@ -429,16 +429,16 @@ func TestCategoriaPermissaoService_Deletar2(t *testing.T) {
 		},
 		{
 			name:  "erro ao deletar categoria/permissão não existente",
-			ctgID: "ctg-999",
-			usrID: "usr-999",
+			ctgID: "id-inexistente",
+			usrID: "id-inexistente",
 			repoSetup: func() cpm.Repository {
-				return novoFakeCategoriaPermissaoRepository2()
+				return novoFakeCategoriaPermissaoRepository()
 			},
 			wantErr: true,
 			assertFn: func(t *testing.T, repo cpm.Repository) {
 				t.Helper()
 				// repositório deve estar vazio
-				fake := repo.(*fakeCategoriaPermissaoRepository2)
+				fake := repo.(*fakeCategoriaPermissaoRepository)
 				if len(fake.categoriasPermissoes) != 0 {
 					t.Errorf("esperado repositório vazio, mas contém dados")
 				}
@@ -446,11 +446,11 @@ func TestCategoriaPermissaoService_Deletar2(t *testing.T) {
 		},
 		{
 			name:  "erro ao deletar categoria/permissão devido a erro no repositório",
-			ctgID: "ctg-123",
-			usrID: "usr-123",
+			ctgID: categoriaTesteID,
+			usrID: usuarioTesteID,
 			repoSetup: func() cpm.Repository {
-				repo := novoFakeCategoriaPermissaoRepository2()
-				repo.categoriasPermissoes[chaveComposta("ctg-123", "usr-123")] = novoCategoriaPermissaoTest("ctg-123", "usr-123", usr.PermADM)
+				repo := novoFakeCategoriaPermissaoRepository()
+				repo.categoriasPermissoes[chaveComposta(categoriaTesteID, usuarioTesteID)] = novoCategoriaPermissaoTeste()
 				repo.erroAoDeletar = errors.New("erro ao deletar no repositório")
 				return repo
 			},
@@ -458,8 +458,8 @@ func TestCategoriaPermissaoService_Deletar2(t *testing.T) {
 			assertFn: func(t *testing.T, repo cpm.Repository) {
 				t.Helper()
 				// categoria/permissão deve continuar existindo no repositório
-				fake := repo.(*fakeCategoriaPermissaoRepository2)
-				chave := chaveComposta("ctg-123", "usr-123")
+				fake := repo.(*fakeCategoriaPermissaoRepository)
+				chave := chaveComposta(categoriaTesteID, usuarioTesteID)
 				_, existe := fake.categoriasPermissoes[chave]
 				if !existe {
 					t.Errorf("categoria/permissão não encontrada no repositório após falha na deleção")
@@ -486,8 +486,8 @@ func TestCategoriaPermissaoService_Deletar2(t *testing.T) {
 	}
 }
 
-// TestCategoriaPermissaoService_Listar2 testa o método Listar do serviço de categoria de permissão.
-func TestCategoriaPermissaoService_Listar2(t *testing.T) {
+// TestCategoriaPermissaoService_Listar testa o método Listar do serviço de categoria de permissão.
+func TestCategoriaPermissaoService_Listar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -503,9 +503,8 @@ func TestCategoriaPermissaoService_Listar2(t *testing.T) {
 		{
 			name: "listar categorias/permissões com sucesso",
 			repoSetup: func() cpm.Repository {
-				repo := novoFakeCategoriaPermissaoRepository2()
-				repo.categoriasPermissoes[chaveComposta("ctg-123", "usr-123")] = novoCategoriaPermissaoTest("ctg-123", "usr-123", usr.PermADM)
-				repo.categoriasPermissoes[chaveComposta("ctg-456", "usr-456")] = novoCategoriaPermissaoTest("ctg-456", "usr-456", usr.PermUSR)
+				repo := novoFakeCategoriaPermissaoRepository()
+				repo.categoriasPermissoes[chaveComposta(categoriaTesteID, usuarioTesteID)] = novoCategoriaPermissaoTeste()
 				return repo
 			},
 			filtro:    cpm.Filtro{},
@@ -530,7 +529,7 @@ func TestCategoriaPermissaoService_Listar2(t *testing.T) {
 		{
 			name: "erro ao listar categorias/permissões devido a erro no repositório",
 			repoSetup: func() cpm.Repository {
-				repo := novoFakeCategoriaPermissaoRepository2()
+				repo := novoFakeCategoriaPermissaoRepository()
 				repo.erroAoListar = errors.New("erro ao listar no repositório")
 				return repo
 			},

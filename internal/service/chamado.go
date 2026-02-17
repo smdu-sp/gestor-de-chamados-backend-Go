@@ -294,14 +294,14 @@ func (c *ChamadoService) AtualizarSolucao(ctx context.Context, id string, a chm.
 
 // Listar recebe um filtro e retorna a lista de chamados correspondentes, 
 // o total de registros e o filtro aplicado.
-func (c *ChamadoService) Listar(ctx context.Context, f chm.Filtro) ([]chm.Chamado, int, chm.Filtro, error) {
-	f.Normalizar()
-	chmSlice, total, err := c.repo.Listar(ctx, f)
+func (c *ChamadoService) Listar(ctx context.Context, filtro chm.Filtro) ([]chm.Chamado, int, chm.Filtro, error) {
+	filtro.Normalizar()
+	chmSlice, total, err := c.repo.Listar(ctx, filtro)
 	if err != nil {
-		return nil, 0, f, fmt.Errorf("listar chamados: %w", err)
+		return nil, 0, chm.Filtro{}, fmt.Errorf("listar chamados: %w", err)
 	}
 
-	return chmSlice, total, f, nil
+	return chmSlice, total, filtro, nil
 }
 
 // =====================================================================================================================

@@ -175,7 +175,7 @@ func Test_LogService_BuscarPorID(t *testing.T) {
 
 				_, ok := repo.(*fakeLogRepository).logs[logTesteID]
 				verificarOk(t, ok, "deveria existir log no repositório")
-				verificarNulo(t, log, "não esperava log encontrado quando há erro no repositório")
+				verificarNulo(t, log)
 			},
 		},
 		{
@@ -194,7 +194,7 @@ func Test_LogService_BuscarPorID(t *testing.T) {
 
 				_, ok := repo.(*fakeLogRepository).logs[logTesteID]
 				verificarOk(t, ok, "deveria existir log no repositório")
-				verificarNulo(t, log, "não esperava log encontrado quando log não existe")
+				verificarNulo(t, log)
 			},
 		},
 	}

@@ -195,14 +195,14 @@ func (u *UsuarioService) Ativar(ctx context.Context, id string) (*usr.Usuario, e
 // juntamente com o total de registros encontrados e o filtro aplicado.
 //
 // Erros sentinela possíveis: ErrosValidacao.
-func (u *UsuarioService) Listar(ctx context.Context, f usr.Filtro) ([]usr.Usuario, int, usr.Filtro, error) {
-	f.Normalizar()
-	usuarios, total, err := u.repo.Listar(ctx, f)
+func (u *UsuarioService) Listar(ctx context.Context, filtro usr.Filtro) ([]usr.Usuario, int, usr.Filtro, error) {
+	filtro.Normalizar()
+	usuarios, total, err := u.repo.Listar(ctx, filtro)
 	if err != nil {
 		return nil, 0, usr.Filtro{}, fmt.Errorf("listar usuários: %w", err)
 	}
 
-	return usuarios, total, f, nil
+	return usuarios, total, filtro, nil
 }
 
 // VerificarPermissao recebe um ID e uma lista de permissões, 

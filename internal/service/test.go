@@ -89,21 +89,21 @@ func verificarErro(t *testing.T, recebido, esperado error) {
 	}
 }
 
-// verificarNaoNulo é um helper que verifica se o valor fornecido não é nulo.
-func verificarNaoNulo[T any](t *testing.T, valor *T, mensagem string) {
+// verificarNaoNulo verifica se o valor fornecido é não nulo, falhando o teste se for nulo.
+func verificarNaoNulo[T any](t *testing.T, valor *T) {
 	t.Helper()
 
 	if valor == nil {
-		t.Fatal(mensagem)
+		t.Fatal("esperava valor não nulo, mas recebeu nulo")
 	}
 }
 
-// verificarNulo é um helper que verifica se o valor fornecido é nulo.
-func verificarNulo[T any](t *testing.T, valor *T, mensagem string) {
+// verificarNulo verifica se o valor fornecido é nulo, falhando o teste se não for nulo.
+func verificarNulo[T any](t *testing.T, valor *T) {
 	t.Helper()
 
 	if valor != nil {
-		t.Error(mensagem)
+		t.Fatal("esperava valor nulo, mas recebeu não nulo")
 	}
 }
 
@@ -113,7 +113,7 @@ func verificarLimite[T any](t *testing.T, slice []T, esperado int) {
 	t.Helper()
 
 	if len(slice) != esperado {
-		t.Fatalf("tamanho do slice deve ser igual ao esperado: esperado %d, obtido %d", esperado, len(slice))
+		t.Fatalf("tamanho do limite deve ser igual ao esperado: esperado %d, obtido %d", esperado, len(slice))
 	}
 }
 
@@ -188,17 +188,10 @@ func verificarIDs(t *testing.T, esperado, recebido string) {
 	}
 }
 
-// verificarLogins é um helper que compara dois logins e falha o teste se eles não forem iguais.
-func verificarLogins(t *testing.T, esperado, recebido string) {
+// verificarParamBusca é um helper que compara dois parâmetros de busca e falha o teste se eles não forem iguais.
+func verificarParamBusca(t *testing.T, esperado, recebido string) {
 	if esperado != recebido {
-		t.Errorf("Login esperado '%s', recebido '%s'", esperado, recebido)
-	}
-}
-
-// verificarNomes é um helper que compara dois nomes e falha o teste se eles não forem iguais.
-func verificarNomes(t *testing.T, esperado, recebido string) {
-	if esperado != recebido {
-		t.Errorf("Nome esperado '%s', recebido '%s'", esperado, recebido)
+		t.Errorf("parâmetro de busca esperado '%s', recebido '%s'", esperado, recebido)
 	}
 }
 

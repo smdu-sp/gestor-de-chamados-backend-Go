@@ -131,12 +131,12 @@ func (s *SubcategoriaService) Ativar(ctx context.Context, id string) (*sub.Subca
 
 // Listar recebe um filtro e retorna uma lista de subcategorias que correspondem aos critérios do filtro,
 // juntamente com o total de registros encontrados.
-func (s *SubcategoriaService) Listar(ctx context.Context, f sub.Filtro) ([]sub.Subcategoria, int, sub.Filtro, error) {
-	f.Normalizar()
-	subcategorias, total, err := s.repo.Listar(ctx, f)
+func (s *SubcategoriaService) Listar(ctx context.Context, filtro sub.Filtro) ([]sub.Subcategoria, int, sub.Filtro, error) {
+	filtro.Normalizar()
+	subcategorias, total, err := s.repo.Listar(ctx, filtro)
 	if err != nil {
 		return nil, 0, sub.Filtro{}, fmt.Errorf("listar subcategorias: %w", err)
 	}
 
-	return subcategorias, total, f, nil
+	return subcategorias, total, filtro, nil
 }

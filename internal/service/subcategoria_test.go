@@ -124,7 +124,7 @@ func (r *fakeSubcategoriaRepository) Listar(ctx context.Context, filtro subc.Fil
 
 const (
 	subcategoriaTesteID   = "subcategoria-123"
-	subcategoriaTesteNome = "Suporte" 
+	subcategoriaTesteNome = "Suporte"
 )
 
 // novoSubcategoriaTeste cria uma subcategoria de teste com os valores fornecidos.
@@ -212,6 +212,9 @@ func Test_SubcategoriaService_Criar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
 				t.Helper()
 
+				verificarNaoNulo(t, subcategoria)
+				verificarPersistido(t, len(repo.(*fakeSubcategoriaRepository).subcategorias))
+
 				if subcategoria.Nome() != novoCriarSubcategoriaParamsTeste().Nome {
 					t.Errorf("Nome esperado '%s', recebido '%s'",
 						novoCriarSubcategoriaParamsTeste().Nome, subcategoria.Nome())
@@ -224,8 +227,6 @@ func Test_SubcategoriaService_Criar(t *testing.T) {
 
 				verificarIDs(t, subcategoriaTesteID, subcategoria.ID())
 				verificarDatas(t, subcategoria.CriadoEm(), subcategoria.AtualizadoEm())
-				verificarNaoNulo(t, subcategoria, "esperava subcategoria criada, recebeu nil")
-				verificarPersistido(t, len(repo.(*fakeSubcategoriaRepository).subcategorias))
 			},
 		},
 		{
@@ -242,7 +243,7 @@ func Test_SubcategoriaService_Criar(t *testing.T) {
 				t.Helper()
 
 				verificarNaoPersistido(t, len(repo.(*fakeSubcategoriaRepository).subcategorias))
-				verificarNulo(t, subcategoria, "não deveria retornar subcategoria quando gerador de ID falha")
+				verificarNulo(t, subcategoria)
 			},
 		},
 		{
@@ -261,7 +262,7 @@ func Test_SubcategoriaService_Criar(t *testing.T) {
 				t.Helper()
 
 				verificarNaoPersistido(t, len(repo.(*fakeSubcategoriaRepository).subcategorias))
-				verificarNulo(t, subcategoria, "não deveria retornar subcategoria quando repositório falha")
+				verificarNulo(t, subcategoria)
 			},
 		},
 		{
@@ -278,7 +279,7 @@ func Test_SubcategoriaService_Criar(t *testing.T) {
 				t.Helper()
 
 				verificarNaoPersistido(t, len(repo.(*fakeSubcategoriaRepository).subcategorias))
-				verificarNulo(t, subcategoria, "não deveria retornar subcategoria quando parâmetros são inválidos")
+				verificarNulo(t, subcategoria)
 			},
 		},
 	}
@@ -327,6 +328,8 @@ func Test_SubcategoriaService_Atualizar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
 				t.Helper()
 
+				verificarNaoNulo(t, subcategoria)
+
 				if novoAtualizarSubcategoriaParamsTeste().Nome != nil {
 					if subcategoria.Nome() != *novoAtualizarSubcategoriaParamsTeste().Nome {
 						t.Errorf("Nome esperado '%s', recebido '%s'",
@@ -343,7 +346,6 @@ func Test_SubcategoriaService_Atualizar(t *testing.T) {
 
 				verificarIDs(t, subcategoriaTesteID, subcategoria.ID())
 				verificarDatas(t, subcategoria.CriadoEm(), subcategoria.AtualizadoEm())
-				verificarNaoNulo(t, subcategoria, "esperava subcategoria atualizada, recebeu nil")
 			},
 		},
 		{
@@ -363,9 +365,10 @@ func Test_SubcategoriaService_Atualizar(t *testing.T) {
 
 				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNulo(t, subcategoria)
 				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
 				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao buscar")
+
 			},
 		},
 		{
@@ -385,9 +388,10 @@ func Test_SubcategoriaService_Atualizar(t *testing.T) {
 
 				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNulo(t, subcategoria)
 				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
 				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao atualizar")
+
 			},
 		},
 		{
@@ -407,9 +411,10 @@ func Test_SubcategoriaService_Atualizar(t *testing.T) {
 
 				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNulo(t, subcategoria)
 				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
 				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando subcategoria não é encontrada")
+
 			},
 		},
 		{
@@ -428,9 +433,10 @@ func Test_SubcategoriaService_Atualizar(t *testing.T) {
 
 				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNulo(t, subcategoria)
 				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
 				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro de validação")
+
 			},
 		},
 	}
@@ -478,7 +484,7 @@ func Test_SubcategoriaService_BuscarPorID(t *testing.T) {
 				t.Helper()
 
 				verificarIDs(t, subcategoriaTesteID, subcategoria.ID())
-				verificarNaoNulo(t, subcategoria, "esperava subcategoria encontrada, recebeu nil")
+				verificarNaoNulo(t, subcategoria)
 			},
 		},
 		{
@@ -497,7 +503,7 @@ func Test_SubcategoriaService_BuscarPorID(t *testing.T) {
 
 				_, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao buscar")
+				verificarNulo(t, subcategoria)
 			},
 		},
 		{
@@ -516,7 +522,7 @@ func Test_SubcategoriaService_BuscarPorID(t *testing.T) {
 
 				_, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando subcategoria não é encontrada")
+				verificarNulo(t, subcategoria)
 			},
 		},
 	}
@@ -563,8 +569,8 @@ func Test_SubcategoriaService_BuscarPorNome(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
 				t.Helper()
 
-				verificarNomes(t, subcategoriaTesteNome, subcategoria.Nome())
-				verificarNaoNulo(t, subcategoria, "esperava subcategoria encontrada, recebeu nil")
+				verificarParamBusca(t, subcategoriaTesteNome, subcategoria.Nome())
+				verificarNaoNulo(t, subcategoria)
 			},
 		},
 		{
@@ -583,7 +589,7 @@ func Test_SubcategoriaService_BuscarPorNome(t *testing.T) {
 
 				_, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao buscar")
+				verificarNulo(t, subcategoria)
 			},
 		},
 		{
@@ -602,7 +608,7 @@ func Test_SubcategoriaService_BuscarPorNome(t *testing.T) {
 
 				_, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando subcategoria não é encontrada")
+				verificarNulo(t, subcategoria)
 			},
 		},
 	}
@@ -646,10 +652,12 @@ func Test_SubcategoriaService_Desativar(t *testing.T) {
 				repo.subcategorias[novaSubcategoria.ID()] = novaSubcategoria
 				return repo
 			},
-			id: 				 subcategoriaTesteID,
-			erroEsperado:       nil,
-			verificarResultado: func (t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+			id:           subcategoriaTesteID,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
 				t.Helper()
+
+				verificarNaoNulo(t, subcategoria)
 
 				if subcategoria.Status() {
 					t.Errorf("Status esperado desativado, recebeu Status=%v", subcategoria.Status())
@@ -657,7 +665,7 @@ func Test_SubcategoriaService_Desativar(t *testing.T) {
 
 				verificarIDs(t, subcategoriaTesteID, subcategoria.ID())
 				verificarDatas(t, subcategoria.CriadoEm(), subcategoria.AtualizadoEm())
-				verificarNaoNulo(t, subcategoria, "esperava subcategoria desativada, recebeu nil")
+
 			},
 		},
 		{
@@ -670,16 +678,16 @@ func Test_SubcategoriaService_Desativar(t *testing.T) {
 				repo.erroAoBuscar = errFakeRepo
 				return repo
 			},
-			id: 				 subcategoriaTesteID,
-			erroEsperado:       errFakeRepo,
-			verificarResultado: func (t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+			id:           subcategoriaTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
 				t.Helper()
 
 				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNulo(t, subcategoria)
 				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
 				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao buscar")
 			},
 		},
 		{
@@ -692,16 +700,16 @@ func Test_SubcategoriaService_Desativar(t *testing.T) {
 				repo.erroAoAtualizar = errFakeRepo
 				return repo
 			},
-			id: 				 subcategoriaTesteID,
-			erroEsperado:       errFakeRepo,
-			verificarResultado: func (t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+			id:           subcategoriaTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
 				t.Helper()
 
 				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNulo(t, subcategoria)
 				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
 				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao atualizar")
 			},
 		},
 		{
@@ -714,16 +722,16 @@ func Test_SubcategoriaService_Desativar(t *testing.T) {
 				repo.erroAoBuscar = mysql.ErrSubcategoriaNaoEncontrada
 				return repo
 			},
-			id: 				 "id-inexistente",
-			erroEsperado:       mysql.ErrSubcategoriaNaoEncontrada,
-			verificarResultado: func (t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
+			id:           "id-inexistente",
+			erroEsperado: mysql.ErrSubcategoriaNaoEncontrada,
+			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
 				t.Helper()
 
 				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNulo(t, subcategoria)
 				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
 				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando subcategoria não é encontrada")
 			},
 		},
 	}
@@ -749,7 +757,7 @@ func Test_SubcategoriaService_Ativar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	
+
 	tests := []struct {
 		nome               string
 		prepararRepo       func() subc.Repository
@@ -771,13 +779,14 @@ func Test_SubcategoriaService_Ativar(t *testing.T) {
 			verificarResultado: func(t *testing.T, repo subc.Repository, subcategoria *subc.Subcategoria) {
 				t.Helper()
 
+				verificarNaoNulo(t, subcategoria)
+
 				if !subcategoria.Status() {
 					t.Errorf("Status esperado ativado, recebeu Status=%v", subcategoria.Status())
 				}
 
 				verificarIDs(t, subcategoriaTesteID, subcategoria.ID())
 				verificarDatas(t, subcategoria.CriadoEm(), subcategoria.AtualizadoEm())
-				verificarNaoNulo(t, subcategoria, "esperava subcategoria ativada, recebeu nil")
 			},
 		},
 		{
@@ -797,9 +806,9 @@ func Test_SubcategoriaService_Ativar(t *testing.T) {
 
 				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNulo(t, subcategoria)
 				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
 				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao buscar")
 			},
 		},
 		{
@@ -819,9 +828,9 @@ func Test_SubcategoriaService_Ativar(t *testing.T) {
 
 				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNulo(t, subcategoria)
 				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
 				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando há erro ao atualizar")
 			},
 		},
 		{
@@ -841,9 +850,9 @@ func Test_SubcategoriaService_Ativar(t *testing.T) {
 
 				subcategoriaRepo, ok := repo.(*fakeSubcategoriaRepository).subcategorias[subcategoriaTesteID]
 				verificarOk(t, ok, "deveria existir subcategoria no repositório")
+				verificarNulo(t, subcategoria)
 				verificarNaoAlterado(t, novoSubcategoriaTeste(), subcategoriaRepo, compararSubcategorias)
 				verificarDatas(t, subcategoriaRepo.CriadoEm(), subcategoriaRepo.AtualizadoEm())
-				verificarNulo(t, subcategoria, "não esperava subcategoria retornada quando subcategoria não é encontrada")
 			},
 		},
 	}

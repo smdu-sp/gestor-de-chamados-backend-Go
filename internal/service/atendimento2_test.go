@@ -14,8 +14,8 @@ import (
 
 // --- Fake Repository (simplificado com estado) ---------------------------------------------------
 
-// fakeAtendimentoRepository2 é uma implementação fake do repositório de atendimentos para testes.
-type fakeAtendimentoRepository2 struct {
+// fakeAtendimentoRepository é uma implementação fake do repositório de atendimentos para testes.
+type fakeAtendimentoRepository struct {
 	atendimentos    map[string]*atd.Atendimento
 	erroAoCriar     error
 	erroAoAtualizar error
@@ -24,14 +24,14 @@ type fakeAtendimentoRepository2 struct {
 	totalListar     int
 }
 
-func novoFakeAtendimentoRepository2() *fakeAtendimentoRepository2 {
-	return &fakeAtendimentoRepository2{
+func novoFakeAtendimentoRepository() *fakeAtendimentoRepository {
+	return &fakeAtendimentoRepository{
 		atendimentos: make(map[string]*atd.Atendimento),
 	}
 }
 
 // Criar adiciona um novo atendimento ao repositório fake.
-func (f *fakeAtendimentoRepository2) Criar(ctx context.Context, a atd.Atendimento) (*atd.Atendimento, error) {
+func (f *fakeAtendimentoRepository) Criar(ctx context.Context, a atd.Atendimento) (*atd.Atendimento, error) {
 	if f.erroAoCriar != nil {
 		return nil, f.erroAoCriar
 	}
@@ -40,7 +40,7 @@ func (f *fakeAtendimentoRepository2) Criar(ctx context.Context, a atd.Atendiment
 }
 
 // Atualizar atualiza um atendimento existente no repositório fake.
-func (f *fakeAtendimentoRepository2) Atualizar(ctx context.Context, id string, a atd.Atendimento) (*atd.Atendimento, error) {
+func (f *fakeAtendimentoRepository) Atualizar(ctx context.Context, id string, a atd.Atendimento) (*atd.Atendimento, error) {
 	if f.erroAoAtualizar != nil {
 		return nil, f.erroAoAtualizar
 	}
@@ -49,7 +49,7 @@ func (f *fakeAtendimentoRepository2) Atualizar(ctx context.Context, id string, a
 }
 
 // BuscarPorID busca um atendimento pelo ID no repositório fake.
-func (f *fakeAtendimentoRepository2) BuscarPorID(ctx context.Context, id string) (*atd.Atendimento, error) {
+func (f *fakeAtendimentoRepository) BuscarPorID(ctx context.Context, id string) (*atd.Atendimento, error) {
 	if f.erroAoBuscar != nil {
 		return nil, f.erroAoBuscar
 	}
@@ -61,7 +61,7 @@ func (f *fakeAtendimentoRepository2) BuscarPorID(ctx context.Context, id string)
 }
 
 // BuscarPorChamadoEAtribuidoID busca um atendimento pelo ID do chamado e do atribuído no repositório fake.
-func (f *fakeAtendimentoRepository2) BuscarPorChamadoEAtribuidoID(ctx context.Context, chamadoID, atribuidoID string) (*atd.Atendimento, error) {
+func (f *fakeAtendimentoRepository) BuscarPorChamadoEAtribuidoID(ctx context.Context, chamadoID, atribuidoID string) (*atd.Atendimento, error) {
 	if f.erroAoBuscar != nil {
 		return nil, f.erroAoBuscar
 	}
@@ -74,7 +74,7 @@ func (f *fakeAtendimentoRepository2) BuscarPorChamadoEAtribuidoID(ctx context.Co
 }
 
 // Listar lista atendimentos com base no filtro fornecido no repositório fake.
-func (f *fakeAtendimentoRepository2) Listar(ctx context.Context, filtro atd.Filtro) ([]atd.Atendimento, int, error) {
+func (f *fakeAtendimentoRepository) Listar(ctx context.Context, filtro atd.Filtro) ([]atd.Atendimento, int, error) {
 	if f.erroAoListar != nil {
 		return nil, 0, f.erroAoListar
 	}
@@ -96,12 +96,14 @@ func (f *fakeAtendimentoRepository2) Listar(ctx context.Context, filtro atd.Filt
 // HELPERS
 // =====================================================================================================================
 
+const atendimentoTesteID = "atendimento-123"
+
 // novoAtendimentoTeste cria um novo atendimento para testes.
-func novoAtendimentoTeste(id, atribuidoID, chamadoID string) *atd.Atendimento {
+func novoAtendimentoTeste() *atd.Atendimento {
 	a, _ := atd.Novo(
-		id,
-		atribuidoID,
-		chamadoID,
+		atendimentoTesteID,
+		usuarioTesteID,
+		chamadoTesteID,
 	)
 	return a
 }
@@ -109,16 +111,16 @@ func novoAtendimentoTeste(id, atribuidoID, chamadoID string) *atd.Atendimento {
 // novoCriarAtendimentoParamsTeste cria parâmetros de criação de atendimento para testes.
 func novoCriarAtendimentoParamsTeste() atd.CriarParams {
 	return atd.CriarParams{
-		AtribuidoID: "user-123",
-		ChamadoID:   "chm-456",
+		AtribuidoID: usuarioTesteID,
+		ChamadoID:   chamadoTesteID,
 	}
 }
 
 // novoAtualizarAtendimentoParamsTeste cria parâmetros de atualização de atendimento para testes.
 func novoAtualizarAtendimentoParamsTeste() atd.AtualizarParams {
 	return atd.AtualizarParams{
-		AtribuidoID: "user-789",
-		ChamadoID:   "chm-012",
+		AtribuidoID: usuarioTesteID,
+		ChamadoID:   chamadoTesteID,
 	}
 }
 
@@ -126,8 +128,8 @@ func novoAtualizarAtendimentoParamsTeste() atd.AtualizarParams {
 // TESTES
 // =====================================================================================================================
 
-// TestAtendimentoService_Criar2 testa o método Criar do serviço de atendimento.
-func TestAtendimentoService_Criar2(t *testing.T) {
+// TestAtendimentoService_Criar testa o método Criar do serviço de atendimento.
+func TestAtendimentoService_Criar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -155,7 +157,7 @@ func TestAtendimentoService_Criar2(t *testing.T) {
 				id: "atd-123",
 			},
 			repoSetup: func() atd.Repository {
-				return novoFakeAtendimentoRepository2()
+				return novoFakeAtendimentoRepository()
 			},
 			params:  novoCriarAtendimentoParamsTeste(),
 			wantErr: false,
@@ -166,7 +168,7 @@ func TestAtendimentoService_Criar2(t *testing.T) {
 					t.Errorf("ID esperado 'atd-123', obtido '%s'", a.ID())
 				}
 
-				fake := repo.(*fakeAtendimentoRepository2)
+				fake := repo.(*fakeAtendimentoRepository)
 				if len(fake.atendimentos) != 1 {
 					t.Errorf("Esperado 1 atendimento no repositório, obtido %d", len(fake.atendimentos))
 				}
@@ -178,7 +180,7 @@ func TestAtendimentoService_Criar2(t *testing.T) {
 				id: "atd-456",
 			},
 			repoSetup: func() atd.Repository {
-				repo := novoFakeAtendimentoRepository2()
+				repo := novoFakeAtendimentoRepository()
 				repo.erroAoCriar = errors.New("erro ao criar atendimento")
 				return repo
 			},
@@ -188,7 +190,7 @@ func TestAtendimentoService_Criar2(t *testing.T) {
 				t.Helper()
 
 				// repositório não deve conter atendimentos
-				fake := repo.(*fakeAtendimentoRepository2)
+				fake := repo.(*fakeAtendimentoRepository)
 				if len(fake.atendimentos) != 0 {
 					t.Errorf("Esperado 0 atendimentos no repositório, obtido %d", len(fake.atendimentos))
 				}
@@ -200,7 +202,7 @@ func TestAtendimentoService_Criar2(t *testing.T) {
 				err: errors.New("erro ao gerar ID"),
 			},
 			repoSetup: func() atd.Repository {
-				return novoFakeAtendimentoRepository2()
+				return novoFakeAtendimentoRepository()
 			},
 			params:  novoCriarAtendimentoParamsTeste(),
 			wantErr: true,
@@ -208,7 +210,7 @@ func TestAtendimentoService_Criar2(t *testing.T) {
 				t.Helper()
 
 				// repositório não deve conter atendimentos
-				fake := repo.(*fakeAtendimentoRepository2)
+				fake := repo.(*fakeAtendimentoRepository)
 				if len(fake.atendimentos) != 0 {
 					t.Errorf("Esperado 0 atendimentos no repositório, obtido %d", len(fake.atendimentos))
 				}
@@ -225,8 +227,8 @@ func TestAtendimentoService_Criar2(t *testing.T) {
 			chamadoRepo := novoFakeChamadoRepository()
 			chamadoRepo.chamados["chm-456"] = novoChamadoTeste()
 			
-			categoriaPermissaoRepo := novoFakeCategoriaPermissaoRepository2()
-			categoriaPermissaoRepo.categoriasPermissoes[chaveComposta("categoria-123", "user-123")] = novoCategoriaPermissaoTest("categoria-123", "user-123", usr.PermTEC)
+			categoriaPermissaoRepo := novoFakeCategoriaPermissaoRepository()
+			categoriaPermissaoRepo.categoriasPermissoes[chaveComposta("categoria-123", "user-123")] = novoCategoriaPermissaoTeste()
 			
 			usuarioRepo := novoFakeUsuarioRepository()
 			novoUsuario := novoUsuarioTeste()

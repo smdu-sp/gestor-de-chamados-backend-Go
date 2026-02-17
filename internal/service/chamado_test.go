@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"testing"
@@ -204,17 +203,12 @@ func novoAtualizarSolucaoChamadoParamsTeste() chm.AtualizarSolucaoParams {
 	return chm.AtualizarSolucaoParams{Solucao: "Solução detalhada para o chamado para fins de teste."}
 }
 
-// novoAtualizarSolucaoChamadoParamsInvalidosTeste cria parâmetros inválidos para atualizar a solução de um chamado para testes.
-func novoAtualizarSolucaoChamadoParamsInvalidosTeste() chm.AtualizarSolucaoParams {
-	return chm.AtualizarSolucaoParams{Solucao: ""}
-}
-
 // =====================================================================================================================
 // TESTES
 // =====================================================================================================================
 
 // TestChamadoService_Criar testa o método Criar do serviço de chamado.
-func TestChamadoService_Criar(t *testing.T) {
+func Test_ChamadoService_Criar(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -239,6 +233,9 @@ func TestChamadoService_Criar(t *testing.T) {
 			erroEsperado: nil,
 			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
 				t.Helper()
+
+				verificarNaoNulo(t, chamado)
+				verificarPersistido(t, len(repo.(*fakeChamadoRepository).chamados))
 
 				if chamado.Titulo() != novoCriarChamadoParamsTeste().Titulo {
 					t.Errorf("Título esperado '%s', recebido '%s'",
@@ -276,8 +273,6 @@ func TestChamadoService_Criar(t *testing.T) {
 				verificarIDs(t, subcategoriaTesteID, chamado.SubcategoriaID())
 				verificarIDs(t, usuarioTesteID, chamado.CriadorID())
 				verificarDatas(t, chamado.CriadoEm(), chamado.AtualizadoEm())
-				verificarNaoNulo(t, chamado, "esperava chamado criado, recebeu nil")
-				verificarPersistido(t, len(repo.(*fakeChamadoRepository).chamados))
 			},
 		},
 		{
@@ -294,7 +289,7 @@ func TestChamadoService_Criar(t *testing.T) {
 				t.Helper()
 
 				verificarNaoPersistido(t, len(repo.(*fakeChamadoRepository).chamados))
-				verificarNulo(t, chamado, "não deveria retornar chamado quando gerador de ID falha")
+				verificarNulo(t, chamado)
 			},
 		},
 		{
@@ -313,7 +308,7 @@ func TestChamadoService_Criar(t *testing.T) {
 				t.Helper()
 
 				verificarNaoPersistido(t, len(repo.(*fakeChamadoRepository).chamados))
-				verificarNulo(t, chamado, "não deveria retornar chamado quando repositório falha ao criar")
+				verificarNulo(t, chamado)
 			},
 		},
 		{
@@ -330,7 +325,7 @@ func TestChamadoService_Criar(t *testing.T) {
 				t.Helper()
 
 				verificarNaoPersistido(t, len(repo.(*fakeChamadoRepository).chamados))
-				verificarNulo(t, chamado, "não deveria retornar chamado quando parâmetros são inválidos")
+				verificarNulo(t, chamado)
 			},
 		},
 	}
@@ -356,7 +351,7 @@ func TestChamadoService_Criar(t *testing.T) {
 }
 
 // TestChamadoService_Atualizar testa a função Atualizar do ChamadoService.
-func TestChamadoService_Atualizar(t *testing.T) {
+func Test_ChamadoService_Atualizar(t *testing.T) {
 	t.Parallel()
 
 	ctx := contextoTeste()
@@ -370,7 +365,7 @@ func TestChamadoService_Atualizar(t *testing.T) {
 		verificarResultado func(t *testing.T, repo chm.Repository, chamado *chm.Chamado)
 	}{
 		{
-			nome: "Atualizar chamado com sucesso",
+			nome: "atualizar chamado com sucesso",
 			prepararRepo: func() chm.Repository {
 				repo := novoFakeChamadoRepository()
 				novoChamado := novoChamadoTeste()
@@ -382,6 +377,8 @@ func TestChamadoService_Atualizar(t *testing.T) {
 			erroEsperado: nil,
 			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
 				t.Helper()
+
+				verificarNaoNulo(t, chamado)
 
 				if novoAtualizarChamadoParamsTeste().Titulo != nil {
 					if chamado.Titulo() != *novoAtualizarChamadoParamsTeste().Titulo {
@@ -414,11 +411,10 @@ func TestChamadoService_Atualizar(t *testing.T) {
 
 				verificarIDs(t, chamadoTesteID, chamado.ID())
 				verificarDatas(t, chamado.CriadoEm(), chamado.AtualizadoEm())
-				verificarNulo(t, chamado, "esperava chamado atualizado, recebeu nil")
 			},
 		},
 		{
-			nome: "Erro ao buscar chamado no repositório para atualizar",
+			nome: "erro ao buscar chamado no repositório para atualizar",
 			prepararRepo: func() chm.Repository {
 				repo := novoFakeChamadoRepository()
 				novoChamado := novoChamadoTeste()
@@ -429,14 +425,14 @@ func TestChamadoService_Atualizar(t *testing.T) {
 			id:           chamadoTesteID,
 			params:       novoAtualizarChamadoParamsTeste(),
 			erroEsperado: errFakeRepo,
-			verificarResultado: func(t *testing.T, repo chm.Repository, c *chm.Chamado) {
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
 				t.Helper()
 
 				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
 				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
 				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
 				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
-				verificarNulo(t, c, "não esperava chamado retornado quando há erro ao buscar")
 			},
 		},
 		{
@@ -456,9 +452,9 @@ func TestChamadoService_Atualizar(t *testing.T) {
 
 				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
 				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
 				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
 				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
-				verificarNulo(t, chamado, "não esperava chamado retornado quando há erro ao atualizar")
 			},
 		},
 		{
@@ -470,7 +466,7 @@ func TestChamadoService_Atualizar(t *testing.T) {
 				repo.erroAoBuscar = mysql.ErrChamadoNaoEncontrado
 				return repo
 			},
-			id:           chamadoTesteID,
+			id:           "id-inexistente",
 			params:       novoAtualizarChamadoParamsTeste(),
 			erroEsperado: mysql.ErrChamadoNaoEncontrado,
 			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
@@ -478,13 +474,14 @@ func TestChamadoService_Atualizar(t *testing.T) {
 
 				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
 				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
 				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
 				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
-				verificarNulo(t, chamado, "não esperava chamado retornado quando chamado não é encontrado para atualizar")
+
 			},
 		},
 		{
-			nome: "Erro de validação ao atualizar chamado",
+			nome: "erro de validação ao atualizar chamado",
 			prepararRepo: func() chm.Repository {
 				repo := novoFakeChamadoRepository()
 				novoChamado := novoChamadoTeste()
@@ -499,9 +496,10 @@ func TestChamadoService_Atualizar(t *testing.T) {
 
 				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
 				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
 				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
 				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
-				verificarNulo(t, chamado, "não esperava chamado retornado quando parâmetros são inválidos")
+
 			},
 		},
 	}
@@ -515,8 +513,10 @@ func TestChamadoService_Atualizar(t *testing.T) {
 			categoriaRepo.categorias[categoriaTesteID] = novoCategoriaTeste()
 			subcategoriaRepo := novoFakeSubcategoriaRepository()
 			subcategoriaRepo.subcategorias[subcategoriaTesteID] = novoSubcategoriaTeste()
-			service := NovoChamadoService(nil, repo, categoriaRepo, subcategoriaRepo, nil, nil, nil)
-			chamadoAtualizado, erroRecebido := service.Atualizar(ctx, "chamado-123", tt.params)
+			atendimentoRepo := novoFakeAtendimentoRepository()
+			atendimentoRepo.atendimentos[atendimentoTesteID] = novoAtendimentoTeste()
+			service := NovoChamadoService(nil, repo, categoriaRepo, subcategoriaRepo, nil, atendimentoRepo, nil)
+			chamadoAtualizado, erroRecebido := service.Atualizar(ctx, tt.id, tt.params)
 
 			verificarErro(t, erroRecebido, tt.erroEsperado)
 			if tt.verificarResultado != nil {
@@ -526,169 +526,677 @@ func TestChamadoService_Atualizar(t *testing.T) {
 	}
 }
 
-// TestChamadoService_BuscarPorID2 testa a função BuscarPorID do ChamadoService.
-func TestChamadoService_BuscarPorID2(t *testing.T) {
+// TestChamadoService_BuscarPorID testa a função BuscarPorID do ChamadoService.
+func Test_ChamadoService_BuscarPorID(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 
 	tests := []struct {
-		name       string
-		repoSetup  func() chm.Repository
-		id         string
-		wantErr    bool
-		assertFunc func(t *testing.T, c *chm.Chamado)
+		nome               string
+		prepararRepo       func() chm.Repository
+		id                 string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo chm.Repository, chamado *chm.Chamado)
 	}{
 		{
-			name: "Busca bem-sucedida de chamado por ID",
-			repoSetup: func() chm.Repository {
+			nome: "buscar chamado por id com sucesso",
+			prepararRepo: func() chm.Repository {
 				repo := novoFakeChamadoRepository()
-				repo.chamados["chamado-123"] = novoChamadoTeste()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
 				return repo
 			},
-			id:      "chamado-123",
-			wantErr: false,
-			assertFunc: func(t *testing.T, c *chm.Chamado) {
+			id:           chamadoTesteID,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
 				t.Helper()
 
-				if c.ID() != "chamado-123" {
-					t.Errorf("ID do chamado incorreto. obtido: %s, esperado: %s", c.ID(), "chamado-123")
-				}
+				verificarNaoNulo(t, chamado)
+				verificarIDs(t, chamadoTesteID, chamado.ID())
 			},
 		},
 		{
-			name: "Erro ao buscar chamado inexistente",
-			repoSetup: func() chm.Repository {
+			nome: "erro ao buscar chamado por id no repositório",
+			prepararRepo: func() chm.Repository {
 				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoBuscar = errFakeRepo
 				return repo
 			},
-			id:      "chamado-inexistente",
-			wantErr: true,
-			assertFunc: func(t *testing.T, c *chm.Chamado) {
+			id:           "chamado-inexistente",
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
 				t.Helper()
-				// Nenhum chamado deve ser retornado
-				if c != nil {
-					t.Errorf("Chamado retornado apesar de não existir. ID: %s", c.ID())
-				}
+
+				_, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
 			},
 		},
 		{
-			name: "Erro ao buscar chamado devido a falha no repositório",
-			repoSetup: func() chm.Repository {
+			nome: "chamado não encontrado  por id",
+			prepararRepo: func() chm.Repository {
 				repo := novoFakeChamadoRepository()
-				repo.erroAoBuscar = errors.New("falha ao buscar chamado")
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoBuscar = mysql.ErrChamadoNaoEncontrado
 				return repo
 			},
-			id:      "chamado-123",
-			wantErr: true,
-			assertFunc: func(t *testing.T, c *chm.Chamado) {
+			id:           "id-inexistente",
+			erroEsperado: mysql.ErrChamadoNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
 				t.Helper()
-				// Nenhum chamado deve ser retornado
-				if c != nil {
-					t.Errorf("Chamado retornado apesar do erro no repositório. ID: %s", c.ID())
-				}
+
+				_, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.nome, func(t *testing.T) {
 			t.Parallel()
 
-			repo := tt.repoSetup()
+			repo := tt.prepararRepo()
 			service := NovoChamadoService(nil, repo, nil, nil, nil, nil, nil)
 
-			c, err := service.BuscarPorID(ctx, tt.id)
+			chamadoEncontrado, erroRecebido := service.BuscarPorID(ctx, tt.id)
 
-			assertError(t, err, tt.wantErr)
-
-			if tt.assertFunc != nil {
-				tt.assertFunc(t, c)
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, chamadoEncontrado)
 			}
 		})
 	}
 }
 
-// TestChamadoService_Listar2 testa a função Listar do ChamadoService.
-func TestChamadoService_Listar2(t *testing.T) {
+// Test_ChamadoService_Arquivar testa a função Arquivar do ChamadoService.
+func Test_ChamadoService_Arquivar(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := contextoTeste()
 
 	tests := []struct {
-		name       string
-		repoSetup  func() chm.Repository
-		filtro     chm.Filtro
-		wantTotal  int
-		wantErr    bool
-		assertFunc func(t *testing.T, chamados []chm.Chamado, filtroRetornado chm.Filtro)
+		nome               string
+		prepararRepo       func() chm.Repository
+		id                 string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo chm.Repository, chamado *chm.Chamado)
 	}{
 		{
-			name: "Listagem bem-sucedida de chamados",
-			repoSetup: func() chm.Repository {
+			nome: "arquivar chamado com sucesso",
+			prepararRepo: func() chm.Repository {
 				repo := novoFakeChamadoRepository()
-				repo.chamados["chamado-1"] = novoChamadoTeste()
-				repo.chamados["chamado-2"] = novoChamadoTeste()
+				novoChamado := novoChamadoTeste()
+				novoChamado.Desarquivar()
+				repo.chamados[novoChamado.ID()] = novoChamado
 				return repo
 			},
-			filtro:    chm.Filtro{},
-			wantTotal: 2,
-			wantErr:   false,
-			assertFunc: func(t *testing.T, chamados []chm.Chamado, filtroRetornado chm.Filtro) {
+			id:           chamadoTesteID,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
 				t.Helper()
 
-				if len(chamados) != 2 {
-					t.Errorf("Número incorreto de chamados retornados. obtido: %d, esperado: %d", len(chamados), 2)
+				verificarNaoNulo(t, chamado)
+
+				if chamado.Arquivado() != true {
+					t.Errorf("Arquivado esperado 'true', recebido '%t'", chamado.Arquivado())
 				}
 
-				// filtro deve estar normalizado
-				if filtroRetornado.Pagina() <= 0 {
-					t.Errorf("Filtro retornado com página inválida: %d", filtroRetornado.Pagina())
-				}
-				if filtroRetornado.Limite() <= 0 {
-					t.Errorf("Filtro retornado com limite inválido: %d", filtroRetornado.Limite())
-				}
+				verificarIDs(t, chamadoTesteID, chamado.ID())
+				verificarDatas(t, chamado.CriadoEm(), chamado.AtualizadoEm())
 			},
 		},
 		{
-			name: "Erro ao listar chamados devido a falha no repositório",
-			repoSetup: func() chm.Repository {
+			nome: "erro ao buscar chamado no repositório para arquivar",
+			prepararRepo: func() chm.Repository {
 				repo := novoFakeChamadoRepository()
-				repo.erroAoListar = errors.New("falha ao listar chamados")
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoBuscar = errFakeRepo
 				return repo
 			},
-			filtro:    chm.Filtro{},
-			wantTotal: 0,
-			wantErr:   true,
-			assertFunc: func(t *testing.T, chamados []chm.Chamado, filtroRetornado chm.Filtro) {
+			id:           chamadoTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
 				t.Helper()
-				// Nenhum chamado deve ser retornado
-				if len(chamados) != 0 {
-					t.Errorf("Chamados retornados apesar do erro no repositório. Total de chamados: %d", len(chamados))
-				}
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+		},
+		{
+			nome: "erro ao persistir chamado arquivado no repositório",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
+			},
+			id:           chamadoTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+		},
+		{
+			nome: "chamado não encontrado para arquivar",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoBuscar = mysql.ErrChamadoNaoEncontrado
+				return repo
+			},
+			id:           "id-inexistente",
+			erroEsperado: mysql.ErrChamadoNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
 			},
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run(tt.nome, func(t *testing.T) {
 			t.Parallel()
 
-			repo := tt.repoSetup()
+			repo := tt.prepararRepo()
 			service := NovoChamadoService(nil, repo, nil, nil, nil, nil, nil)
+			chamadoArquivado, erroRecebido := service.Arquivar(ctx, tt.id)
 
-			chamados, total, filtroRetornado, err := service.Listar(ctx, tt.filtro)
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, chamadoArquivado)
+			}
+		})
+	}
+}
 
-			assertError(t, err, tt.wantErr)
+// Test_ChamadoService_Desarquivar testa a função Desarquivar do ChamadoService.
+func Test_ChamadoService_Desarquivar(t *testing.T) {
+	t.Parallel()
 
-			if !tt.wantErr {
-				if total != tt.wantTotal {
-					t.Errorf("Total de chamados incorreto. obtido: %d, esperado: %d", total, tt.wantTotal)
+	ctx := contextoTeste()
+
+	tests := []struct {
+		nome               string
+		prepararRepo       func() chm.Repository
+		id                 string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo chm.Repository, chamado *chm.Chamado)
+	}{
+		{
+			nome: "desarquivar chamado com sucesso",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				novoChamado.Arquivar()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				return repo
+			},
+			id:           chamadoTesteID,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				verificarNaoNulo(t, chamado)
+
+				if chamado.Arquivado() != false {
+					t.Errorf("Arquivado esperado 'false', recebido '%t'", chamado.Arquivado())
 				}
 
-				if tt.assertFunc != nil {
-					tt.assertFunc(t, chamados, filtroRetornado)
+				verificarIDs(t, chamadoTesteID, chamado.ID())
+				verificarDatas(t, chamado.CriadoEm(), chamado.AtualizadoEm())
+			},
+		},
+		{
+			nome: "erro ao buscar chamado no repositório para desarquivar",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoBuscar = errFakeRepo
+				return repo
+			},
+			id:           chamadoTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+		},
+		{
+			nome: "erro ao persistir chamado desarquivado no repositório",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				novoChamado.Arquivar()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
+			},
+			id:           chamadoTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+		},
+		{
+			nome: "chamado não encontrado para desarquivar",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoBuscar = mysql.ErrChamadoNaoEncontrado
+				return repo
+			},
+			id:           "id-inexistente",
+			erroEsperado: mysql.ErrChamadoNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
+
+			repo := tt.prepararRepo()
+			service := NovoChamadoService(nil, repo, nil, nil, nil, nil, nil)
+			chamadoDesarquivado, erroRecebido := service.Desarquivar(ctx, tt.id)
+
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, chamadoDesarquivado)
+			}
+		})
+	}
+}
+
+// Test_ChamadoService_AtualizarStatus testa a função AtualizarStatus do ChamadoService.
+func Test_ChamadoService_AtualizarStatus(t *testing.T) {
+	t.Parallel()
+
+	ctx := contextoTeste()
+
+	tests := []struct {
+		nome               string
+		prepararRepo       func() chm.Repository
+		id                 string
+		params             chm.AtualizarStatusParams
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo chm.Repository, chamado *chm.Chamado)
+	}{
+		{
+			nome: "atualizar status do chamado com sucesso",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				return repo
+			},
+			id:           chamadoTesteID,
+			params:       novoAtualizarStatusChamadoParamsTeste(),
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				if chamado.Status() != novoAtualizarStatusChamadoParamsTeste().Status {
+					t.Errorf("Status esperado '%s', recebido '%s'",
+						novoAtualizarStatusChamadoParamsTeste().Status, chamado.Status())
 				}
+
+				verificarIDs(t, chamadoTesteID, chamado.ID())
+				verificarDatas(t, chamado.CriadoEm(), chamado.AtualizadoEm())
+				verificarNaoNulo(t, chamado)
+			},
+		},
+		{
+			nome: "erro ao buscar chamado no repositório para atualizar status",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoBuscar = errFakeRepo
+				return repo
+			},
+			id:           chamadoTesteID,
+			params:       novoAtualizarStatusChamadoParamsTeste(),
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+		},
+		{
+			nome: "erro ao persistir chamado com status atualizado no repositório",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
+			},
+			id:           chamadoTesteID,
+			params:       novoAtualizarStatusChamadoParamsTeste(),
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+		},
+		{
+			nome: "chamado não encontrado para atualizar status",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoBuscar = mysql.ErrChamadoNaoEncontrado
+				return repo
+			},
+			id:           "id-inexistente",
+			params:       novoAtualizarStatusChamadoParamsTeste(),
+			erroEsperado: mysql.ErrChamadoNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+		},
+			{
+			nome: "erro de validação ao atualizar status do chamado",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				return repo
+			},
+			id:           chamadoTesteID,
+			params:       novoAtualizarStatusChamadoParamsInvalidosTeste(),
+			erroEsperado: &dmn.ErrosValidacao{},
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+			},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
+
+			repo := tt.prepararRepo()
+			categoriaRepo := novoFakeCategoriaRepository()
+			categoriaRepo.categorias[categoriaTesteID] = novoCategoriaTeste()
+			subcategoriaRepo := novoFakeSubcategoriaRepository()
+			subcategoriaRepo.subcategorias[subcategoriaTesteID] = novoSubcategoriaTeste()
+			atendimentoRepo := novoFakeAtendimentoRepository()
+			atendimentoRepo.atendimentos[atendimentoTesteID] = novoAtendimentoTeste()
+			categoriaPermissaoRepo := novoFakeCategoriaPermissaoRepository()
+			categoriaPermissaoRepo.categoriasPermissoes[chaveComposta(categoriaTesteID, usuarioTesteID)] = novoCategoriaPermissaoTeste()
+			usuarioRepo := novoFakeUsuarioRepository()
+			usuarioRepo.usuarios[usuarioTesteID] = novoUsuarioTeste()
+			service := NovoChamadoService(nil, repo, categoriaRepo, subcategoriaRepo, categoriaPermissaoRepo, atendimentoRepo, nil)
+			chamadoAtualizado, erroRecebido := service.AtualizarStatus(ctx, tt.id, tt.params)
+
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, chamadoAtualizado)
+			}
+		})
+	}
+}
+
+// Test_ChamadoService_AtualizarSolucao testa a função AtualizarSolucao do ChamadoService.
+func Test_ChamadoService_AtualizarSolucao(t *testing.T) {
+	t.Parallel()
+
+	ctx := contextoTeste()
+
+	tests := []struct {
+		nome               string
+		prepararRepo       func() chm.Repository
+		id                 string
+		params             chm.AtualizarSolucaoParams
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo chm.Repository, chamado *chm.Chamado)
+	}{
+		{
+			nome: "atualizar solução do chamado com sucesso",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				return repo
+			},
+			id:           chamadoTesteID,
+			params:       novoAtualizarSolucaoChamadoParamsTeste(),
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				if *chamado.Solucao() != novoAtualizarSolucaoChamadoParamsTeste().Solucao {
+					t.Errorf("Solução esperada '%s', recebida '%v'",
+						novoAtualizarSolucaoChamadoParamsTeste().Solucao, chamado.Solucao())
+				}
+
+				verificarIDs(t, chamadoTesteID, chamado.ID())
+				verificarDatas(t, chamado.CriadoEm(), chamado.AtualizadoEm())
+				verificarNaoNulo(t, chamado)
+			},
+		},
+		{
+			nome: "erro ao buscar chamado no repositório para atualizar solução",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoBuscar = errFakeRepo
+				return repo
+			},
+			id:           chamadoTesteID,
+			params:       novoAtualizarSolucaoChamadoParamsTeste(),
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+		},
+		{
+			nome: "erro ao persistir chamado com solução atualizada no repositório",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
+			},
+			id:           chamadoTesteID,
+			params:       novoAtualizarSolucaoChamadoParamsTeste(),
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+		},
+		{
+			nome: "chamado não encontrado para atualizar solução",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				novoChamado := novoChamadoTeste()
+				repo.chamados[novoChamado.ID()] = novoChamado
+				repo.erroAoBuscar = mysql.ErrChamadoNaoEncontrado
+				return repo
+			},
+			id:           "id-inexistente",
+			params:       novoAtualizarSolucaoChamadoParamsTeste(),
+			erroEsperado: mysql.ErrChamadoNaoEncontrado,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamado *chm.Chamado) {
+				t.Helper()
+
+				chamadoRepo, ok := repo.(*fakeChamadoRepository).chamados[chamadoTesteID]
+				verificarOk(t, ok, "deveria existir chamado no repositório")
+				verificarNulo(t, chamado)
+				verificarNaoAlterado(t, novoChamadoTeste(), chamadoRepo, compararChamados)
+				verificarDatas(t, chamadoRepo.CriadoEm(), chamadoRepo.AtualizadoEm())
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
+
+			repo := tt.prepararRepo()
+			categoriaRepo := novoFakeCategoriaRepository()
+			categoriaRepo.categorias[categoriaTesteID] = novoCategoriaTeste()
+			subcategoriaRepo := novoFakeSubcategoriaRepository()
+			subcategoriaRepo.subcategorias[subcategoriaTesteID] = novoSubcategoriaTeste()
+			atendimentoRepo := novoFakeAtendimentoRepository()
+			atendimentoRepo.atendimentos[atendimentoTesteID] = novoAtendimentoTeste()
+			categoriaPermissaoRepo := novoFakeCategoriaPermissaoRepository()
+			categoriaPermissaoRepo.categoriasPermissoes[chaveComposta(categoriaTesteID, usuarioTesteID)] = novoCategoriaPermissaoTeste()
+			usuarioRepo := novoFakeUsuarioRepository()
+			usuarioRepo.usuarios[usuarioTesteID] = novoUsuarioTeste()
+			service := NovoChamadoService(nil, repo, categoriaRepo, subcategoriaRepo, categoriaPermissaoRepo, atendimentoRepo, nil)
+			chamadoAtualizado, erroRecebido := service.AtualizarSolucao(ctx, tt.id, tt.params)
+
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, chamadoAtualizado)
+			}
+		})
+	}
+}
+
+// Test_ChamadoService_Listar testa a função Listar do ChamadoService.
+func Test_ChamadoService_Listar(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	tests := []struct {
+		nome               string
+		prepararRepo       func() chm.Repository
+		filtro             chm.Filtro
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo chm.Repository, chamados []chm.Chamado, total int, filtroRetornado chm.Filtro)
+	}{
+		{
+			nome: "listar 10 chamados paginados com sucesso - pagina 1 limite 5",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				popularChamadosTeste(repo, 10)
+				return repo
+			},
+			filtro:       chm.NovoFiltro(dmn.NovoPaginacao(1, 5), nil, nil, nil, nil, nil),
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamados []chm.Chamado, total int, filtroRetornado chm.Filtro) {
+				t.Helper()
+
+				fakeRepo := repo.(*fakeChamadoRepository)
+				verificarPaginacao(t, filtroRetornado.Paginacao(), 1, 5)
+				verificarTotal(t, total, len(fakeRepo.chamados))
+				verificarLimite(t, chamados, 5)
+			},
+		},
+		{
+			nome: "erro ao listar chamados paginados no repositório",
+			prepararRepo: func() chm.Repository {
+				repo := novoFakeChamadoRepository()
+				popularChamadosTeste(repo, 10)
+				repo.erroAoListar = errFakeRepo
+				return repo
+			},
+			filtro:       chm.NovoFiltro(dmn.NovoPaginacao(1, 10), nil, nil, nil, nil, nil),
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo chm.Repository, chamados []chm.Chamado, total int, filtroRetornado chm.Filtro) {
+				t.Helper()
+
+				verificarPaginacao(t, filtroRetornado.Paginacao(), 0, 0)
+				verificarTotal(t, total, 0)
+				verificarLimite(t, chamados, 0)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
+
+			repo := tt.prepararRepo()
+			service := NovoChamadoService(nil, repo, nil, nil, nil, nil, nil)
+			chamados, total, filtroRetornado, erroRecebido := service.Listar(ctx, tt.filtro)
+
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, chamados, total, filtroRetornado)
 			}
 		})
 	}
