@@ -17,6 +17,11 @@ func NovoFiltro(paginacao domain.Paginacao, chamadoID, atribuidoID *string) Filt
 		atribuidoID: atribuidoID,
 	}
 }
+
+// Paginacao retorna o filtro de paginação do Filtro.
+func (f *Filtro) Paginacao() domain.Paginacao {
+	return f.paginacao
+}
 	
 // Pagina retorna a página atual do filtro de paginação.
 func (f *Filtro) Pagina() int {

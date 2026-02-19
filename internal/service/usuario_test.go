@@ -124,8 +124,22 @@ func (f *fakeUsuarioRepository) Listar(ctx context.Context, filtro usr.Filtro) (
 
 const (
 	usuarioTesteID    = "usuario-123"
+	tecnicoTesteID    = "tecnico-123"
 	usuarioTesteLogin = "rogerio"
 )
+
+// novoTecnicoTeste cria um técnico de teste com valores fixos.
+func novoTecnicoTeste() *usr.Usuario {
+	t, _ := usr.Novo(
+		tecnicoTesteID,
+		"Tecnico",
+		"tecnico",
+		usr.NovoEmail("tecnico@email.com"),
+		usr.PermTEC,
+		nil,
+	)
+	return t
+}
 
 // novoUsuarioTeste cria um usuário de teste com valores fixos.
 func novoUsuarioTeste() *usr.Usuario {

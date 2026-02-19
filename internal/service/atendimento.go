@@ -192,7 +192,7 @@ func (a *AtendimentoService) Listar(ctx context.Context, f atd.Filtro) ([]atd.At
 	f.Normalizar()
 	atdSlice, total, err := a.repo.Listar(ctx, f)
 	if err != nil {
-		return nil, 0, f, fmt.Errorf("listar atendimentos: %w", err)
+		return nil, 0, atd.Filtro{}, fmt.Errorf("listar atendimentos: %w", err)
 	}
 	return atdSlice, total, f, nil
 }

@@ -223,7 +223,23 @@ func claimsTeste() *auth.Claims {
 	}
 }
 
+// claimsTecnicoTeste retorna um conjunto de claims para uso em testes, representando um técnico com permissão de TEC.
+func claimsTecnicoTeste() *auth.Claims {
+	return &auth.Claims{
+		ID:        "tecnico-123",
+		Login:     "tecnico-teste",
+		Nome:      "Técnico Teste",
+		Email:     "tecnico-teste@example.com",
+		Permissao: usr.PermTEC.String(),
+	}
+}
+
 // contextoTeste retorna um contexto contendo os claims de teste, para uso em testes que requerem autenticação.
 func contextoTeste() context.Context {
 	return auth.ContextoComClaims(context.Background(), claimsTeste())
+}
+
+// contextoTecnicoTeste retorna um contexto contendo os claims de um técnico de teste, para uso em testes que requerem autenticação.
+func contextoTecnicoTeste() context.Context {
+	return auth.ContextoComClaims(context.Background(), claimsTecnicoTeste())
 }
