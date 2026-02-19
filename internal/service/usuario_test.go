@@ -369,7 +369,7 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				return repo
 			},
 			id:           usuarioTesteID,
@@ -421,7 +421,7 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = errFakeRepo
 				return repo
 			},
@@ -444,7 +444,7 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoAtualizar = errFakeRepo
 				return repo
 			},
@@ -488,7 +488,7 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				return repo
 			},
 			id:           usuarioTesteID,
@@ -540,7 +540,7 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				return repo
 			},
 			id:           usuarioTesteID,
@@ -576,7 +576,7 @@ func Test_UsuarioService_BuscarPorID(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				return repo
 			},
@@ -644,7 +644,7 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = errFakeRepo
 				return repo
 			},
@@ -663,7 +663,7 @@ func Test_UsuarioService_BuscarPorLogin(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				return repo
 			},
@@ -714,7 +714,7 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				return repo
 			},
 			id:           usuarioTesteID,
@@ -738,7 +738,7 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = errFakeRepo
 				return repo
 			},
@@ -760,7 +760,7 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoAtualizar = errFakeRepo
 				return repo
 			},
@@ -782,7 +782,7 @@ func Test_UsuarioService_AtualizarPermissao(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				return repo
 			},
@@ -856,7 +856,7 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				return repo
 			},
 			id:           usuarioTesteID,
@@ -874,7 +874,7 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = errFakeRepo
 				return repo
 			},
@@ -895,7 +895,7 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoAtualizar = errFakeRepo
 				return repo
 			},
@@ -916,7 +916,7 @@ func Test_UsuarioService_AtualizarUltimoLogin(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				return repo
 			},
@@ -969,7 +969,7 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
 				novoUsuario.Ativar()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				return repo
 			},
 			id:           usuarioTesteID,
@@ -980,7 +980,7 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 				verificarNaoNulo(t, usuario)
 
 				if usuario.Status() {
-					t.Errorf("esperava usuário desativado, recebeu Status=%v", usuario.Status())
+					t.Errorf("esperava usuário desativado, recebeu Status=%t", usuario.Status())
 				}
 
 				verificarIDs(t, usuarioTesteID, usuario.ID())
@@ -993,7 +993,7 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
 				novoUsuario.Ativar()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = errFakeRepo
 				return repo
 			},
@@ -1016,7 +1016,7 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
 				novoUsuario.Ativar()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoAtualizar = errFakeRepo
 				return repo
 			},
@@ -1037,7 +1037,7 @@ func Test_UsuarioService_Desativar(t *testing.T) {
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				return repo
 			},
@@ -1090,7 +1090,7 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
 				novoUsuario.Desativar()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				return repo
 			},
 			id:           usuarioTesteID,
@@ -1101,7 +1101,7 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 				verificarNaoNulo(t, usuario)
 
 				if !usuario.Status() {
-					t.Errorf("esperava usuário ativado, recebeu Status=%v", usuario.Status())
+					t.Errorf("esperava usuário ativado, recebeu Status=%t", usuario.Status())
 				}
 
 				verificarIDs(t, usuarioTesteID, usuario.ID())
@@ -1114,7 +1114,7 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
 				novoUsuario.Desativar()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = errFakeRepo
 				return repo
 			},
@@ -1136,7 +1136,7 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
 				novoUsuario.Desativar()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoAtualizar = errFakeRepo
 				return repo
 			},
@@ -1159,7 +1159,7 @@ func Test_UsuarioService_Ativar(t *testing.T) {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()
 				novoUsuario.Ativar()
-				repo.usuarios[novoUsuario.ID()] = novoUsuario
+				repo.usuarios[usuarioTesteID] = novoUsuario
 				repo.erroAoBuscar = mysql.ErrUsuarioNaoEncontrado
 				return repo
 			},

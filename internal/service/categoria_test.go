@@ -608,6 +608,239 @@ func Test_CategoriaService_BuscarPorNome(t *testing.T) {
 	}
 }
 
+// Test_CategoriaService_Ativar o método Ativar do CategoriaService.
+func Test_CategoriaService_Ativar(t *testing.T) {
+	t.Parallel()
+	
+	ctx := context.Background()
+
+	tests := []struct {
+		nome               string
+		prepararRepo       func() ctg.Repository
+		id                 string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo ctg.Repository, categoria *ctg.Categoria)
+	}{
+		{
+			nome: "ativar categoria com sucesso",
+			prepararRepo: func() ctg.Repository {
+				repo := novoFakeCategoriaRepository()
+				novaCategoria := novoCategoriaTeste()
+				repo.categorias[categoriaTesteID] = novaCategoria
+				return repo
+			},
+			id:           categoriaTesteID,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo ctg.Repository, categoria *ctg.Categoria) {
+				t.Helper()
+
+				verificarNaoNulo(t, categoria)
+				if !categoria.Status() {
+					t.Errorf("esperava categoria ativada, recebeu Status=%t", categoria.Status())
+				}
+
+				verificarIDs(t, categoriaTesteID, categoria.ID())
+				verificarDatas(t, categoria.CriadoEm(), categoria.AtualizadoEm())
+			},
+		},
+		{
+			nome: "erro ao buscar categoria no repositório para ativar",
+			prepararRepo: func() ctg.Repository {
+				repo := novoFakeCategoriaRepository()
+				novaCategoria := novoCategoriaTeste()
+				repo.categorias[categoriaTesteID] = novaCategoria
+				repo.erroAoBuscar = errFakeRepo
+				return repo
+			},
+			id:           categoriaTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo ctg.Repository, categoria *ctg.Categoria) {
+				t.Helper()
+
+				categoriaRepo, ok := repo.(*fakeCategoriaRepository).categorias[categoriaTesteID]
+				verificarOk(t, ok, "deveria existir categoria no repositório")
+				verificarNulo(t, categoria)
+				verificarNaoAlterado(t, novoCategoriaTeste(), categoriaRepo, compararCategorias)
+				verificarDatas(t, categoriaRepo.CriadoEm(), categoriaRepo.AtualizadoEm())
+			},
+		},
+		{
+			nome: "erro ao persistir categoria ativada no repositório",
+			prepararRepo: func() ctg.Repository {
+				repo := novoFakeCategoriaRepository()
+				novaCategoria := novoCategoriaTeste()
+				repo.categorias[categoriaTesteID] = novaCategoria
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
+			},
+			id:           categoriaTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo ctg.Repository, categoria *ctg.Categoria) {
+				t.Helper()
+
+				categoriaRepo, ok := repo.(*fakeCategoriaRepository).categorias[categoriaTesteID]
+				verificarOk(t, ok, "deveria existir categoria no repositório")
+				verificarNulo(t, categoria)
+				verificarNaoAlterado(t, novoCategoriaTeste(), categoriaRepo, compararCategorias)
+				verificarDatas(t, categoriaRepo.CriadoEm(), categoriaRepo.AtualizadoEm())
+			},
+		},
+		 {
+			nome: "categoria não encontrada para ativar",
+			prepararRepo: func() ctg.Repository {
+				repo := novoFakeCategoriaRepository()
+				novaCategoria := novoCategoriaTeste()
+				repo.categorias[categoriaTesteID] = novaCategoria
+				repo.erroAoBuscar = mysql.ErrCategoriaNaoEncontrada
+				return repo
+			},
+			id:           "id-inexistente",
+			erroEsperado: mysql.ErrCategoriaNaoEncontrada,
+			verificarResultado: func(t *testing.T, repo ctg.Repository, categoria *ctg.Categoria) {
+				t.Helper()
+
+				categoriaRepo, ok := repo.(*fakeCategoriaRepository).categorias[categoriaTesteID]
+				verificarOk(t, ok, "deveria existir categoria original no repositório")
+				verificarNulo(t, categoria)
+				verificarNaoAlterado(t, novoCategoriaTeste(), categoriaRepo, compararCategorias)
+				verificarDatas(t, categoriaRepo.CriadoEm(), categoriaRepo.AtualizadoEm())
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
+
+			repo := tt.prepararRepo()
+			service := NovoCategoriaService(nil, repo)
+			categoriaAtivada, erroRecebido := service.Ativar(ctx, tt.id)
+
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, categoriaAtivada)
+			}
+		})
+	}
+}
+
+// Test_CategoriaService_Desativar o método Desativar do CategoriaService.
+func Test_CategoriaService_Desativar(t *testing.T) {
+	t.Parallel()
+	
+	ctx := context.Background()
+
+	tests := []struct {
+		nome               string
+		prepararRepo       func() ctg.Repository
+		id                 string
+		erroEsperado       error
+		verificarResultado func(t *testing.T, repo ctg.Repository, categoria *ctg.Categoria)
+	}{
+		{
+			nome: "desativar categoria com sucesso",
+			prepararRepo: func() ctg.Repository {
+				repo := novoFakeCategoriaRepository()
+				novaCategoria := novoCategoriaTeste()
+				novaCategoria.Desativar()
+				repo.categorias[categoriaTesteID] = novaCategoria
+				return repo
+			},
+			id:           categoriaTesteID,
+			erroEsperado: nil,
+			verificarResultado: func(t *testing.T, repo ctg.Repository, categoria *ctg.Categoria) {
+				t.Helper()
+
+				verificarNaoNulo(t, categoria)
+				if categoria.Status() {
+					t.Errorf("esperava categoria desativada, recebeu Status=%t", categoria.Status())
+				}
+
+				verificarIDs(t, categoriaTesteID, categoria.ID())
+				verificarDatas(t, categoria.CriadoEm(), categoria.AtualizadoEm())
+			},
+		},
+		{
+			nome: "erro ao buscar categoria no repositório para desativar",
+			prepararRepo: func() ctg.Repository {
+				repo := novoFakeCategoriaRepository()
+				novaCategoria := novoCategoriaTeste()
+				repo.categorias[categoriaTesteID] = novaCategoria
+				repo.erroAoBuscar = errFakeRepo
+				return repo
+			},
+			id:           categoriaTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo ctg.Repository, categoria *ctg.Categoria) {
+				t.Helper()
+
+				categoriaRepo, ok := repo.(*fakeCategoriaRepository).categorias[categoriaTesteID]
+				verificarOk(t, ok, "deveria existir categoria no repositório")
+				verificarNulo(t, categoria)
+				verificarNaoAlterado(t, novoCategoriaTeste(), categoriaRepo, compararCategorias)
+				verificarDatas(t, categoriaRepo.CriadoEm(), categoriaRepo.AtualizadoEm())
+			},
+		},
+		 {
+			nome: "erro ao persistir categoria desativada no repositório",
+			prepararRepo: func() ctg.Repository {
+				repo := novoFakeCategoriaRepository()
+				novaCategoria := novoCategoriaTeste()
+				repo.categorias[categoriaTesteID] = novaCategoria
+				repo.erroAoAtualizar = errFakeRepo
+				return repo
+			},
+			id:           categoriaTesteID,
+			erroEsperado: errFakeRepo,
+			verificarResultado: func(t *testing.T, repo ctg.Repository, categoria *ctg.Categoria) {
+				t.Helper()
+
+				categoriaRepo, ok := repo.(*fakeCategoriaRepository).categorias[categoriaTesteID]
+				verificarOk(t, ok, "deveria existir categoria no repositório")
+				verificarNulo(t, categoria)
+				verificarNaoAlterado(t, novoCategoriaTeste(), categoriaRepo, compararCategorias)
+				verificarDatas(t, categoriaRepo.CriadoEm(), categoriaRepo.AtualizadoEm())
+			},
+		},
+		{
+			nome: "categoria não encontrada para desativar",
+			prepararRepo: func() ctg.Repository {
+				repo := novoFakeCategoriaRepository()
+				novaCategoria := novoCategoriaTeste()
+				repo.categorias[categoriaTesteID] = novaCategoria
+				repo.erroAoBuscar = mysql.ErrCategoriaNaoEncontrada
+				return repo
+			},
+			id:					 "id-inexistente",
+			erroEsperado: mysql.ErrCategoriaNaoEncontrada,
+			verificarResultado: func(t *testing.T, repo ctg.Repository, categoria *ctg.Categoria) {
+				t.Helper()
+
+				categoriaRepo, ok := repo.(*fakeCategoriaRepository).categorias[categoriaTesteID]
+				verificarOk(t, ok, "deveria existir categoria original no repositório")
+				verificarNulo(t, categoria)
+				verificarNaoAlterado(t, novoCategoriaTeste(), categoriaRepo, compararCategorias)
+				verificarDatas(t, categoriaRepo.CriadoEm(), categoriaRepo.AtualizadoEm())
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.nome, func(t *testing.T) {
+			t.Parallel()
+
+			repo := tt.prepararRepo()
+			service := NovoCategoriaService(nil, repo)
+			categoriaDesativada, erroRecebido := service.Desativar(ctx, tt.id)
+
+			verificarErro(t, erroRecebido, tt.erroEsperado)
+			if tt.verificarResultado != nil {
+				tt.verificarResultado(t, repo, categoriaDesativada)
+			}
+		})
+	}
+}
+
 // Test_CategoriaService_Listar testa o método Listar do CategoriaService.
 func Test_CategoriaService_Listar(t *testing.T) {
 	t.Parallel()
