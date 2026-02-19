@@ -228,7 +228,7 @@ func TestAtendimentoService_Criar(t *testing.T) {
 			chamadoRepo.chamados["chm-456"] = novoChamadoTeste()
 			
 			categoriaPermissaoRepo := novoFakeCategoriaPermissaoRepository()
-			categoriaPermissaoRepo.categoriasPermissoes[chaveComposta("categoria-123", "user-123")] = novoCategoriaPermissaoTeste()
+			categoriaPermissaoRepo.categoriasPermissoes[chaveCompostaCategoriaPermissao] = novoCategoriaPermissaoTeste()
 			
 			usuarioRepo := novoFakeUsuarioRepository()
 			novoUsuario := novoUsuarioTeste()

@@ -15,6 +15,9 @@ import (
 // REPOSITÓRIO FALSO
 // =====================================================================================================================
 
+// asserção de interface para garantir que fakeCategoriaRepository implementa ctg.Repository
+var _ ctg.Repository = (*fakeCategoriaRepository)(nil)
+
 // fakeCategoriaRepository é uma implementação fake do repositório de categorias para testes.
 type fakeCategoriaRepository struct {
 	categorias      map[string]*ctg.Categoria

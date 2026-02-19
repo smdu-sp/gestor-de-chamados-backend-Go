@@ -484,7 +484,7 @@ func Test_UsuarioService_Atualizar(t *testing.T) {
 			},
 		},
 		{
-			nome: "erro de validacao ao atualizar usuario",
+			nome: "erro de validação ao atualizar usuario",
 			prepararRepo: func() usr.Repository {
 				repo := novoFakeUsuarioRepository()
 				novoUsuario := novoUsuarioTeste()

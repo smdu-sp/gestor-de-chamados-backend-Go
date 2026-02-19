@@ -25,7 +25,7 @@ var _ cpm.Service = (*CategoriaPermissaoService)(nil)
 // Erros sentinela possíveis: ErrCategoriaPermissaoJaExiste.
 func (c *CategoriaPermissaoService) Criar(ctx context.Context, criar cpm.CriarParams) (*cpm.CategoriaPermissao, error) {
 	// 1 - Criar a categoria de permissão
-	cpm, err := cpm.Novo(
+	categoriaPermissao, err := cpm.Novo(
 		criar.CategoriaID,
 		criar.UsuarioID,
 		criar.Permissao,
@@ -35,31 +35,31 @@ func (c *CategoriaPermissaoService) Criar(ctx context.Context, criar cpm.CriarPa
 	}
 
 	// 2 - Salvar a categoria de permissão no repositório
-	cpmCriada, err := c.repo.Criar(ctx, *cpm)
+	categoriaPermissaoCriada, err := c.repo.Criar(ctx, *categoriaPermissao)
 	if err != nil {
 		return nil, fmt.Errorf("criar categoria/permissão: %w", err)
 	}
 
-	return cpmCriada, nil
+	return categoriaPermissaoCriada, nil
 }
 
 // BuscarPorID recebe o ID composto de categoria e usuário, e retorna a categoria de permissão correspondente.
 //
 // Erros sentinela possíveis: ErrCategoriaPermissaoNaoEncontrada.
-func (c *CategoriaPermissaoService) BuscarPorID(ctx context.Context, ctgID, usrID string) (*cpm.CategoriaPermissao, error) {
-	cpm, err := c.repo.BuscarPorID(ctx, ctgID, usrID)
+func (c *CategoriaPermissaoService) BuscarPorID(ctx context.Context, categoriaID, usuarioID string) (*cpm.CategoriaPermissao, error) {
+	categoriaPermissao, err := c.repo.BuscarPorID(ctx, categoriaID, usuarioID)
 	if err != nil {
 		return nil, fmt.Errorf("buscar categoriaPermissão por ID composto: %w", err)
 	}
-	return cpm, nil
+	return categoriaPermissao, nil
 }
 
 // Atualizar recebe o ID composto de categoria e usuário, e os parâmetros para atualizar a categoria de permissão existente.
 //
 // Erros sentinela possíveis: ErrCategoriaPermissaoNaoEncontrada.
-func (c *CategoriaPermissaoService) Atualizar(ctx context.Context, ctgID, usrID string, atualizar cpm.AtualizarParams) (*cpm.CategoriaPermissao, error) {
+func (c *CategoriaPermissaoService) Atualizar(ctx context.Context, categoriaID, usuarioID string, atualizar cpm.AtualizarParams) (*cpm.CategoriaPermissao, error) {
 	// 1 - Buscar a categoria de permissão existente
-	categoriaPermissaoAtual, err := c.repo.BuscarPorID(ctx, ctgID, usrID)
+	categoriaPermissaoAtual, err := c.repo.BuscarPorID(ctx, categoriaID, usuarioID)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar categoriaPermissão: %w", err)
 	}
@@ -71,7 +71,7 @@ func (c *CategoriaPermissaoService) Atualizar(ctx context.Context, ctgID, usrID 
 	}
 
 	// 3 - Salvar as alterações no repositório
-	categoriaPermissaoSalva, err := c.repo.Atualizar(ctx, ctgID, usrID, categoriaPermissaoAtualizada)
+	categoriaPermissaoSalva, err := c.repo.Atualizar(ctx, categoriaID, usuarioID, categoriaPermissaoAtualizada)
 	if err != nil {
 		return nil, fmt.Errorf("atualizar categoriaPermissão: %w", err)
 	}
@@ -102,7 +102,7 @@ func (c *CategoriaPermissaoService) Listar(ctx context.Context, f cpm.Filtro) ([
 	f.Normalizar()
 	cpmSlice, total, err := c.repo.Listar(ctx, f)
 	if err != nil {
-		return nil, 0, f, fmt.Errorf("listar categoriaPermissão: %w", err)
+		return nil, 0, cpm.Filtro{}, fmt.Errorf("listar categoriaPermissão: %w", err)
 	}
 
 	return cpmSlice, total, f, nil

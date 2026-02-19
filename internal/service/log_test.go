@@ -16,6 +16,9 @@ import (
 // REPOSITÓRIO FALSO
 // =====================================================================================================================
 
+// asserção de interface para garantir que fakeLogRepository implementa log.Repository
+var _ log.Repository = (*fakeLogRepository)(nil)
+
 // fakeLogRepository é uma implementação falsa de repositório de logs para testes.
 type fakeLogRepository struct {
 	logs         map[string]*log.Log
