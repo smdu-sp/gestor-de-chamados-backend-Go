@@ -219,7 +219,7 @@ func claimsTeste() *auth.Claims {
 		Login:     "testuser",
 		Nome:      "Test User",
 		Email:     "test@example.com",
-		Permissao: usr.PermTEC.String(),
+		Permissao: usr.PermADM.String(),
 	}
 }
 

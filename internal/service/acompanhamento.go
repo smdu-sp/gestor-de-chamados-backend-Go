@@ -200,7 +200,7 @@ func (a *AcompanhamentoService) Listar(ctx context.Context, f acp.Filtro) ([]acp
 	f.Normalizar()
 	acompanhamentos, total, err := a.repo.Listar(ctx, f)
 	if err != nil {
-		return nil, 0, f, fmt.Errorf("listar acompanhamentos: %w", err)
+		return nil, 0, acp.Filtro{}, fmt.Errorf("listar acompanhamentos: %w", err)
 	}
 	return acompanhamentos, total, f, nil
 }
